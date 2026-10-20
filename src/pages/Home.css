@@ -1,0 +1,26 @@
+.hero { background: var(--bg-page); padding-block: 24px 48px; }
+@media (min-width: 1024px) { .hero { padding-block: 48px 80px; } }
+.hero__slide { display: grid; gap: 24px; align-items: center; }
+.hero__media img { display: block; inline-size: 100%; block-size: auto; aspect-ratio: 358 / 448; object-fit: cover; border-radius: 179px 179px 20px 20px; }
+.hero__text { display: grid; gap: 12px; justify-items: start; order: 2; }
+.hero__p { margin: 0; max-inline-size: 46ch; } .hero__cta { inline-size: 100%; }
+@media (min-width: 1024px) {
+  .hero__slide { grid-template-columns: 1fr 488px; gap: 80px; }
+  .hero__text { order: 0; gap: 16px; } .hero__cta { inline-size: auto; min-inline-size: 140px; }
+  .hero__media { order: 1; } .hero__media img { block-size: 610px; aspect-ratio: auto; border-radius: 244px 244px 28px 28px; }
+}
+.hero__ctrl { display: flex; align-items: center; justify-content: center; gap: 8px; margin-block-start: 16px; }
+.hero__dots { display: flex; }
+.hero__dot { inline-size: 44px; block-size: 44px; display: grid; place-items: center; border: 0; background: none; cursor: pointer; }
+.hero__dot span { inline-size: 8px; block-size: 8px; border-radius: 99px; background: var(--n-400); }
+.hero__dot[aria-current="true"] span { inline-size: 24px; background: var(--teal-600); }
+.feature { padding-block: var(--section-gap) 0; }
+.feature--white { background: #fff; } .feature--cream { background: var(--bg-page); }
+.best { padding-block: var(--section-gap); }
+.feature__in { display: grid; gap: 24px; align-items: center; }
+.feature__text { display: grid; gap: 12px; justify-items: start; order: 2; }
+.feature__text p { margin: 0; max-inline-size: 48ch; }
+.feature__img { display: block; inline-size: 100%; block-size: auto; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 179px 179px 20px 20px; }
+@media (min-width: 1024px) { .feature__in { grid-template-columns: 1fr 488px; gap: 80px; } .feature__text { order: 0; } .feature__img { border-radius: 244px 244px 28px 28px; } }
+.story { padding-block-end: var(--section-gap); }
+@media (min-width: 1024px) { .feature--flip .feature__in { grid-template-columns: 488px 1fr; } .feature--flip .feature__text { order: 2; } }

@@ -1,0 +1,816 @@
+[
+  {
+    "page": "home",
+    "viewport": "desktop 1280",
+    "path": "/",
+    "screenshot": "shots/home-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "women",
+    "viewport": "desktop 1280",
+    "path": "/women",
+    "screenshot": "shots/women-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "women-p2",
+    "viewport": "desktop 1280",
+    "path": "/women?page=2",
+    "screenshot": "shots/women-p2-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "men",
+    "viewport": "desktop 1280",
+    "path": "/men",
+    "screenshot": "shots/men-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "women-filter",
+    "viewport": "desktop 1280",
+    "path": "/women",
+    "screenshot": "shots/women-filter-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "product",
+    "viewport": "desktop 1280",
+    "path": "/product/women-1",
+    "screenshot": "shots/product-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "product-added",
+    "viewport": "desktop 1280",
+    "path": "/product/women-1",
+    "screenshot": "shots/product-added-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "search",
+    "viewport": "desktop 1280",
+    "path": "/",
+    "screenshot": "shots/search-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "auth-modal",
+    "viewport": "desktop 1280",
+    "path": "/",
+    "screenshot": "shots/auth-modal-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "cart-empty",
+    "viewport": "desktop 1280",
+    "path": "/cart",
+    "screenshot": "shots/cart-empty-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "cart",
+    "viewport": "desktop 1280",
+    "path": "/cart",
+    "screenshot": "shots/cart-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "checkout",
+    "viewport": "desktop 1280",
+    "path": "/checkout",
+    "screenshot": "shots/checkout-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "payment",
+    "viewport": "desktop 1280",
+    "path": "/checkout/payment?order=10124",
+    "screenshot": "shots/payment-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "confirmation",
+    "viewport": "desktop 1280",
+    "path": "/checkout/confirmation/10124",
+    "screenshot": "shots/confirmation-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "account",
+    "viewport": "desktop 1280",
+    "path": "/account",
+    "screenshot": "shots/account-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "orders",
+    "viewport": "desktop 1280",
+    "path": "/account/orders",
+    "screenshot": "shots/orders-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "order-detail",
+    "viewport": "desktop 1280",
+    "path": "/account/orders/10124",
+    "screenshot": "shots/order-detail-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "returns",
+    "viewport": "desktop 1280",
+    "path": "/account/returns",
+    "screenshot": "shots/returns-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "return-detail",
+    "viewport": "desktop 1280",
+    "path": "/account/returns/1",
+    "screenshot": "shots/return-detail-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "addresses",
+    "viewport": "desktop 1280",
+    "path": "/account/addresses",
+    "screenshot": "shots/addresses-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "address-add",
+    "viewport": "desktop 1280",
+    "path": "/account/addresses",
+    "screenshot": "shots/address-add-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 400 (Bad Request)"
+    ],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "favorites",
+    "viewport": "desktop 1280",
+    "path": "/account/favorites",
+    "screenshot": "shots/favorites-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "payment-info",
+    "viewport": "desktop 1280",
+    "path": "/account/payment",
+    "screenshot": "shots/payment-info-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "settings",
+    "viewport": "desktop 1280",
+    "path": "/account/settings",
+    "screenshot": "shots/settings-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "account-guest",
+    "viewport": "desktop 1280",
+    "path": "/account",
+    "screenshot": "shots/account-guest-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "not-found",
+    "viewport": "desktop 1280",
+    "path": "/no-such-page",
+    "screenshot": "shots/not-found-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "info",
+    "viewport": "desktop 1280",
+    "path": "/info/shipping",
+    "screenshot": "shots/info-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "home",
+    "viewport": "mobile 375",
+    "path": "/",
+    "screenshot": "shots/home-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "women",
+    "viewport": "mobile 375",
+    "path": "/women",
+    "screenshot": "shots/women-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "women-p2",
+    "viewport": "mobile 375",
+    "path": "/women?page=2",
+    "screenshot": "shots/women-p2-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "men",
+    "viewport": "mobile 375",
+    "path": "/men",
+    "screenshot": "shots/men-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "women-filter",
+    "viewport": "mobile 375",
+    "path": "/women",
+    "screenshot": "shots/women-filter-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "product",
+    "viewport": "mobile 375",
+    "path": "/product/women-1",
+    "screenshot": "shots/product-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "product-added",
+    "viewport": "mobile 375",
+    "path": "/product/women-1",
+    "screenshot": "shots/product-added-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "search",
+    "viewport": "mobile 375",
+    "path": "/",
+    "screenshot": "shots/search-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "auth-modal",
+    "viewport": "mobile 375",
+    "path": "/",
+    "screenshot": "shots/auth-modal-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "cart-empty",
+    "viewport": "mobile 375",
+    "path": "/cart",
+    "screenshot": "shots/cart-empty-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "cart",
+    "viewport": "mobile 375",
+    "path": "/cart",
+    "screenshot": "shots/cart-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "checkout",
+    "viewport": "mobile 375",
+    "path": "/checkout",
+    "screenshot": "shots/checkout-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "payment",
+    "viewport": "mobile 375",
+    "path": "/checkout/payment?order=10124",
+    "screenshot": "shots/payment-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "confirmation",
+    "viewport": "mobile 375",
+    "path": "/checkout/confirmation/10124",
+    "screenshot": "shots/confirmation-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "account",
+    "viewport": "mobile 375",
+    "path": "/account",
+    "screenshot": "shots/account-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "orders",
+    "viewport": "mobile 375",
+    "path": "/account/orders",
+    "screenshot": "shots/orders-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "order-detail",
+    "viewport": "mobile 375",
+    "path": "/account/orders/10124",
+    "screenshot": "shots/order-detail-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "returns",
+    "viewport": "mobile 375",
+    "path": "/account/returns",
+    "screenshot": "shots/returns-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "return-detail",
+    "viewport": "mobile 375",
+    "path": "/account/returns/1",
+    "screenshot": "shots/return-detail-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "addresses",
+    "viewport": "mobile 375",
+    "path": "/account/addresses",
+    "screenshot": "shots/addresses-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "address-add",
+    "viewport": "mobile 375",
+    "path": "/account/addresses",
+    "screenshot": "shots/address-add-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 400 (Bad Request)"
+    ],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "favorites",
+    "viewport": "mobile 375",
+    "path": "/account/favorites",
+    "screenshot": "shots/favorites-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "payment-info",
+    "viewport": "mobile 375",
+    "path": "/account/payment",
+    "screenshot": "shots/payment-info-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "settings",
+    "viewport": "mobile 375",
+    "path": "/account/settings",
+    "screenshot": "shots/settings-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "account-guest",
+    "viewport": "mobile 375",
+    "path": "/account",
+    "screenshot": "shots/account-guest-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "not-found",
+    "viewport": "mobile 375",
+    "path": "/no-such-page",
+    "screenshot": "shots/not-found-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "info",
+    "viewport": "mobile 375",
+    "path": "/info/shipping",
+    "screenshot": "shots/info-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  }
+]

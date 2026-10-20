@@ -1,0 +1,23 @@
+.shop__head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-block: 8px 32px; flex-wrap: wrap; }
+.shop__count { margin: 4px 0 0; }
+.shop__tools { display: flex; gap: 12px; align-items: flex-end; }
+.shop__sort { min-inline-size: 180px; gap: 2px; }
+@media (max-width: 767px) { .shop__tools { inline-size: 100%; display: grid; grid-template-columns: 1fr 1fr; } .shop__tools .btn { padding-inline: 8px; font-size: 14px; } }
+.shop__panel { margin-block-end: 32px; }
+.filters { display: grid; gap: 20px; }
+.filters fieldset { border: 0; padding: 0; margin: 0; } .filters legend { font-weight: 700; font-size: 15px; margin-block-end: 8px; display: flex; gap: 8px; align-items: center; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chk { position: relative; display: inline-flex; } .chk input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.chk span { display: inline-flex; align-items: center; gap: 6px; min-block-size: 44px; min-inline-size: 44px; justify-content: center; padding-inline: 14px; border: 1px solid var(--n-500); border-radius: var(--r-8); font-size: 14px; background: #fff; }
+.chk input:checked + span { border-color: var(--teal-600); background: var(--teal-50); color: var(--teal-700); font-weight: 600; box-shadow: inset 0 0 0 1px var(--teal-600); }
+.chk input:focus-visible + span { outline: 3px solid var(--teal-600); outline-offset: 2px; }
+.sw { inline-size: 16px; block-size: 16px; border-radius: 99px; border: 1px solid var(--n-300); display: inline-block; }
+.filters__act { display: flex; gap: 8px; flex-wrap: wrap; }
+.radios { display: grid; gap: 4px; }
+.radio { display: flex; align-items: center; gap: 12px; min-block-size: 48px; cursor: pointer; font-size: 16px; }
+.radio input { inline-size: 20px; block-size: 20px; accent-color: var(--teal-600); margin: 0; }
+.pager { display: flex; justify-content: center; align-items: center; gap: 8px; margin-block: 48px 0; }
+.pager button { min-inline-size: 44px; block-size: 44px; border-radius: 999px; border: 0; background: transparent; cursor: pointer; display: grid; place-items: center; font-weight: 600; }
+.pager__num[aria-current="page"] { background: var(--teal-600); color: #fff; }
+.pager button:disabled { color: var(--n-400); cursor: not-allowed; }
+.pager__gap { color: var(--n-500); }

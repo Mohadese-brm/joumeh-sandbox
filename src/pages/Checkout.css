@@ -1,0 +1,13 @@
+.checkout { padding-block-start: 24px; }
+.steps { list-style: none; display: flex; justify-content: center; gap: 8px; padding: 0; margin: 0 0 24px; flex-wrap: wrap; }
+.steps li { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--n-600); }
+.steps li + li::before { content: ''; inline-size: 48px; block-size: 2px; background: var(--n-300); }
+.steps li.done + li::before, .steps li.cur::before { background: var(--teal-600); }
+.steps__n { inline-size: 28px; block-size: 28px; border-radius: 99px; display: grid; place-items: center; border: 1.5px solid var(--n-400); font-weight: 700; }
+.steps .cur, .steps .done { color: var(--n-900); font-weight: 700; }
+.steps .cur .steps__n, .steps .done .steps__n { background: var(--teal-600); border-color: var(--teal-600); color: #fff; }
+.checkout__grid { display: grid; gap: 24px; align-items: start; }
+@media (min-width: 1024px) { .checkout__grid { grid-template-columns: 1fr 368px; gap: 32px; } }
+.checkout__form { display: grid; gap: 20px; }
+.checkout__methods { border: 0; padding: 0; margin: 0; display: grid; gap: 4px; }
+.checkout__methods legend { font-weight: 700; margin-block-end: 8px; display: flex; gap: 8px; align-items: center; }

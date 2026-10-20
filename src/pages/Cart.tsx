@@ -1,0 +1,78 @@
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useStore } from '../lib/store';
+import { api, type Cart as CartT, type CartItem } from '../lib/api';
+import { faNumber, formatPrice } from '../lib/format';
+import { Icon } from '../components/Icon';
+import { Stub } from '../components/Stub';
+import './Cart.css';
+
+export function Summary({ cart, children, title = 'خلاصه سفارش' }: { cart: CartT; children?: React.ReactNode; title?: string }) {
+  const t = cart.totals;
+  return (
+    <aside className="card summary" aria-labelledby="sum-h">
+      <h2 id="sum-h" className="summary__h">{title}</h2>
+      <dl>
+        <div><dt>جمع کل ({faNumber(t.count)} کالا)</dt><dd>{formatPrice(t.subtotal)}</dd></div>
+        {t.discount > 0 && <div><dt>تخفیف</dt><dd className="summary__disc">{formatPrice(t.discount)}−</dd></div>}
+        <div><dt>ارسال</dt><dd className="small muted">در انتظار تصمیم (BD-02)</dd></div>
+        <div><dt>مالیات بر ارزش افزوده</dt><dd className="small muted">در انتظار تصمیم (BD-06)</dd></div>
+        <div className="summary__total"><dt>مبلغ قابل پرداخت</dt><dd>{formatPrice(t.payable)}</dd></div>
+      </dl>
+      <p className="caption muted">مبلغ بدون هزینه‌ی ارسال و مالیات است؛ این دو در انتظار تصمیم کسب‌وکار هستند.</p>
+      {children}
+    </aside>
+  );
+}
+export function Cart() {
+  const { cart, cartError, refreshCart, setCart, addToCart, toast } = useStore(); const nav = useNavigate();
+  const [loading, setLoading] = useState(true); const [busy, setBusy] = useState<number | null>(null);
+  useEffect(() => { refreshCart().finally(() => setLoading(false)); }, [refreshCart]);
+  const setQty = async (it: CartItem, q: number) => {
+    if (q < 1 || q > 99) return; setBusy(it.id);
+    try { const r = await api<CartT>(`/cart/${cart!.cartId}/items/${it.id}`, { method: 'PATCH', body: { quantity: q } }); setCart(r.data); }
+    catch { toast('تغییر تعداد انجام نشد'); } finally { setBusy(null); }
+  };
+  const remove = async (it: CartItem) => {
+    setBusy(it.id);
+    try { const r = await api<CartT>(`/cart/${cart!.cartId}/items/${it.id}`, { method: 'DELETE' }); setCart(r.data);
+      toast(`«${it.name}» از سبد حذف شد`, { label: 'بازگرداندن', onClick: () => void addToCart(it.variantId, it.quantity) }); }
+    catch { toast('حذف انجام نشد'); } finally { setBusy(null); }
+  };
+  if (loading) return <div className="wrap cart" aria-busy="true"><h1 className="h-page cart__h">سبد خرید</h1><div className="skel" style={{ blockSize: 320 }} /></div>;
+  if (cartError) return <div className="wrap cart"><h1 className="h-page cart__h">سبد خرید</h1><div className="state" role="alert"><p>بارگذاری سبد خرید انجام نشد.</p><button className="btn btn--outline" onClick={() => { setLoading(true); refreshCart().finally(() => setLoading(false)); }}>تلاش دوباره</button></div></div>;
+  if (!cart || cart.items.length === 0) return (
+    <div className="wrap cart"><h1 className="h-page cart__h">سبد خرید</h1>
+      <div className="state cart__empty"><Icon name="bag-1" size={48} /><p className="h-section">سبد خرید شما خالی است</p><p className="muted small">محصولات موردعلاقه‌تان را به سبد اضافه کنید.</p>
+        <div className="cart__emptyact"><Link to="/women" className="btn btn--primary">خرید زنانه</Link><Link to="/men" className="btn btn--outline">خرید مردانه</Link></div></div></div>);
+  const unavailable = cart.items.some(i => !i.available);
+  return (
+    <div className="wrap cart">
+      <div className="cart__head"><h1 className="h-page">سبد خرید</h1><span className="small muted">{faNumber(cart.totals.count)} کالا</span></div>
+      <div className="cart__grid">
+        <div>
+          {unavailable && <p className="stub" role="alert"><Icon name="danger-circle" size={20} /><span>برخی کالاها ناموجود شده‌اند و در جمع حساب نمی‌شوند. آن‌ها را حذف کنید.</span></p>}
+          <ul className="cart__list">{cart.items.map(it => (
+            <li key={it.id} className={`citem${it.available ? '' : ' citem--na'}`} aria-busy={busy === it.id}>
+              <Link to={`/product/${it.slug}`} className="citem__img"><img src={it.imageUrl} alt={it.name} width={64} height={80} /></Link>
+              <div className="citem__info">
+                <Link to={`/product/${it.slug}`} className="citem__name">{it.name}</Link>
+                <p className="caption muted">رنگ: {it.color} · سایز: {it.size}</p>
+                <p className="caption">قیمت واحد: {it.originalPrice && it.originalPrice > it.price && <s className="muted">{faNumber(it.originalPrice)}</s>} <span className={it.originalPrice ? 'pc__now--sale' : ''}>{formatPrice(it.price)}</span></p>
+                {!it.available && <p className="err">ناموجود</p>}
+              </div>
+              {it.available ? <div className="qty" role="group" aria-label={`تعداد ${it.name}`}>
+                <button type="button" onClick={() => setQty(it, it.quantity + 1)} disabled={busy === it.id} aria-label={`افزایش تعداد ${it.name}`}><Icon name="add" size={18} /></button>
+                <output aria-live="polite">{faNumber(it.quantity)}</output>
+                <button type="button" onClick={() => setQty(it, it.quantity - 1)} disabled={busy === it.id || it.quantity <= 1} aria-label={`کاهش تعداد ${it.name}`}><Icon name="minus" size={18} /></button>
+              </div> : <span />}
+              <div className="citem__total"><span className="caption muted">جمع</span><strong>{formatPrice(it.lineTotal)}</strong></div>
+              <button type="button" className="icon-btn" onClick={() => remove(it)} disabled={busy === it.id} aria-label={`حذف ${it.name} از سبد`}><Icon name="close-circle" /></button>
+            </li>))}</ul>
+          <Stub code="BD-08/BD-16">رزرو موجودی، پیام «موجودی ناکافی» و «تغییر قیمت» به تصمیم کسب‌وکار وابسته‌اند و فعال نیستند.</Stub>
+        </div>
+        <Summary cart={cart}><button className="btn btn--primary btn--block" disabled={cart.totals.count === 0} onClick={() => nav('/checkout')}>ادامه فرایند خرید</button></Summary>
+      </div>
+    </div>
+  );
+}

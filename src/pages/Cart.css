@@ -1,0 +1,22 @@
+.cart { padding-block-start: 32px; } .cart__h { margin-block-end: 24px; }
+.cart__head { display: flex; justify-content: space-between; align-items: baseline; margin-block-end: 24px; }
+.cart__grid { display: grid; gap: 24px; align-items: start; }
+@media (min-width: 1024px) { .cart__grid { grid-template-columns: 1fr 368px; gap: 40px; } }
+.cart__list { list-style: none; margin: 0 0 16px; padding: 0; }
+.citem { display: grid; grid-template-columns: 64px 1fr auto; grid-template-areas: "img info del" "img qty total"; gap: 8px 16px; padding-block: 20px; border-block-end: 1px solid var(--n-200); align-items: center; }
+.citem__img { grid-area: img; align-self: start; } .citem__img img { border-radius: 32px 32px 6px 6px; object-fit: cover; display: block; }
+.citem__info { grid-area: info; } .citem__info p { margin: 2px 0; }
+.citem .qty { grid-area: qty; justify-self: start; } .citem__total { grid-area: total; display: grid; } .citem > .icon-btn { grid-area: del; justify-self: end; }
+@media (min-width: 768px) { .citem { grid-template-columns: 72px 1fr auto 140px 44px; grid-template-areas: "img info qty total del"; } }
+.citem__name { color: var(--text); font-weight: 700; text-decoration: none; } .citem__name:hover { text-decoration: underline; }
+.citem--na { opacity: .7; }
+.summary { display: grid; gap: 12px; position: sticky; inset-block-start: calc(var(--header-h) + 16px); }
+.summary__h { font-size: 18px; font-weight: 700; }
+.summary dl { margin: 0; display: grid; gap: 12px; }
+.summary dl div { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; }
+.summary dd { margin: 0; font-weight: 600; text-align: end; }
+.summary__disc { color: var(--red-600); }
+.summary__total { border-block-start: 1px solid var(--n-200); padding-block-start: 12px; font-size: 16px !important; }
+.summary__total dd { font-size: 18px; font-weight: 800; }
+.summary p { margin: 0; }
+.cart__empty { padding-block: 64px; } .cart__empty p { margin: 0; } .cart__emptyact { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
