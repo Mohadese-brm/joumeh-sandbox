@@ -33,7 +33,7 @@ function SearchBox({ onClose }: { onClose: () => void }) {
             : res!.length === 0 ? <p className="small">نتیجه‌ای برای «{q.trim()}» پیدا نشد.</p>
             : <>
               <p className="caption muted">{faNumber(res!.length)} نتیجه برای «{q.trim()}»</p>
-              <ul>{res!.map(p => <li key={p.id}><button type="button" className="search__item" onClick={() => { onClose(); nav(`/product/${p.slug}`); }}>
+              <ul>{res!.slice(0, 3).map(p => <li key={p.id}><button type="button" className="search__item" onClick={() => { onClose(); nav(`/product/${p.slug}`); }}>
                 <img src={p.imageUrl} alt="" width={36} height={48} />
                 <span><span className="search__name">{p.name}</span>
                   <span className="search__price">{p.originalPrice && p.status === 'sale' && <s className="caption muted">{faNumber(p.originalPrice)}</s>} <span className={p.status === 'sale' ? 'pc__now--sale' : ''}>{formatPrice(p.price)}</span></span></span>
@@ -55,7 +55,7 @@ export function Header() {
       <div className="hdr__in wrap">
         <nav className="hdr__nav" aria-label="منوی اصلی">
           <button type="button" className="icon-btn hdr__menu" aria-expanded={menu} aria-controls="mmenu" onClick={() => setMenu(m => !m)} aria-label="منو">
-            <span className="burger" aria-hidden="true"><i /><i /><i /></span>
+            <Icon name="menu" />
           </button>
           <ul className="hdr__links">
             <li><NavLink to="/women">زنانه</NavLink></li><li><NavLink to="/men">مردانه</NavLink></li><li><Link to="/#story">قصه‌ی ما</Link></li>
@@ -82,8 +82,8 @@ export function Footer() {
         <nav aria-labelledby="f1"><h2 id="f1">فروشگاه</h2><ul><li><Link to="/women">زنانه</Link></li><li><Link to="/men">مردانه</Link></li><li><Link to="/women?sale=1">حراج</Link></li></ul></nav>
         <nav aria-labelledby="f2"><h2 id="f2">راهنمای خرید</h2><ul>
           {/* Policy pages are BD stubs (BD-02/04/18) and not designed → placeholder route */}
-          <li><Link to="/info/shipping">ارسال و تحویل</Link></li><li><Link to="/info/returns">بازگشت کالا</Link></li><li><Link to="/info/size-guide">راهنمای سایز</Link></li><li><Link to="/info/faq">پرسش‌های متداول</Link></li></ul></nav>
-        <nav aria-labelledby="f3"><h2 id="f3">جومه</h2><ul><li><Link to="/#story">قصه‌ی ما</Link></li><li><Link to="/info/contact">تماس با ما</Link></li><li><Link to="/info/careers">همکاری</Link></li><li><Link to="/info/blog">وبلاگ</Link></li></ul></nav>
+          <li><Link to="/info/shipping">ارسال و تحویل</Link></li><li><Link to="/info/returns">بازگشت کالا</Link></li><li><Link to="/info/size-guide">راهنمای سایز</Link></li><li><Link to="/support">پرسش‌های متداول</Link></li></ul></nav>
+        <nav aria-labelledby="f3"><h2 id="f3">جومه</h2><ul><li><Link to="/#story">قصه‌ی ما</Link></li><li><Link to="/support/contact">تماس با ما</Link></li><li><Link to="/info/careers">همکاری</Link></li><li><Link to="/info/blog">وبلاگ</Link></li></ul></nav>
       </div>
       <div className="wrap"><p className="ftr__copy caption">© ۱۴۰۵ جومه — تمامی حقوق محفوظ است. <span className="ftr__sample">نسخه‌ی محلی با داده نمونه</span></p></div>
     </footer>

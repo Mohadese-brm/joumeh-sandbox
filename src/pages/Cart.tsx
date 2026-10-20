@@ -43,8 +43,8 @@ export function Cart() {
   if (cartError) return <div className="wrap cart"><h1 className="h-page cart__h">سبد خرید</h1><div className="state" role="alert"><p>بارگذاری سبد خرید انجام نشد.</p><button className="btn btn--outline" onClick={() => { setLoading(true); refreshCart().finally(() => setLoading(false)); }}>تلاش دوباره</button></div></div>;
   if (!cart || cart.items.length === 0) return (
     <div className="wrap cart"><h1 className="h-page cart__h">سبد خرید</h1>
-      <div className="state cart__empty"><Icon name="bag-1" size={48} /><p className="h-section">سبد خرید شما خالی است</p><p className="muted small">محصولات موردعلاقه‌تان را به سبد اضافه کنید.</p>
-        <div className="cart__emptyact"><Link to="/women" className="btn btn--primary">خرید زنانه</Link><Link to="/men" className="btn btn--outline">خرید مردانه</Link></div></div></div>);
+      <div className="state cart__empty" data-figma="119:383"><span className="state__ic" aria-hidden="true"><Icon name="bag-1" size={32} /></span><p className="h-section">سبد خرید شما خالی است</p>
+        <Link to="/women" className="btn btn--primary">مشاهده محصولات</Link></div></div>);
   const unavailable = cart.items.some(i => !i.available);
   return (
     <div className="wrap cart">
@@ -67,7 +67,7 @@ export function Cart() {
                 <button type="button" onClick={() => setQty(it, it.quantity - 1)} disabled={busy === it.id || it.quantity <= 1} aria-label={`کاهش تعداد ${it.name}`}><Icon name="minus" size={18} /></button>
               </div> : <span />}
               <div className="citem__total"><span className="caption muted">جمع</span><strong>{formatPrice(it.lineTotal)}</strong></div>
-              <button type="button" className="icon-btn" onClick={() => remove(it)} disabled={busy === it.id} aria-label={`حذف ${it.name} از سبد`}><Icon name="close-circle" /></button>
+              <button type="button" className="icon-btn" onClick={() => remove(it)} disabled={busy === it.id} aria-label={`حذف ${it.name} از سبد`}><Icon name="trash" /></button>
             </li>))}</ul>
           <Stub code="BD-08/BD-16">رزرو موجودی، پیام «موجودی ناکافی» و «تغییر قیمت» به تصمیم کسب‌وکار وابسته‌اند و فعال نیستند.</Stub>
         </div>

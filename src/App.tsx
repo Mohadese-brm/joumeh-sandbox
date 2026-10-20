@@ -1,4 +1,5 @@
-import { Route, Routes, useParams } from 'react-router-dom';
+import { Navigate, Route, Routes, useParams } from 'react-router-dom';
+import { SizeGuidePage } from './components/SizeGuide';
 import { Layout } from './components/Layout';
 import { Home } from './pages/Home';
 import { Shop } from './pages/Shop';
@@ -8,8 +9,8 @@ import { Checkout } from './pages/Checkout';
 import { Payment, Confirmation } from './pages/Payment';
 import { NotFound } from './pages/NotFound';
 import { Info } from './pages/Info';
-import { AccountLayout } from './pages/account/AccountLayout';
-import { Overview, Orders, OrderDetail, Returns, ReturnDetail, Addresses, Favorites, PaymentInfo, Settings, Support } from './pages/account/Pages';
+import { AccountLayout, SupportLayout } from './pages/account/AccountLayout';
+import { Overview, Orders, OrderDetail, Returns, ReturnDetail, Addresses, Favorites, PaymentInfo, Settings, SupportFaq, SupportContact } from './pages/account/Pages';
 const ConfirmRoute = () => <Confirmation id={useParams().id!} />;
 export function AppRoutes() {
   return (
@@ -28,8 +29,11 @@ export function AppRoutes() {
           <Route path="orders" element={<Orders />} /><Route path="orders/:id" element={<OrderDetail />} />
           <Route path="returns" element={<Returns />} /><Route path="returns/:id" element={<ReturnDetail />} />
           <Route path="addresses" element={<Addresses />} /><Route path="favorites" element={<Favorites />} />
-          <Route path="payment" element={<PaymentInfo />} /><Route path="support" element={<Support />} /><Route path="settings" element={<Settings />} />
+          <Route path="payment" element={<PaymentInfo />} /><Route path="support" element={<SupportFaq />} /><Route path="support/contact" element={<SupportContact />} /><Route path="settings" element={<Settings />} />
         </Route>
+        <Route path="support" element={<SupportLayout />}><Route index element={<SupportFaq />} /><Route path="contact" element={<SupportContact />} /></Route>
+        <Route path="info/size-guide" element={<SizeGuidePage />} />
+        <Route path="info/faq" element={<Navigate to="/support" replace />} /><Route path="info/contact" element={<Navigate to="/support/contact" replace />} />
         <Route path="info/:slug" element={<Info />} />
         <Route path="*" element={<NotFound />} />
       </Route>

@@ -13,7 +13,9 @@ const lastId = (db: Database) => one<{ id: number }>(db, 'SELECT last_insert_row
 const PHONE_RE = /^09\d{9}$/;
 const toLatin = (s: unknown) => String(s ?? '').replace(/[۰-۹]/g, d => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/[٠-٩]/g, d => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d))).replace(/\s+/g, '');
 
-const PRODUCT_SQL = `SELECT p.id, p.slug, p.name, p.status, p.badge_percent AS badgePercent, p.is_sample AS isSample, c.slug AS category,
+// BD-18 STUB: no product-type taxonomy exists. Sample «دسته‌بندی» = first word of the sample product name (e.g. مانتو، پیراهن، کیمونو).
+const TYPE_SQL = `replace(substr(p.name, 1, instr(p.name || ' ', ' ') - 1), '‌ی', '')`;
+const PRODUCT_SQL = `SELECT ${TYPE_SQL} AS type, p.id, p.slug, p.name, p.status, p.badge_percent AS badgePercent, p.is_sample AS isSample, c.slug AS category,
   pr.amount AS price, pr.original_amount AS originalPrice, pr.currency,
   (SELECT url FROM images i WHERE i.product_id=p.id ORDER BY position LIMIT 1) AS imageUrl,
   (SELECT alt FROM images i WHERE i.product_id=p.id ORDER BY position LIMIT 1) AS imageAlt
@@ -46,7 +48,7 @@ export function createApp(db: Database, deps: Deps = {}) {
 
   // ---------- Catalog ----------
   app.get('/api/products', (req, res) => {
-    const { category, sort = 'newest', size, color, sale } = req.query as Record<string, string>;
+    const { category, sort = 'newest', size, color, sale, type, minPrice, maxPrice } = req.query as Record<string, string>;
     const page = Math.max(1, Number(req.query.page ?? 1) | 0);
     if (!SORTS[sort]) return bad(res, 'invalid_sort');
     const where: string[] = []; const p: unknown[] = [];
@@ -54,6 +56,10 @@ export function createApp(db: Database, deps: Deps = {}) {
     if (size) { const s = size.split(',').filter(Boolean); where.push(`EXISTS (SELECT 1 FROM variants v WHERE v.product_id=p.id AND v.available=1 AND v.size IN (${s.map(() => '?').join(',')}))`); p.push(...s); }
     if (color) { const c = color.split(',').filter(Boolean); where.push(`EXISTS (SELECT 1 FROM variants v WHERE v.product_id=p.id AND v.color IN (${c.map(() => '?').join(',')}))`); p.push(...c); }
     if (sale === '1') where.push(`p.status='sale'`);
+    if (type) { const t = type.split(',').filter(Boolean); where.push(`${TYPE_SQL} IN (${t.map(() => '?').join(',')})`); p.push(...t); }
+    const minP = Number(minPrice), maxP = Number(maxPrice);
+    if (minPrice && Number.isFinite(minP)) { where.push('pr.amount >= ?'); p.push(minP); }
+    if (maxPrice && Number.isFinite(maxP)) { where.push('pr.amount <= ?'); p.push(maxP); }
     const w = where.length ? ' WHERE ' + where.join(' AND ') : '';
     const total = one<{ n: number }>(db, `SELECT COUNT(*) AS n FROM products p JOIN prices pr ON pr.product_id=p.id JOIN categories c ON c.id=p.category_id${w}`, p)!.n;
     const totalPages = Math.max(1, Math.ceil(total / config.pageSize));
@@ -64,7 +70,9 @@ export function createApp(db: Database, deps: Deps = {}) {
     const cat = String(req.query.category ?? '');
     const sizes = all<{ size: string }>(db, `SELECT DISTINCT v.size FROM variants v JOIN products p ON p.id=v.product_id JOIN categories c ON c.id=p.category_id WHERE (?='' OR c.slug=?)`, [cat, cat]).map(r => r.size);
     const colors = all(db, `SELECT DISTINCT v.color AS name, v.color_hex AS hex FROM variants v JOIN products p ON p.id=v.product_id JOIN categories c ON c.id=p.category_id WHERE (?='' OR c.slug=?) ORDER BY v.color`, [cat, cat]);
-    res.json({ data: { sizes, colors }, stubs: { taxonomy: stub('BD-18') } });
+    const types = all<{ t: string; n: number }>(db, `SELECT ${TYPE_SQL} AS t, COUNT(*) AS n FROM products p JOIN categories c ON c.id=p.category_id WHERE (?='' OR c.slug=?) GROUP BY t ORDER BY n DESC, t`, [cat, cat]).map(r => r.t);
+    const pr = one<{ lo: number; hi: number }>(db, `SELECT MIN(pr.amount) AS lo, MAX(pr.amount) AS hi FROM prices pr JOIN products p ON p.id=pr.product_id JOIN categories c ON c.id=p.category_id WHERE (?='' OR c.slug=?)`, [cat, cat])!;
+    res.json({ data: { types, sizes, colors, price: { min: pr.lo, max: pr.hi } }, stubs: { taxonomy: stub('BD-18') } });
   });
   app.get('/api/products/:slug', (req, res) => {
     const prod = one<Record<string, unknown> & { id: number; category: string }>(db, PRODUCT_SQL + ' WHERE p.slug = ?', [req.params.slug]);
@@ -129,32 +137,59 @@ export function createApp(db: Database, deps: Deps = {}) {
     res.json({ data: cartView(cid) });
   });
 
-  // ---------- Auth (phone OTP, mock SMS) ----------
+  // ---------- Auth (phone OTP, mock SMS; e-mail OTP mock = BD-21 stub) ----------
+  // Code length 6 per Figma Auth/Modal Mode=Verify 107:941 («کد ۶ رقمی») and OTP Input 53:234 (round 1).
+  const CODE_RE = new RegExp(`^\\d{${config.otpLength}}$`);
+  const issue = (res: Response, key: string, send: (code: string) => void, extra: Record<string, unknown>) => {
+    const t = now(); const since = t - config.otpWindowSeconds * 1000;
+    const n = one<{ n: number }>(db, 'SELECT COUNT(*) AS n FROM otp_requests WHERE phone=? AND created_at>?', [key, since])!.n;
+    if (n >= config.otpRequestsPerWindow) return res.status(429).json({ error: 'rate_limited' });
+    const code = String(randomInt(0, 10 ** config.otpLength)).padStart(config.otpLength, '0');
+    db.run('INSERT INTO otp_requests (phone,code_hash,expires_at,created_at) VALUES (?,?,?,?)', [key, sha(key + code), t + config.otpTtlSeconds * 1000, t]);
+    send(code);
+    res.status(201).json({ data: { ...extra, expiresIn: config.otpTtlSeconds, resendIn: config.otpTtlSeconds, codeLength: config.otpLength, ...(config.exposeDevOtp ? { devCode: code } : {}) }, stubs: { sms: stub('BD-13'), emailOtp: stub('BD-21') } });
+  };
+  const check = (res: Response, key: string, code: string): boolean => {
+    const r = one<{ id: number; code_hash: string; expires_at: number; attempts: number }>(db, 'SELECT * FROM otp_requests WHERE phone=? AND consumed=0 ORDER BY id DESC LIMIT 1', [key]);
+    if (!r) { res.status(400).json({ error: 'no_pending_code' }); return false; }
+    if (r.expires_at < now()) { res.status(410).json({ error: 'code_expired' }); return false; }
+    if (r.attempts >= config.otpMaxAttempts) { res.status(429).json({ error: 'too_many_attempts' }); return false; }
+    if (r.code_hash !== sha(key + code)) { db.run('UPDATE otp_requests SET attempts=attempts+1 WHERE id=?', [r.id]); res.status(400).json({ error: 'wrong_code' }); return false; }
+    db.run('UPDATE otp_requests SET consumed=1 WHERE id=?', [r.id]); return true;
+  };
+  const session = (res: Response, uid: number) => {
+    const token = randomBytes(24).toString('hex');
+    db.run('INSERT INTO sessions (token_hash,user_id,created_at) VALUES (?,?,?)', [sha(token), uid, now()]);
+    res.json({ data: { token, user: profile(uid) } });
+  };
   app.post('/api/auth/otp/request', (req, res) => {
     const phone = toLatin(req.body?.phone);
     if (!PHONE_RE.test(phone)) return bad(res, 'invalid_phone', { phone: 'شماره موبایل معتبر نیست' });
-    const t = now(); const since = t - config.otpWindowSeconds * 1000;
-    const n = one<{ n: number }>(db, 'SELECT COUNT(*) AS n FROM otp_requests WHERE phone=? AND created_at>?', [phone, since])!.n;
-    if (n >= config.otpRequestsPerWindow) return res.status(429).json({ error: 'rate_limited' });
-    const code = String(randomInt(0, 100000)).padStart(5, '0');
-    db.run('INSERT INTO otp_requests (phone,code_hash,expires_at,created_at) VALUES (?,?,?,?)', [phone, sha(phone + code), t + config.otpTtlSeconds * 1000, t]);
-    sms.sendOtp(phone, code);
-    res.status(201).json({ data: { phone, expiresIn: config.otpTtlSeconds, ...(config.exposeDevOtp ? { devCode: code } : {}) }, stubs: { sms: stub('BD-13'), emailOtp: stub('BD-21') } });
+    issue(res, phone, code => sms.sendOtp(phone, code), { phone });
   });
   app.post('/api/auth/otp/verify', (req, res) => {
     const phone = toLatin(req.body?.phone); const code = toLatin(req.body?.code);
-    if (!PHONE_RE.test(phone) || !/^\d{5}$/.test(code)) return bad(res, 'invalid_body');
-    const r = one<{ id: number; code_hash: string; expires_at: number; attempts: number }>(db, 'SELECT * FROM otp_requests WHERE phone=? AND consumed=0 ORDER BY id DESC LIMIT 1', [phone]);
-    if (!r) return res.status(400).json({ error: 'no_pending_code' });
-    if (r.expires_at < now()) return res.status(410).json({ error: 'code_expired' });
-    if (r.attempts >= config.otpMaxAttempts) return res.status(429).json({ error: 'too_many_attempts' });
-    if (r.code_hash !== sha(phone + code)) { db.run('UPDATE otp_requests SET attempts=attempts+1 WHERE id=?', [r.id]); return res.status(400).json({ error: 'wrong_code' }); }
-    db.run('UPDATE otp_requests SET consumed=1 WHERE id=?', [r.id]);
+    if (!PHONE_RE.test(phone) || !CODE_RE.test(code)) return bad(res, 'invalid_body');
+    if (!check(res, phone, code)) return;
     let u = one<{ id: number }>(db, 'SELECT id FROM users WHERE phone=?', [phone]);
     if (!u) { db.run('INSERT INTO users (phone) VALUES (?)', [phone]); u = { id: lastId(db) }; }
-    const token = randomBytes(24).toString('hex');
-    db.run('INSERT INTO sessions (token_hash,user_id,created_at) VALUES (?,?,?)', [sha(token), u.id, now()]);
-    res.json({ data: { token, user: profile(u.id) } });
+    session(res, u.id);
+  });
+  // BD-21 STUB: e-mail OTP is undecided. Mock only: sign-in for an existing account e-mail; nothing is e-mailed (code logged locally).
+  const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,190}\.[a-z]{2,}$/i;
+  app.post('/api/auth/email/request', (req, res) => {
+    const email = String(req.body?.email ?? '').trim().toLowerCase();
+    if (!EMAIL_RE.test(email)) return bad(res, 'invalid_email', { email: 'ایمیل معتبر نیست' });
+    if (!one(db, 'SELECT id FROM users WHERE lower(email)=?', [email])) return res.status(404).json({ error: 'email_not_found' });
+    issue(res, `email:${email}`, code => console.info(`[mock e-mail BD-21] code for ${email}: ${code}`), { email });
+  });
+  app.post('/api/auth/email/verify', (req, res) => {
+    const email = String(req.body?.email ?? '').trim().toLowerCase(); const code = toLatin(req.body?.code);
+    if (!EMAIL_RE.test(email) || !CODE_RE.test(code)) return bad(res, 'invalid_body');
+    if (!check(res, `email:${email}`, code)) return;
+    const u = one<{ id: number }>(db, 'SELECT id FROM users WHERE lower(email)=?', [email]);
+    if (!u) return res.status(404).json({ error: 'email_not_found' });
+    session(res, u.id);
   });
   const profile = (id: number) => one(db, 'SELECT id, phone, first_name AS firstName, last_name AS lastName, email, email_verified AS emailVerified FROM users WHERE id=?', [id]);
   app.post('/api/auth/logout', auth, (req, res) => { db.run('DELETE FROM sessions WHERE token_hash=?', [sha((req.headers.authorization ?? '').slice(7))]); res.status(204).end(); });
@@ -249,7 +284,7 @@ export function createApp(db: Database, deps: Deps = {}) {
       VALUES (?,'pending','unpaid','unfulfilled',?,NULL,NULL,?,?,?,?)`, [req.userId!, shippingMethodId, cart.totals.subtotal, cart.totals.discount, cart.totals.payable,
       JSON.stringify({ recipient: address.recipient, phone: toLatin(address.phone), province: address.province, city: address.city, line: address.line, postalCode: toLatin(address.postalCode) })]);
     const oid = lastId(db);
-    db.run('UPDATE orders SET order_number=? WHERE id=?', [`STUB-${oid}`, oid]); // BD-11 STUB
+    db.run('UPDATE orders SET order_number=? WHERE id=?', [String(oid), oid]); // BD-11 STUB: one sample format app-wide (same as seeded ۱۰۱۲۴); final format = CEO
     for (const i of items as unknown as { productId: number; variantId: number; name: string; size: string; color: string; price: number; quantity: number }[])
       db.run('INSERT INTO order_items (order_id,product_id,variant_id,name,size,color,unit_price,quantity) VALUES (?,?,?,?,?,?,?,?)', [oid, i.productId, i.variantId, i.name, i.size, i.color, i.price, i.quantity]);
     db.run('DELETE FROM cart_items WHERE cart_id=?', [cartId]);

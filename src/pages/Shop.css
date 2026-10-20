@@ -21,3 +21,36 @@
 .pager__num[aria-current="page"] { background: var(--teal-600); color: #fff; }
 .pager button:disabled { color: var(--n-400); cursor: not-allowed; }
 .pager__gap { color: var(--n-500); }
+/* Round-1 M2 — filter sheet per Figma 69:15362 */
+.filters { gap: 24px; }
+.filters legend { font-size: 16px; margin-block-end: 12px; }
+.filters__checks { display: grid; gap: 4px; }
+.fchk { position: relative; display: flex; align-items: center; gap: 12px; min-block-size: 56px; cursor: pointer; font-size: 16px; }
+.fchk input { position: absolute; opacity: 0; inline-size: 24px; block-size: 24px; margin: 0; cursor: pointer; }
+.fchk__box { inline-size: 24px; block-size: 24px; border: 1.5px solid var(--n-500); border-radius: var(--r-4, 4px); display: grid; place-items: center; color: transparent; flex: none; }
+.fchk__box .icon { color: inherit; }
+.fchk input:checked + .fchk__box { background: var(--teal-600); border-color: var(--teal-600); color: #fff; }
+.fchk input:focus-visible + .fchk__box { outline: 3px solid var(--teal-600); outline-offset: 2px; }
+.fsizes { display: flex; flex-wrap: wrap; gap: 8px; }
+.fsize { position: relative; } .fsize input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.fsize span { display: grid; place-items: center; min-inline-size: 44px; block-size: 44px; padding-inline: 8px; border: 1px solid var(--n-500); border-radius: var(--r-12); font-weight: 700; font-size: 15px; background: #fff; }
+.fsize input:checked + span { background: var(--teal-600); border-color: var(--teal-600); color: #fff; }
+.fsize input:focus-visible + span { outline: 3px solid var(--teal-600); outline-offset: 2px; }
+.frange { position: relative; padding-block: 12px 0; }
+.frange__track { position: relative; block-size: 4px; background: var(--n-200); border-radius: 4px; margin-inline: 12px; }
+.frange__track i { position: absolute; inset-block: 0; inset-inline-start: var(--a); inset-inline-end: calc(100% - var(--b)); background: var(--teal-600); border-radius: 4px; }
+.frange input[type=range] { position: absolute; inset-inline: 0; inset-block-start: 2px; inline-size: 100%; block-size: 24px; margin: 0; background: none; pointer-events: none; -webkit-appearance: none; appearance: none; }
+.frange input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; pointer-events: auto; inline-size: 24px; block-size: 24px; border-radius: 99px; background: #fff; border: 2px solid var(--teal-600); cursor: pointer; }
+.frange input[type=range]::-moz-range-thumb { pointer-events: auto; inline-size: 20px; block-size: 20px; border-radius: 99px; background: #fff; border: 2px solid var(--teal-600); cursor: pointer; }
+.frange input[type=range]::-webkit-slider-runnable-track { background: none; }
+.frange input[type=range]:focus-visible { outline: none; } .frange input[type=range]:focus-visible::-webkit-slider-thumb { outline: 3px solid var(--teal-600); outline-offset: 2px; }
+.frange__labels { display: flex; justify-content: space-between; margin-block-start: 16px; color: var(--n-600); }
+.fswatches { display: flex; flex-wrap: wrap; gap: 4px; }
+.fswatch { position: relative; inline-size: 44px; block-size: 44px; display: grid; place-items: center; border-radius: 99px; }
+.fswatch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.fswatch span { inline-size: 32px; block-size: 32px; border-radius: 99px; border: 1px solid rgb(0 0 0 / .08); }
+.fswatch:has(input:checked) { box-shadow: inset 0 0 0 2px var(--teal-600); }
+.fswatch:has(input:focus-visible) { outline: 3px solid var(--teal-600); outline-offset: 2px; }
+.filters__act { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+.modal__box--sheet .filters__act { position: sticky; inset-block-end: -24px; background: #fff; padding-block: 12px 24px; margin-block-end: -24px; }
+@media (min-width: 768px) { .shop__panel .filters { grid-template-columns: repeat(2, 1fr); gap: 24px 48px; } .shop__panel .filters__act { grid-column: 1 / -1; justify-self: start; grid-template-columns: auto auto; } }

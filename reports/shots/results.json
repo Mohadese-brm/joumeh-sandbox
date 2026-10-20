@@ -362,6 +362,126 @@
     "horizontalOverflow": false
   },
   {
+    "page": "men-filter",
+    "viewport": "desktop 1280",
+    "path": "/men",
+    "screenshot": "shots/men-filter-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "auth-code",
+    "viewport": "desktop 1280",
+    "path": "/",
+    "screenshot": "shots/auth-code-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "size-required",
+    "viewport": "desktop 1280",
+    "path": "/women",
+    "screenshot": "shots/size-required-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "size-guide",
+    "viewport": "desktop 1280",
+    "path": "/product/women-1",
+    "screenshot": "shots/size-guide-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "size-guide-page",
+    "viewport": "desktop 1280",
+    "path": "/info/size-guide",
+    "screenshot": "shots/size-guide-page-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "faq",
+    "viewport": "desktop 1280",
+    "path": "/account/support",
+    "screenshot": "shots/faq-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "contact",
+    "viewport": "desktop 1280",
+    "path": "/account/support/contact",
+    "screenshot": "shots/contact-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "faq-guest",
+    "viewport": "desktop 1280",
+    "path": "/support",
+    "screenshot": "shots/faq-guest-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
     "page": "account-guest",
     "viewport": "desktop 1280",
     "path": "/account",
@@ -758,6 +878,126 @@
     "viewport": "mobile 375",
     "path": "/account/settings",
     "screenshot": "shots/settings-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "men-filter",
+    "viewport": "mobile 375",
+    "path": "/men",
+    "screenshot": "shots/men-filter-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "auth-code",
+    "viewport": "mobile 375",
+    "path": "/",
+    "screenshot": "shots/auth-code-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "size-required",
+    "viewport": "mobile 375",
+    "path": "/women",
+    "screenshot": "shots/size-required-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "size-guide",
+    "viewport": "mobile 375",
+    "path": "/product/women-1",
+    "screenshot": "shots/size-guide-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "size-guide-page",
+    "viewport": "mobile 375",
+    "path": "/info/size-guide",
+    "screenshot": "shots/size-guide-page-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "faq",
+    "viewport": "mobile 375",
+    "path": "/account/support",
+    "screenshot": "shots/faq-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "contact",
+    "viewport": "mobile 375",
+    "path": "/account/support/contact",
+    "screenshot": "shots/contact-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "faq-guest",
+    "viewport": "mobile 375",
+    "path": "/support",
+    "screenshot": "shots/faq-guest-mobile.png",
     "axeViolations": 0,
     "violations": [],
     "consoleErrors": [],

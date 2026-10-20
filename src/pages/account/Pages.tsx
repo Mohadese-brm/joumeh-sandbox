@@ -145,17 +145,58 @@ export function Favorites() {
   return (<>
     <div className="acc__sub"><h2>علاقه‌مندی‌ها</h2></div>
     {r.loading ? <ListSkeleton n={2} /> : r.error ? <ErrorCard onRetry={r.reload} /> : r.data!.length === 0 ? <Empty title="فهرست علاقه‌مندی‌ها خالی است" text="با زدن آیکن قلب روی محصولات، آن‌ها را اینجا ذخیره کنید." cta={['/women', 'مشاهده محصولات']} />
-      : <div className="acc__favs"><ProductGrid products={r.data!} onFavoriteToggled={() => void r.reload()} /></div>}
+      : <div className="acc__favs"><ProductGrid products={r.data!} onFavoriteToggled={() => void r.reload()} removable /></div>}
   </>);
 }
+// Round-1 M3: designed empty state, Figma 125:4203 (mobile 125:4733). Static — no card saving (BD-01).
 export function PaymentInfo() {
   return (<>
     <div className="acc__sub"><h2>اطلاعات پرداخت</h2></div>
-    <section className="card"><Stub code="BD-01">روش‌های پرداخت ذخیره‌شده به درگاه پرداخت وابسته‌اند و هنوز تعیین نشده‌اند. طراحی: Figma 125:4203.</Stub></section>
+    <section className="card pay-empty" data-figma="125:4203">
+      <span className="pay-empty__ic" aria-hidden="true"><Icon name="card-lg" size={32} /></span>
+      <h3>کارت بانکی ذخیره نشده است</h3>
+      <p className="small muted">جومه اطلاعات کارت بانکی شما را ذخیره نمی‌کند. پرداخت هر سفارش از طریق درگاه امن بانکی انجام می‌شود.</p>
+      <p className="small pay-empty__safe"><Icon name="shield-tick" size={20} /><span>پرداخت امن از طریق درگاه بانکی</span></p>
+    </section>
   </>);
 }
-export function Support() {
-  return <Placeholder title="پشتیبانی" figma="Support 246:15454 — designed, outside this build's scope"><span className="small">کانال‌ها و زمان پاسخ‌گویی: در انتظار تصمیم کسب‌وکار (BD-12).</span></Placeholder>;
+// Round-1 P6/P7 (partial): FAQ 246:15454 (m 246:17249) and Contact 246:15613 (m 246:17397). Content is sample / BD-12.
+// Ticket form, list and detail (246:15742…246:17112) are NOT built — waiting on the CEO's scope decision.
+const FAQ = [1, 2, 3, 4, 5];
+function TicketCta() {
+  return <button type="button" className="btn btn--primary" aria-disabled="true" aria-describedby="ticket-note" onClick={e => e.preventDefault()}>ثبت درخواست پشتیبانی</button>;
+}
+function TicketNote() {
+  return <p id="ticket-note" className="caption muted" style={{ margin: 0 }}>فرم درخواست پشتیبانی هنوز ساخته نشده است (در انتظار تصمیم دامنه‌ی کار).</p>;
+}
+export function SupportFaq() {
+  const [open, setOpen] = useState(1);
+  return (<>
+    <div className="acc__sub"><h2>سؤالات متداول</h2></div>
+    <p className="small muted" style={{ margin: 0 }}>پرسش‌ها و پاسخ‌ها نمونه‌اند و پس از تأیید کسب‌وکار جایگزین می‌شوند.</p>
+    <div className="faq" data-figma="246:15454">{FAQ.map(n => {
+      const on = open === n;
+      return (<div key={n} className="faq__item">
+        <h3><button type="button" className="faq__q" aria-expanded={on} aria-controls={`faq-${n}`} onClick={() => setOpen(on ? 0 : n)}>
+          <span>پرسش نمونه {faNumber(n)} (داده نمونه)</span><Icon name={on ? 'minus' : 'add'} size={20} /></button></h3>
+        <div id={`faq-${n}`} className="faq__a small muted" hidden={!on}>پاسخ نمونه — در انتظار تأیید کسب‌وکار</div>
+      </div>);
+    })}</div>
+    <section className="card faq__more">
+      <h3>پاسخ خود را پیدا نکردید؟</h3>
+      <p className="small muted">می‌توانید درخواست پشتیبانی ثبت کنید یا راه‌های تماس را ببینید.</p>
+      <div className="faq__act"><TicketCta /><Link to="contact" relative="path" className="btn btn--secondary">راه‌های تماس</Link></div><TicketNote />
+    </section>
+  </>);
+}
+const CONTACT = ['تلفن پشتیبانی', 'ایمیل پشتیبانی', 'ساعات پاسخ‌گویی', 'زمان پاسخ به درخواست'];
+export function SupportContact() {
+  return (<>
+    <div className="acc__sub"><h2>تماس با ما</h2></div>
+    <p className="small muted" style={{ margin: 0 }}>اطلاعات تماس و ساعات پاسخ‌گویی پس از تصمیم کسب‌وکار تکمیل می‌شود.</p>
+    {CONTACT.map(t => <section key={t} className="card contact-card" data-figma="246:15613"><h3>{t}</h3><p className="small muted">در انتظار تصمیم کسب‌وکار <span className="caption">(BD-12)</span></p></section>)}
+    <div className="faq__act"><TicketCta /></div><TicketNote />
+  </>);
 }
 export function Settings() {
   const { user, refreshUser } = useStore();

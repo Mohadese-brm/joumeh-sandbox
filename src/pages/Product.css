@@ -1,6 +1,6 @@
 .pdp__main { display: grid; gap: 24px; }
 .pdp__gallery { order: -1; }
-@media (min-width: 1024px) { .pdp__main { grid-template-columns: 1fr 488px; gap: 64px; align-items: start; } .pdp__gallery { order: 0; } }
+@media (min-width: 1024px) { .pdp__main { grid-template-columns: 1fr 480px; gap: 76px; align-items: start; } .pdp__gallery { order: 0; } }
 .pdp__hero { display: block; inline-size: 100%; block-size: auto; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 244px 244px 28px 28px; }
 .pdp__thumbs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-block-start: 12px; }
 .pdp__thumbs button { padding: 0; border: 2px solid transparent; border-radius: 48px 48px 8px 8px; overflow: hidden; cursor: pointer; background: none; }

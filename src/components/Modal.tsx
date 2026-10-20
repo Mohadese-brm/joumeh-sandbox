@@ -1,7 +1,7 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { Icon } from './Icon';
 /** Accessible dialog: focus trap, Esc to close, focus restore. Bottom sheet on mobile via CSS. */
-export function Modal({ title, onClose, children, labelId = 'dlg-title', sheet = false }: { title: string; onClose: () => void; children: ReactNode; labelId?: string; sheet?: boolean }) {
+export function Modal({ title, onClose, children, labelId = 'dlg-title', sheet = false, wide = false, hideTitle = false }: { title: string; onClose: () => void; children: ReactNode; labelId?: string; sheet?: boolean; wide?: boolean; hideTitle?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const prev = document.activeElement as HTMLElement | null;
@@ -17,7 +17,8 @@ export function Modal({ title, onClose, children, labelId = 'dlg-title', sheet =
   }, [onClose]);
   return (
     <div className="modal" onMouseDown={e => e.target === e.currentTarget && onClose()}>
-      <div ref={ref} className={`modal__box${sheet ? ' modal__box--sheet' : ''}`} role="dialog" aria-modal="true" aria-labelledby={labelId}>
+      <div ref={ref} className={`modal__box${sheet ? ' modal__box--sheet' : ''}${wide ? ' modal__box--wide' : ''}`} role="dialog" aria-modal="true" aria-labelledby={labelId}>
+        {sheet && <span className="modal__grip" aria-hidden="true" />}
         <div className="modal__head"><h2 id={labelId} className="modal__title">{title}</h2>
           <button type="button" className="icon-btn" onClick={onClose} aria-label="بستن"><Icon name="close" /></button></div>
         {children}

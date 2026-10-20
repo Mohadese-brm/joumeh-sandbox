@@ -48,7 +48,8 @@ export function Home() {
           <p className="muted small">جومه از دل کویر آمده است؛ از رنگ خاک، نور گرم بعدازظهر و صدای آرام دار قالی. هر پارچه را با دست و با حوصله می‌بافیم تا لباسی بسازیم که سال‌ها با تو بماند.</p>
           <Link to="/info/story" className="btn btn--secondary">بیشتر بخوانید</Link>
         </div>
-        <img className="feature__img" src="/img/editorial-weaving-loom@1x.webp" srcSet="/img/editorial-weaving-loom@1x.webp 1x, /img/editorial-weaving-loom@2x.webp 2x" alt="دار بافندگی با نخ‌های آبی و زرد" width={480} height={600} loading="lazy" />
+        {/* Round-1 M4: crop exported read-only from ArchImage/Story 69:1456 (55:282); arch radii top w/2, bottom w×0.057 */}
+        <img className="feature__img story__img" src="/img/story-arch@1x.webp" srcSet="/img/story-arch@1x.webp 1x, /img/story-arch@2x.webp 2x" alt="دار بافندگی با نخ‌های آبی و زرد" width={480} height={600} loading="lazy" />
       </div>
     </section>
   </>);

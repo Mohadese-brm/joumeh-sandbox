@@ -2,6 +2,7 @@
 export const config = {
   port: Number(process.env.PORT ?? 3001),
   otpTtlSeconds: Number(process.env.OTP_TTL_SECONDS ?? 120),        // engineering default, not a BD value
+  otpLength: 6,                                                       // Figma 107:941 «کد ۶ رقمی» / OTP Input 53:234
   otpMaxAttempts: Number(process.env.OTP_MAX_ATTEMPTS ?? 5),
   otpRequestsPerWindow: Number(process.env.OTP_REQUESTS_PER_WINDOW ?? 3),
   otpWindowSeconds: Number(process.env.OTP_WINDOW_SECONDS ?? 600),

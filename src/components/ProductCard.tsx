@@ -9,11 +9,11 @@ export type ProductCardData = {
   price: number; originalPrice?: number | null; badgePercent?: number | null;
   imageUrl: string; imageAlt: string;
 };
-type Props = { product: ProductCardData; size?: 'desktop' | 'mobile'; href?: string; onAddToCart?: (id: number) => void; onToggleFavorite?: (id: number) => void; headingLevel?: 2 | 3 | 4; favorite?: boolean; showBadge?: boolean };
+type Props = { product: ProductCardData; size?: 'desktop' | 'mobile'; href?: string; onAddToCart?: (id: number) => void; onToggleFavorite?: (id: number) => void; headingLevel?: 2 | 3 | 4; favorite?: boolean; showBadge?: boolean; children?: React.ReactNode };
 // Icons use currentColor (Figma stroke #1C1917 replaced).
 const svg = (raw: string) => raw.replace(/ id="[^"]*"/g, '').replace(/stroke="#1C1917"/gi, 'stroke="currentColor"').replace(/fill="#1C1917"/gi, 'fill="currentColor"');
 
-export function ProductCard({ product, size = 'desktop', href, onAddToCart, onToggleFavorite, headingLevel = 3, favorite = false, showBadge = true }: Props) {
+export function ProductCard({ product, size = 'desktop', href, onAddToCart, onToggleFavorite, headingLevel = 3, favorite = false, showBadge = true, children }: Props) {
   const isSale = product.status === 'sale' && product.originalPrice != null;
   const H = `h${headingLevel}` as 'h2' | 'h3' | 'h4';
   const w = size === 'desktop' ? 282 : 171, h = size === 'desktop' ? 376 : 228;
@@ -30,6 +30,7 @@ export function ProductCard({ product, size = 'desktop', href, onAddToCart, onTo
           <span className={isSale ? 'pc__now pc__now--sale' : 'pc__now'}>{isSale && <span className="sr-only">قیمت با تخفیف </span>}{formatPrice(product.price)}</span>
         </p>
       </Link>
+      {children}
       {showBadge && product.status === 'sale' && product.badgePercent != null && <span className="pc__badge">{formatBadge(product.badgePercent)}</span>}
       {product.status === 'new' && <span className="pc__badge pc__badge--new">جدید</span>}
       <button type="button" className="pc__icon pc__fav" aria-pressed={favorite} aria-label={`${product.name} در علاقه‌مندی‌ها`} onClick={() => onToggleFavorite?.(product.id)}>

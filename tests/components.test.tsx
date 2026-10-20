@@ -82,8 +82,8 @@ describe('Shop filters: select-then-Apply (R-2 decided)', () => {
   it('selections stay pending until Apply; Apply updates URL + request; reset clears', async () => {
     const calls: string[] = [];
     handler = url => {
-      if (url.startsWith('/api/products?')) { calls.push(url); return { json: { data: [sale], total: 1, totalPages: 1, page: 1 } }; }
-      if (url.startsWith('/api/filters')) return { json: { data: { sizes: ['S', 'M'], colors: [{ name: 'مشکی', hex: '#000' }] } } };
+      if (url.startsWith('/api/products?')) { if (url.includes('page=')) calls.push(url); return { json: { data: [sale], total: url.includes('size=M') ? 1 : 9, totalPages: 1, page: 1 } }; }
+      if (url.startsWith('/api/filters')) return { json: { data: { types: ['مانتو'], sizes: ['S', 'M'], colors: [{ name: 'مشکی', hex: '#000' }], price: { min: 500000, max: 3000000 } } } };
       return { status: 404, json: { error: 'not_found' } };
     };
     rtl(<StoreProvider><Routes><Route path="/women" element={<><Shop category="women" /><Loc /></>} /></Routes></StoreProvider>, '/women');
@@ -93,11 +93,14 @@ describe('Shop filters: select-then-Apply (R-2 decided)', () => {
     const before = calls.length;
     await new Promise(r => setTimeout(r, 50));
     expect(calls.length).toBe(before); expect(screen.getByTestId('loc').textContent).toBe('/women'); // pending, not applied
-    fireEvent.click(screen.getByRole('button', { name: 'اعمال فیلتر' }));
+    expect(await screen.findByRole('button', { name: 'نمایش ۱ محصول' })).toBeInTheDocument(); // live pending count
+    expect(screen.getByRole('checkbox', { name: 'مانتو' })).toBeInTheDocument(); expect(screen.getByRole('slider', { name: 'حداقل قیمت' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'مشکی' })).toBeInTheDocument(); expect(screen.queryByText('فقط کالاهای حراج')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'نمایش ۱ محصول' }));
     await waitFor(() => expect(screen.getByTestId('loc').textContent).toBe('/women?size=M'));
     await waitFor(() => expect(calls.at(-1)).toContain('size=M'));
     fireEvent.click(screen.getByRole('button', { name: /فیلترها/ }));
-    fireEvent.click(await screen.findByRole('button', { name: 'پاک کردن همه' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'پاک کردن' }));
     await waitFor(() => expect(screen.getByTestId('loc').textContent).toBe('/women'));
   });
   it('sort change updates URL and resets page', async () => {
@@ -113,8 +116,8 @@ describe('AuthModal (mock OTP)', () => {
   const Opener = () => { const { openAuth, user } = useStore(); useEffect(() => openAuth(), [openAuth]); return <p>{user ? `user:${user.phone}` : 'guest'}</p>; };
   it('phone → code → signed in; shows labelled mock-SMS code; e-mail tab is a BD-21 stub', async () => {
     handler = (url, init) => {
-      if (url === '/api/auth/otp/request') return { status: 201, json: { data: { phone: '09123456789', devCode: '12345' } } };
-      if (url === '/api/auth/otp/verify') return JSON.parse(String(init?.body)).code === '12345' ? { json: { data: { token: 't', user: { id: 1, phone: '09123456789' } } } } : { status: 400, json: { error: 'wrong_code' } };
+      if (url === '/api/auth/otp/request') return { status: 201, json: { data: { phone: '09123456789', devCode: '123456' } } };
+      if (url === '/api/auth/otp/verify') return JSON.parse(String(init?.body)).code === '123456' ? { json: { data: { token: 't', user: { id: 1, phone: '09123456789' } } } } : { status: 400, json: { error: 'wrong_code' } };
       if (url === '/api/favorites') return { json: { data: [] } };
       return { status: 401, json: {} };
     };
@@ -122,17 +125,26 @@ describe('AuthModal (mock OTP)', () => {
     const dlg = await screen.findByRole('dialog', { name: 'ورود' });
     expect(await axe(container)).toHaveNoViolations();
     fireEvent.click(within(dlg).getByRole('tab', { name: 'استفاده از ایمیل' })); expect(within(dlg).getByText(/BD-21/)).toBeInTheDocument();
+    fireEvent.click(within(dlg).getByRole('button', { name: 'ثبت‌نام کنید' })); expect(screen.getByRole('dialog', { name: 'ثبت‌نام' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'وارد شوید' }));
     fireEvent.click(within(dlg).getByRole('tab', { name: 'استفاده از موبایل' }));
     fireEvent.change(within(dlg).getByLabelText('شماره موبایل'), { target: { value: '09123456789' } });
     fireEvent.click(within(dlg).getByRole('button', { name: 'ادامه' }));
     expect(await screen.findByTestId('dev-otp')).toHaveTextContent('BD-13');
-    fireEvent.change(screen.getByLabelText('کد تأیید'), { target: { value: '00000' } });
-    fireEvent.click(screen.getByRole('button', { name: 'ورود' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('کد واردشده درست نیست');
-    fireEvent.change(screen.getByLabelText('کد تأیید'), { target: { value: '12345' } });
-    fireEvent.click(screen.getByRole('button', { name: 'ورود' }));
-    expect(await screen.findByText('user:09123456789')).toBeInTheDocument();
-    expect(screen.queryByRole('dialog')).toBeNull(); expect(localStorage.getItem('joumeh.token')).toBe('t');
+    expect(screen.getByRole('dialog', { name: 'کد تأیید' })).toBeInTheDocument();
+    expect(screen.getByText(/ارسال مجدد کد تا/)).toBeInTheDocument();
+    const first = screen.getByLabelText('رقم ۱ کد تأیید');
+    fireEvent.change(first, { target: { value: '000000' } }); // paste fills all 6 digits
+    expect(screen.getByLabelText('رقم ۶ کد تأیید')).toHaveValue('۰');
+    expect(await axe(container)).toHaveNoViolations();
+    fireEvent.click(screen.getByRole('button', { name: 'تأیید و ورود' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('کد وارد شده نادرست است');
+    fireEvent.change(first, { target: { value: '123456' } });
+    fireEvent.click(screen.getByRole('button', { name: 'تأیید و ورود' }));
+    expect(await screen.findByText('ورود موفق')).toBeInTheDocument();
+    expect(await screen.findByText('user:09123456789', {}, { timeout: 3000 })).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull(), { timeout: 3000 });
+    expect(localStorage.getItem('joumeh.token')).toBe('t');
   });
   it('Escape closes the dialog', async () => {
     handler = () => ({ status: 401, json: {} });

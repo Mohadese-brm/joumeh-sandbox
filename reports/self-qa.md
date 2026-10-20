@@ -76,3 +76,9 @@ Not measured: Lighthouse (not run). Screen-reader pass (not run). Contrast was c
 - [x] Tests pass: 50/50 vitest, 20/20 browser flow, 0 axe violations / 54 renders
 - [x] Secrets: none used; `.env.example` holds names only; scan clean; `.gitignore` covers `.env*`, `node_modules`, `dist`
 - [ ] Emma's design review (next) · [ ] COO verification · [ ] CEO approval for any deploy
+
+## Round 1 update (2026-10-21)
+Emma's review fixes applied; see `reports/fixes-round-1.md` for the item→evidence map.
+Re-run: tsc clean, build OK, vitest 56/56, axe 0 violations across 70 renders (35 pages/states × 1280 + 375), browser flow 24/24.
+Superseded deviations: account icons (M1, now exported), filter UI (M2, now designed), payment-info (M3), OTP step (P3), size guide (P8), card quick-add toast (P9), FAQ/Contact placeholders (P6).
+Remaining: payment, confirmation, carousel controls, info pages (shipping/returns/terms/careers/blog/story), support tickets (P7), signup-mode copy, desktop filter layout.

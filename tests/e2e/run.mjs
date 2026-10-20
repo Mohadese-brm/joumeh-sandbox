@@ -38,6 +38,14 @@ const PAGES = [
   ['returns', '/account/returns', true], ['return-detail', '/account/returns/1', true],
   ['addresses', '/account/addresses', true], ['address-add', '/account/addresses', true, false, async pg => { await pg.getByRole('button', { name: 'افزودن آدرس جدید' }).click(); await pg.getByRole('button', { name: 'ذخیره آدرس' }).click(); await pg.waitForSelector('.err'); }],
   ['favorites', '/account/favorites', true], ['payment-info', '/account/payment', true], ['settings', '/account/settings', true],
+  // Round 1 additions
+  ['men-filter', '/men', false, false, async pg => { await pg.getByRole('button', { name: /فیلترها/ }).click(); await pg.waitForSelector('.filters__act'); await pg.waitForTimeout(400); }],
+  ['auth-code', '/', false, false, async (pg, mobile) => { if (mobile) await pg.getByRole('navigation', { name: 'ناوبری پایین' }).getByRole('button', { name: 'پروفایل' }).click(); else await pg.getByRole('button', { name: 'ورود یا ثبت‌نام' }).click();
+    await pg.fill('#phone', mobile ? '09120000002' : '09120000001'); await pg.getByRole('button', { name: 'ادامه' }).click(); await pg.waitForSelector('.otp'); }],
+  ['size-required', '/women', false, false, async pg => { await pg.locator('.pc__cart').first().click(); await pg.waitForSelector('#pdp-err'); }],
+  ['size-guide', '/product/women-1', false, false, async pg => { await pg.getByRole('button', { name: 'راهنمای سایز' }).click(); await pg.waitForSelector('.sg'); await pg.waitForTimeout(300); }],
+  ['size-guide-page', '/info/size-guide'],
+  ['faq', '/account/support', true], ['contact', '/account/support/contact', true], ['faq-guest', '/support'],
   ['account-guest', '/account'], ['not-found', '/no-such-page'], ['info', '/info/shipping'],
 ];
 const browser = await chromium.launch();

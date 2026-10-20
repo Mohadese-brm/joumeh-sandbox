@@ -19,4 +19,4 @@
 .summary__total { border-block-start: 1px solid var(--n-200); padding-block-start: 12px; font-size: 16px !important; }
 .summary__total dd { font-size: 18px; font-weight: 800; }
 .summary p { margin: 0; }
-.cart__empty { padding-block: 64px; } .cart__empty p { margin: 0; } .cart__emptyact { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.cart__empty { padding-block: 64px; gap: 16px; } .cart__empty p { margin: 0; } .cart__emptyact { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }

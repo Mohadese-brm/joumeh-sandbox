@@ -22,6 +22,14 @@ desktop address-add    axe=0 console=1 overflow=false
 desktop favorites      axe=0 console=0 overflow=false
 desktop payment-info   axe=0 console=0 overflow=false
 desktop settings       axe=0 console=0 overflow=false
+desktop men-filter     axe=0 console=0 overflow=false
+desktop auth-code      axe=0 console=0 overflow=false
+desktop size-required  axe=0 console=0 overflow=false
+desktop size-guide     axe=0 console=0 overflow=false
+desktop size-guide-page axe=0 console=0 overflow=false
+desktop faq            axe=0 console=0 overflow=false
+desktop contact        axe=0 console=0 overflow=false
+desktop faq-guest      axe=0 console=0 overflow=false
 desktop account-guest  axe=0 console=0 overflow=false
 desktop not-found      axe=0 console=0 overflow=false
 desktop info           axe=0 console=0 overflow=false
@@ -49,8 +57,16 @@ mobile  address-add    axe=0 console=1 overflow=false
 mobile  favorites      axe=0 console=0 overflow=false
 mobile  payment-info   axe=0 console=0 overflow=false
 mobile  settings       axe=0 console=0 overflow=false
+mobile  men-filter     axe=0 console=0 overflow=false
+mobile  auth-code      axe=0 console=0 overflow=false
+mobile  size-required  axe=0 console=0 overflow=false
+mobile  size-guide     axe=0 console=0 overflow=false
+mobile  size-guide-page axe=0 console=0 overflow=false
+mobile  faq            axe=0 console=0 overflow=false
+mobile  contact        axe=0 console=0 overflow=false
+mobile  faq-guest      axe=0 console=0 overflow=false
 mobile  account-guest  axe=0 console=0 overflow=false
 mobile  not-found      axe=0 console=0 overflow=false
 mobile  info           axe=0 console=0 overflow=false
 
-54 page renders, 0 axe violations, 0 with issues
+70 page renders, 0 axe violations, 0 with issues

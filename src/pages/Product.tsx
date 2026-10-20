@@ -8,6 +8,7 @@ import { Icon } from '../components/Icon';
 import { ProductGrid } from '../components/Grid';
 import { Modal } from '../components/Modal';
 import { Stub } from '../components/Stub';
+import { SizeGuide } from '../components/SizeGuide';
 import { flags } from '../config/flags';
 import { NotFound } from './NotFound';
 import './Product.css';
@@ -22,7 +23,9 @@ export function Product() {
   const p = r.data;
   useEffect(() => { setImg(0); setSize(null); setQty(1); setErr(''); setColor(null); }, [slug]);
   useEffect(() => { if (p && !color) setColor(p.variants[0]?.color ?? null); }, [p, color]);
-  useEffect(() => { if (p && loc.hash === '#options') document.getElementById('size-group')?.querySelector<HTMLInputElement>('input:not(:disabled)')?.focus(); }, [p, loc.hash]);
+  // P9: arriving from a card's bag button shows the designed size-required state (260:62447 / m 260:63048).
+  const sizeRequired = !!(loc.state as { sizeRequired?: boolean } | null)?.sizeRequired;
+  useEffect(() => { if (p && loc.hash === '#options') { if (sizeRequired) setErr('لطفاً سایز را انتخاب کنید.'); document.getElementById('size-group')?.querySelector<HTMLInputElement>('input:not(:disabled)')?.focus(); } }, [p, loc.hash, sizeRequired]);
   const colors = useMemo(() => p ? [...new Map(p.variants.map(v => [v.color, v.colorHex])).entries()] : [], [p]);
   const sizes = useMemo(() => p ? p.variants.filter(v => v.color === color) : [], [p, color]);
   if (r.error === 404) return <NotFound />;
@@ -32,7 +35,7 @@ export function Product() {
     const v = sizes.find(s => s.size === size);
     if (!v) { setErr('لطفاً سایز را انتخاب کنید.'); document.getElementById('size-group')?.querySelector<HTMLInputElement>('input:not(:disabled)')?.focus(); return; }
     setErr(''); setBusy(true);
-    try { await addToCart(v.id, qty); toast('به سبد خرید اضافه شد', { label: 'مشاهده سبد', onClick: () => nav('/cart') }); }
+    try { await addToCart(v.id, qty); toast(`«${p.name}» به سبد اضافه شد`, { label: 'مشاهده سبد', onClick: () => nav('/cart') }); }
     catch (e) { setErr((e as ApiError).code === 'variant_unavailable' ? 'این سایز ناموجود است.' : 'افزودن به سبد انجام نشد. دوباره تلاش کنید.'); }
     finally { setBusy(false); }
   };
@@ -87,8 +90,8 @@ export function Product() {
         <div className="sec-head"><h2 id="rel-h" className="h-section">محصولات مشابه</h2><Link to={`/${p.category}`} className="more">مشاهده همه <Icon name="left-2" size={16} /></Link></div>
         <div className="pgrid--4"><ProductGrid products={p.related} /></div>
       </section>}
-      {guide && <Modal title="راهنمای سایز" onClose={() => setGuide(false)} labelId="guide-title">
-        <Stub code="BD-18">جدول سایز نهایی هنوز تأیید نشده است. طراحی: Figma 245:61044 / 245:61112.</Stub>
+      {guide && <Modal title="راهنمای سایز" onClose={() => setGuide(false)} labelId="guide-title" sheet wide>
+        <SizeGuide name={p.name} type={p.type} sizes={[...new Set(p.variants.map(v => v.size))]} />
       </Modal>}
     </div>
   );

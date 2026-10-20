@@ -84,10 +84,30 @@ describe('cart', () => {
   });
 });
 
+describe('auth — e-mail OTP mock (BD-21 stub) and filters (round 1)', () => {
+  it('e-mail sign-in works only for an existing account e-mail; 6-digit code', async () => {
+    expect((await request(app).post('/api/auth/email/request').send({ email: 'nobody@example.com' })).status).toBe(404);
+    expect((await request(app).post('/api/auth/email/request').send({ email: 'bad' })).status).toBe(400);
+    const r = await request(app).post('/api/auth/email/request').send({ email: 'Sara@example.com' });
+    expect(r.status).toBe(201); expect(r.body.data.devCode).toMatch(/^\d{6}$/); expect(r.body.stubs.emailOtp.code).toBe('BD-21');
+    const v = await request(app).post('/api/auth/email/verify').send({ email: 'sara@example.com', code: r.body.data.devCode });
+    expect(v.status).toBe(200); expect(v.body.data.user.phone).toBe('09123456789');
+  });
+  it('filters expose sample types + price bounds; type and price filters narrow results', async () => {
+    const f = (await request(app).get('/api/filters?category=women')).body;
+    expect(f.data.types).toContain('مانتو'); expect(f.data.price.min).toBeLessThan(f.data.price.max); expect(f.stubs.taxonomy.code).toBe('BD-18');
+    const all = (await request(app).get('/api/products?category=women')).body.total;
+    const t = (await request(app).get('/api/products?category=women&type=' + encodeURIComponent('مانتو'))).body;
+    expect(t.total).toBeGreaterThan(0); expect(t.total).toBeLessThan(all); expect(t.data.every((p: { type: string }) => p.type === 'مانتو')).toBe(true);
+    const pr = (await request(app).get('/api/products?category=women&minPrice=1000000&maxPrice=1500000')).body;
+    expect(pr.total).toBeGreaterThan(0); expect(pr.data.every((p: { price: number }) => p.price >= 1000000 && p.price <= 1500000)).toBe(true);
+  });
+});
+
 describe('auth (mock SMS OTP)', () => {
   it('requests and verifies, accepts Persian digits, creates session', async () => {
     const r = await request(app).post('/api/auth/otp/request').send({ phone: '۰۹۱۲۰۰۰۰۰۰۰' });
-    expect(r.status).toBe(201); expect(r.body.data.devCode).toMatch(/^\d{5}$/); expect(sms.sent).toHaveLength(1); expect(r.body.stubs.sms.code).toBe('BD-13');
+    expect(r.status).toBe(201); expect(r.body.data.devCode).toMatch(/^\d{6}$/); expect(sms.sent).toHaveLength(1); expect(r.body.stubs.sms.code).toBe('BD-13');
     const v = await request(app).post('/api/auth/otp/verify').send({ phone: '09120000000', code: r.body.data.devCode });
     expect(v.status).toBe(200); const me = await request(app).get('/api/me').set(auth(v.body.data.token)); expect(me.body.data.phone).toBe('09120000000');
   });
@@ -98,7 +118,7 @@ describe('auth (mock SMS OTP)', () => {
   it('rejects bad phone, wrong code, expired code, too many attempts, reuse', async () => {
     expect((await request(app).post('/api/auth/otp/request').send({ phone: '123' })).status).toBe(400);
     const r = await request(app).post('/api/auth/otp/request').send({ phone: '09120000000' }); const code = r.body.data.devCode as string;
-    const wrong = code === '00000' ? '11111' : '00000';
+    const wrong = code === '000000' ? '111111' : '000000';
     expect((await request(app).post('/api/auth/otp/verify').send({ phone: '09120000000', code: wrong })).body.error).toBe('wrong_code');
     for (let i = 0; i < 4; i++) await request(app).post('/api/auth/otp/verify').send({ phone: '09120000000', code: wrong });
     expect((await request(app).post('/api/auth/otp/verify').send({ phone: '09120000000', code })).status).toBe(429);
@@ -173,7 +193,7 @@ describe('checkout + mock payment', () => {
     const bad = await request(app).post('/api/orders').set(auth(token)).send({ cartId, address: {}, shippingMethodId: 'x' }); expect(bad.body.fields.shippingMethodId).toBeTruthy();
     const o = await request(app).post('/api/orders').set(auth(token)).send({ cartId, address, shippingMethodId: 'sample-post' });
     expect(o.status).toBe(201); expect(o.body.data).toMatchObject({ orderStatus: 'pending', paymentStatus: 'unpaid', fulfilmentStatus: 'unfulfilled', shippingFee: null, vatAmount: null, total: 2960000, discount: 740000 });
-    expect(o.body.data.orderNumber).toMatch(/^STUB-/); expect(o.body.stubs.orderNumber.code).toBe('BD-11');
+    expect(o.body.data.orderNumber).toMatch(/^\d{5,}$/); expect(o.body.stubs.orderNumber.code).toBe('BD-11');
     expect((await request(app).get(`/api/cart/${cartId}`)).body.data.items).toEqual([]);
     expect((await request(app).post('/api/orders').set(auth(token)).send({ cartId, address, shippingMethodId: 'sample-post' })).status).toBe(409);
     const id = o.body.data.id;
