@@ -23,3 +23,7 @@ All times Asia/Tehran.
 - Signup per Auth/Modal Mode=Signup 107:773 (title «عضویت», footer «قبلاً عضو شده‌اید؟ ورود»). E-mail signup is a BD-21 stub.
 - Demo OTP code box is dev-only (`src/config/dev.ts`) and never appears in production builds.
 - Timer ۰۲:۰۰ accepted by Emma (BD-13). Desktop filter stays interim. Sample categories stay labelled BD-18.
+
+## Round 3 (2026-10-21)
+- Mobile auth dialogs are a centred 343px card (108:6003); sheets only for filter, sort and size guide.
+- Demo OTP: explicit opt-in JOUMEH_DEMO_OTP=1, off by default, forced off on Vercel.

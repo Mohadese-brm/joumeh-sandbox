@@ -77,7 +77,9 @@ textarea.input { padding-block: 10px; min-block-size: 88px; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 .modal { position: fixed; inset: 0; z-index: 50; background: rgb(28 25 23 / .4); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); display: grid; place-items: center; padding: 16px; }
 .modal__box { background: #fff; border-radius: var(--r-24); inline-size: min(420px, 100%); padding: 24px; max-block-size: 90vh; overflow: auto; box-shadow: var(--shadow-2); }
-@media (max-width: 767px) { .modal { place-items: end stretch; padding: 0; } .modal__box { inline-size: 100%; border-end-start-radius: 0; border-end-end-radius: 0; } }
+/* Round 3 (R2-1): on mobile only sheets (filter, sort, size guide) dock to the bottom; dialogs (auth 107:1247/1375/1543, confirm) stay a centred 343px card (108:6003). */
+@media (max-width: 767px) { .modal { padding: 16px; } .modal__box:not(.modal__box--sheet) { inline-size: min(343px, 100%); padding: 24px 20px; }
+  .modal:has(> .modal__box--sheet) { place-items: end stretch; padding: 0; } .modal__box--sheet { inline-size: 100%; border-end-start-radius: 0; border-end-end-radius: 0; } }
 .modal__head { display: flex; justify-content: space-between; align-items: center; margin-block-end: 16px; }
 .modal__title { font-size: 22px; font-weight: 800; }
 .tabs { display: grid; grid-template-columns: 1fr 1fr; border-block-end: 1px solid var(--n-200); margin-block-end: 20px; }

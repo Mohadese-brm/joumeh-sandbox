@@ -23,6 +23,7 @@ PASS   mobile: favourite toggle then listed, then red remove link (127:468)
 PASS   mobile: card bag button → PDP size-required state (P9)
 PASS   mobile: filter Apply via «نمایش N محصول» updates URL; «پاک کردن» resets
 PASS   mobile: signup (107:773) requires names, then creates the account
+PASS   mobile: auth dialogs are a centred 343px card, filter stays a bottom sheet (R2-1, 108:6003)
 PASS   mobile: logout confirm
 
-26/26 flow steps passed
+27/27 flow steps passed

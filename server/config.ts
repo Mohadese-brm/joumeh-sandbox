@@ -6,8 +6,9 @@ export const config = {
   otpMaxAttempts: Number(process.env.OTP_MAX_ATTEMPTS ?? 5),
   otpRequestsPerWindow: Number(process.env.OTP_REQUESTS_PER_WINDOW ?? 3),
   otpWindowSeconds: Number(process.env.OTP_WINDOW_SECONDS ?? 600),
-  // Exposes the mock OTP code in the API response for local testing only. Never enable outside local dev.
-  exposeDevOtp: process.env.NODE_ENV !== 'production',
+  // Round 3 (R2-2): demo OTP is an explicit opt-in. OFF unless JOUMEH_DEMO_OTP=1 — regardless of NODE_ENV.
+  // When ON, the mock code is returned in the API response and logged locally. Never set it on a deployed environment.
+  get demoOtp() { return process.env.JOUMEH_DEMO_OTP === '1'; },
   // R-1 DECIDED by the CEO (Mohadeseh, 2026-10-21 02:12 Tehran): discount badge = 20%. Env override kept for testing only.
   r1SampleBadgePercent: process.env.R1_SAMPLE_BADGE_PERCENT === 'none' ? null : Number(process.env.R1_SAMPLE_BADGE_PERCENT ?? 20),
   pageSize: 9, // Figma/KB: 9 items per page (3×3)

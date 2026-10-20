@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "concurrently -k \"npm:api\" \"vite\"",
     "api": "tsx server/index.ts",
+    "api:demo": "JOUMEH_DEMO_OTP=1 tsx server/index.ts",
     "build": "tsc && vite build",
     "test": "vitest run",
     "schema": "node scripts/schema.mjs",

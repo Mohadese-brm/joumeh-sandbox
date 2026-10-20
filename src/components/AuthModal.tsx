@@ -79,7 +79,7 @@ export function AuthModal() {
   };
   const title = step === 'id' ? (mode === 'signup' ? 'عضویت' : 'ورود') : 'کد تأیید';
   return (
-    <Modal title={title} onClose={close} labelId="auth-title" sheet>
+    <Modal title={title} onClose={close} labelId="auth-title">
       {step === 'done' ? (
         <div className="auth__done" role="status" data-figma="107:1078"><span className="auth__doneic"><Icon name="tick" size={28} /></span><p>ورود موفق</p></div>
       ) : step === 'code' ? (

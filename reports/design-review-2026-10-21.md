@@ -164,3 +164,34 @@ Method: same as above. New build screenshots (1280/375) compared with Figma rend
 
 ### Round 1 counts
 Majors 5/5 FIXED. Minors 9 FIXED, 1 accepted interim. Placeholders: P3 PARTIAL; P4 mobile, P6, P8, P9 FIXED; P1, P2, P5 and desktop P4 interim; P7 BLOCKED. New: 1 Major (R1-2) and 3 Minors (R1-3, R1-4, R1-5), plus 1 check (story-image edge line).
+
+---
+## Round 2 verification (commit 0255de8) — 2026-10-21 03:25 Tehran
+Method: as before. New/changed shots compared with Figma renders pulled read-only (107:773, 107:851, 107:1375, 107:941, 108:6003, 245:61112, plus the round 1 renders). I also ran rg on `dist/` and read the source. Visual evidence only; no interaction testing.
+
+| # | Item | Status | Evidence |
+|---|---|---|---|
+| R1-2 | Signup | **PARTIAL** | **Desktop matches.** signup-desktop vs 107:773: «عضویت», the tabs, «نام *», «نام خانوادگی *» (placeholders «مثلاً سارا / مثلاً احمدی»), «شماره موبایل», «ادامه», «قبلاً عضو شده‌اید؟ ورود». signup-error vs 107:851: red border, icon and «شماره موبایل معتبر نیست». signup-email follows 107:812 plus a labelled BD-21 note. **Mobile does not match: R2-1.** |
+| R1-3 | OTP spacing / focus | FIXED | auth-code-desktop vs 107:941: tight 6-box row, first box shows the teal focus ring. |
+| R1-4 | Demo code box | FIXED (UI) | `rg "dev-otp\|SMS آزمایشی\|کد محلی" dist/` finds no match. The JSX was dead-code-eliminated; only the inert `{showDevOtpBox:!1}` flag object remains. Not visible in auth-code shots. **Residual risk R2-2** (below). |
+| R1-5 | Size-guide title | FIXED | size-guide-desktop: no title row, close only, as in 245:61044. Mobile sheet keeps «راهنمای سایز», which is correct: 245:61112 shows the handle, «راهنمای سایز» and a close button. |
+| M4 | Story-image edge line | FIXED | Zoomed home-desktop: clean arch edge. The texture at the top is the loom's warp threads (photo content), not a fringe. |
+
+### New findings
+- **R2-1 (Major, pattern mismatch): mobile auth is a bottom sheet, but Figma shows a centred modal.**
+  - Figma: Auth / Modal on Home / Mobile **108:6003** shows the modal as a centred card with side margins over the dimmed page, with no drag handle. The mobile variants (107:1247 login, 107:1375 signup, 107:1543 verify…) are 343-wide cards with all corners rounded.
+  - Build: signup, signup-error, signup-email, auth-modal and auth-code on mobile all render as a bottom sheet with a drag handle.
+  - This dates from round 1 (my round-1 P3 note didn't catch it).
+  - Fix: render the mobile auth/verify/signup modal as the centred card per 108:6003. Bottom sheets stay only where the design uses them (filter 69:15362, sort, size guide 245:61112).
+- **R2-2 (engineering, not design fidelity): demo code can still reach the client through the API.**
+  - The API still returns `devCode` whenever `NODE_ENV !== 'production'` (`server/config.ts:10` → `server/app.ts:150`).
+  - Nothing in `api/` or `vercel.json` sets NODE_ENV, so whether the code is exposed on a deployed preview depends on the runtime default.
+  - Recommend an explicit opt-in flag (off by default) and an API test asserting no `devCode` in production mode. Flag for Alex/QA; deploy itself needs CEO approval anyway.
+- No other regressions seen in the changed shots (home, auth-code, size-guide-desktop).
+
+### Sign-off status
+**Not yet signed off: one Major remains (R2-1, mobile auth presentation).** Everything else matches Figma on the screenshot evidence, except the interim and BLOCKED items:
+- Interim: payment (P1), confirmation (P2), carousel controls (P5), desktop filter (P4), city text field (D2), 9 sample categories (BD-18), timer ۰۲:۰۰ (BD-13).
+- BLOCKED for the CEO: BD-01/02/03/06/07/11/14/15/18/21/24 and support tickets (P7).
+
+Once R2-1 is fixed and re-shot, I expect to give design-match approval with those exceptions. R2-2 should be closed before any deploy.

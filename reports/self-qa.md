@@ -85,3 +85,6 @@ Remaining: payment, confirmation, carousel controls, info pages (shipping/return
 
 ## Round 2 update
 See reports/fixes-round-2.md. vitest 57/57, axe 0 across 76 renders, flow 26/26.
+
+## Round 3 update
+See reports/fixes-round-3.md. vitest 63/63, axe 0 across 76 renders, flow 27/27. Demo OTP is opt-in (JOUMEH_DEMO_OTP=1), forced off in the Vercel handler.

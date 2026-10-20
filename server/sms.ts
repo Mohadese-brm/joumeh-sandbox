@@ -2,8 +2,9 @@
 export interface SmsAdapter { sendOtp(phone: string, code: string): void }
 export class ConsoleSmsAdapter implements SmsAdapter {
   sent: { phone: string; at: number }[] = [];
+  constructor(private logCode = false) {} // code is logged only in explicit demo mode (JOUMEH_DEMO_OTP=1)
   sendOtp(phone: string, code: string) {
     this.sent.push({ phone, at: Date.now() });
-    if (process.env.NODE_ENV !== 'test') console.log(`[mock-sms BD-13] OTP for ${phone.slice(0, 4)}***${phone.slice(-2)}: ${code}`);
+    if (this.logCode && process.env.NODE_ENV !== 'test') console.log(`[mock-sms BD-13] OTP for ${phone.slice(0, 4)}***${phone.slice(-2)}: ${code}`);
   }
 }

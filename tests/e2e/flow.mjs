@@ -1,6 +1,9 @@
+// Requires the local API with the explicit demo-OTP opt-in: `npm run api:demo` (JOUMEH_DEMO_OTP=1).
 // End-to-end purchase flow in a real browser (local only): PDP → cart → checkout → OTP login → mock payment → confirmation.
 import { chromium } from 'playwright';
 const BASE = process.env.BASE ?? 'http://127.0.0.1:4173';
+const h = await (await fetch('http://127.0.0.1:3001/api/auth/otp/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: '09129999999' }) })).json();
+if (!h.data?.devCode) { console.error('API is not in demo-OTP mode. Start it with JOUMEH_DEMO_OTP=1 (npm run api:demo).'); process.exit(2); }
 const b = await chromium.launch(); const results = [];
 const step = async (name, fn) => { try { await fn(); results.push([name, 'PASS']); } catch (e) { results.push([name, 'FAIL ' + String(e).split('\n')[0]]); throw e; } };
 for (const [vp, width] of [['desktop', 1280], ['mobile', 375]]) {
@@ -54,6 +57,16 @@ for (const [vp, width] of [['desktop', 1280], ['mobile', 375]]) {
       if (!(await f.evaluate(e => e === document.activeElement))) throw new Error('first OTP box not focused');
       await f.fill(code); await pg.getByRole('button', { name: 'تأیید و ورود' }).click(); await pg.getByText('ورود موفق').waitFor(); await pg.getByRole('dialog').waitFor({ state: 'detached' });
       await pg.goto(BASE + '/account'); await pg.getByText('خوش آمدید، نگار').waitFor(); });
+    if (vp === 'mobile') await step(`mobile: auth dialogs are a centred 343px card, filter stays a bottom sheet (R2-1, 108:6003)`, async () => {
+      const tok = await pg.evaluate(() => { const t = localStorage.getItem('joumeh.token'); localStorage.removeItem('joumeh.token'); return t; });
+      await pg.goto(BASE + '/'); await pg.getByRole('navigation', { name: 'ناوبری پایین' }).getByRole('button', { name: 'پروفایل' }).click(); await pg.getByRole('dialog').waitFor();
+      for (const open of [async () => {}, async () => pg.getByRole('button', { name: 'ثبت‌نام کنید' }).click()]) {
+        await open(); const r = await pg.locator('.modal__box').boundingBox(); const vh = pg.viewportSize().height;
+        if (Math.round(r.width) !== 343 || r.x < 15 || vh - (r.y + r.height) < 15 || (await pg.locator('.modal__grip').count())) throw new Error('auth modal not a centred card: ' + JSON.stringify(r));
+      }
+      await pg.keyboard.press('Escape'); await pg.goto(BASE + '/women'); await pg.getByRole('button', { name: /فیلترها/ }).click();
+      const f = await pg.locator('.modal__box').boundingBox(); if (Math.round(f.y + f.height) < pg.viewportSize().height - 1 || Math.round(f.width) !== 375) throw new Error('filter not a bottom sheet');
+      await pg.keyboard.press('Escape'); await pg.evaluate(t => t && localStorage.setItem('joumeh.token', t), tok); });
     await step(`${vp}: logout confirm`, async () => { await pg.goto(BASE + '/account'); await pg.getByRole('button', { name: 'خروج' }).click(); await pg.getByRole('dialog').getByRole('button', { name: 'خروج' }).click(); await pg.waitForURL(BASE + '/'); });
   } catch { /* recorded */ }
   await pg.close();

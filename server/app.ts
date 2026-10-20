@@ -26,11 +26,14 @@ const SORTS: Record<string, string> = {
 };
 const CATALOG_STUBS = { stock: stub('BD-16'), reviews: stub('BD-15'), sizeChart: stub('BD-18'), shipping: stub('BD-02'), returns: stub('BD-04') };
 
-export type Deps = { sms?: SmsAdapter; payment?: PaymentProvider; now?: () => number };
+export type Deps = { sms?: SmsAdapter; payment?: PaymentProvider; now?: () => number;
+  /** Return/log the mock OTP code. Default: JOUMEH_DEMO_OTP=1 only (off everywhere else). The Vercel handler forces false. */
+  demoOtp?: boolean };
 type AuthedReq = Request & { userId?: number };
 
 export function createApp(db: Database, deps: Deps = {}) {
-  const sms = deps.sms ?? new ConsoleSmsAdapter();
+  const demoOtp = deps.demoOtp ?? config.demoOtp;
+  const sms = deps.sms ?? new ConsoleSmsAdapter(demoOtp);
   const pay = deps.payment ?? new MockProvider();
   const now = deps.now ?? (() => Date.now());
   const app = express();
@@ -147,7 +150,7 @@ export function createApp(db: Database, deps: Deps = {}) {
     const code = String(randomInt(0, 10 ** config.otpLength)).padStart(config.otpLength, '0');
     db.run('INSERT INTO otp_requests (phone,code_hash,expires_at,created_at) VALUES (?,?,?,?)', [key, sha(key + code), t + config.otpTtlSeconds * 1000, t]);
     send(code);
-    res.status(201).json({ data: { ...extra, expiresIn: config.otpTtlSeconds, resendIn: config.otpTtlSeconds, codeLength: config.otpLength, ...(config.exposeDevOtp ? { devCode: code } : {}) }, stubs: { sms: stub('BD-13'), emailOtp: stub('BD-21') } });
+    res.status(201).json({ data: { ...extra, expiresIn: config.otpTtlSeconds, resendIn: config.otpTtlSeconds, codeLength: config.otpLength, ...(demoOtp ? { devCode: code } : {}) }, stubs: { sms: stub('BD-13'), emailOtp: stub('BD-21') } });
   };
   const check = (res: Response, key: string, code: string): boolean => {
     const r = one<{ id: number; code_hash: string; expires_at: number; attempts: number }>(db, 'SELECT * FROM otp_requests WHERE phone=? AND consumed=0 ORDER BY id DESC LIMIT 1', [key]);
@@ -185,7 +188,7 @@ export function createApp(db: Database, deps: Deps = {}) {
     const email = String(req.body?.email ?? '').trim().toLowerCase();
     if (!EMAIL_RE.test(email)) return bad(res, 'invalid_email', { email: 'ایمیل معتبر نیست' });
     if (!one(db, 'SELECT id FROM users WHERE lower(email)=?', [email])) return res.status(404).json({ error: 'email_not_found' });
-    issue(res, `email:${email}`, code => console.info(`[mock e-mail BD-21] code for ${email}: ${code}`), { email });
+    issue(res, `email:${email}`, code => { if (demoOtp) console.info(`[mock e-mail BD-21] code for ${email}: ${code}`); }, { email });
   });
   app.post('/api/auth/email/verify', (req, res) => {
     const email = String(req.body?.email ?? '').trim().toLowerCase(); const code = toLatin(req.body?.code);
