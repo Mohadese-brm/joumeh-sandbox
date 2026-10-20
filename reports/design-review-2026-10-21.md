@@ -195,3 +195,35 @@ Method: as before. New/changed shots compared with Figma renders pulled read-onl
 - BLOCKED for the CEO: BD-01/02/03/06/07/11/14/15/18/21/24 and support tickets (P7).
 
 Once R2-1 is fixed and re-shot, I expect to give design-match approval with those exceptions. R2-2 should be closed before any deploy.
+
+---
+## Round 3 verification and design sign-off (commit 07db401) — 2026-10-21 03:30 Tehran
+Method: re-shot mobile screens compared with Figma 108:6003, 107:1247/1375/1543 and 107:812/107:709 (read-only renders); `rg` over source, `api/`, `vercel.json`, tests and `dist/`. Visual + static evidence; no interaction testing.
+
+| # | Item | Status | Evidence |
+|---|---|---|---|
+| R2-1 | Mobile auth = centred card | **FIXED** | auth-modal, signup, signup-error, signup-email and auth-code (mobile) are now centred cards with side margins, all corners rounded and no drag handle, over the dimmed page. This matches 108:6003 and the 343-wide variants 107:1247 / 107:1375 / 107:1543. women-filter-mobile is still a full-width bottom sheet with a handle (69:15362). The size-guide sheet (245:61112) was verified as a sheet in round 2; that shot was not retaken this round. There is no sort-sheet screenshot, so sort is unverified by image (Alex's flow step covers filter only). |
+| R2-2 | Demo OTP opt-in | **FIXED** | `server/config.ts:11` `demoOtp = process.env.JOUMEH_DEMO_OTP === '1'` (independent of NODE_ENV). `server/app.ts:35-36,153,191`: code is returned and logged only when `demoOtp` is on. `server/sms.ts:5`: logCode defaults to false. `api/index.ts:9` `createApp(db, { demoOtp: false })` forces it off on Vercel. `vercel.json` sets nothing. `.env.example` has the name only, and `package.json` has an opt-in `api:demo` script. Tests: `tests/api.test.ts:111-118` (unset, NODE_ENV=production, NODE_ENV=development, `true` rejected, `1` accepted, e-mail) and `tests/api-vercel.test.ts:12-15` (no code even with the variable set). The `dist/` bundle has no «dev-otp», «SMS آزمایشی» or «کد محلی». It does contain the field name `devCode` (the client reads the optional field), which is harmless because the server never sends it by default. I did not run the test suite myself; I'm relying on Alex's reported 63/63. |
+
+**Email-tab helper copy (signup).** Figma 107:812 (Signup / Email / Default) has **no helper line**: just «نام *», «نام خانوادگی *», «ایمیل» (placeholder name@example.com), «ادامه» and «قبلاً عضو شده‌اید؟ ورود». The login email variant 107:709 has none either. So there is no signup-specific wording to give, and I won't invent any. The build's line «ورود با ایمیل آزمایشی است (BD-21)…» is a BD-21 stub note, not designed copy. Ruling: **Minor R3-1.** In signup mode, replace the login-worded sentence with the build's standard neutral stub pattern (BD-21 chip / «در انتظار تصمیم کسب‌وکار»), or hide it. Final wording depends on the BD-21 decision.
+
+### Design sign-off
+**APPROVED for design match** with the screenshot evidence (1280 / 375; not checked at 1440, no interaction testing), with one open Minor (R3-1, wording of a stub note) that doesn't block sign-off. These exceptions apply:
+
+Interim (accepted, not designed):
+- Payment step (P1) and order confirmation (P2): not designed, BD-01/03/13.
+- Hero carousel controls (P5).
+- Desktop filter panel (P4); the mobile sheet follows 69:15362.
+- City as a text field (D2, no city dataset, BD-02).
+- 9 sample filter categories (BD-18), size-guide values «—» (BD-18).
+- OTP timer starting at ۰۲:۰۰ (BD-13).
+- Email signup/login as a stub (BD-21).
+- Info pages other than FAQ/contact/size guide (BD-14/BD-04).
+
+BLOCKED for the CEO:
+- BD-01 payment provider, BD-02 shipping/fees/zones (۲ میلیون vs ۳۲۰٬۰۰۰), BD-03 delivery promise, BD-06 VAT, BD-07 guest checkout, BD-11 order number format, BD-13 SMS provider and timer, BD-14 legal/info, BD-15 reviews, BD-18 taxonomy and size charts, BD-21 e-mail OTP, BD-24 COD/pickup.
+- Support tickets in scope (P7; designs exist 246:15742–246:18775).
+- Font licence, photo rights and the shared men's photo (asset gap).
+- Confirmation in my chat of the relayed R-01/02/03 decisions (20% badge, carousel, Apply filters).
+
+This is design approval only. Any deploy, Vercel included, still needs the CEO's explicit approval.

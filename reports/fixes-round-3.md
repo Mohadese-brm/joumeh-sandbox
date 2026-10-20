@@ -18,3 +18,8 @@ Visibly changed (mobile only): `auth-modal-mobile`, `signup-mobile`, `signup-err
 
 ## Note
 - The email-tab helper line in signup mode still reads «ورود با ایمیل آزمایشی است (BD-21)…» (login wording). Signup by email remains a BD-21 stub.
+
+## R3-1 (Minor, after Emma's sign-off) — FIXED
+- In signup mode the email-tab helper line is removed entirely (107:812 / 107:709 have none). The sign-in email tab keeps it. The BD-21 stub behaviour is unchanged (signup by email shows the labelled BD-21 note after submit).
+- Evidence: `signup-email-desktop.png`, `signup-email-mobile.png`, retaken together with auth-modal / signup / signup-error: 8 renders, axe 0, console 0. Component test asserts the line is absent in signup mode. vitest 63/63. `results.json` is from the full round-3 run.
+- Release check: `npm run build` OK. `.gitignore` excludes `node_modules`, `dist`, `coverage` and `.env*` (except `.env.example`, which lists names only). None of them are tracked. `vercel.json` (vite, dist, `/api` rewrite, sql.js wasm include) and `api/index.ts` are present; the demo OTP is forced off there. A secret-pattern scan of tracked files found nothing. Not deployed or pushed.

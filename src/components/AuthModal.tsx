@@ -111,8 +111,8 @@ export function AuthModal() {
             </>}
             {isMail
               ? <div className="field"><label htmlFor="email">ایمیل</label>
-                <input id="email" className="input" type="email" autoComplete="email" dir="ltr" placeholder="name@example.com" value={email} onChange={e => setEmail(e.target.value)} aria-invalid={!!err} aria-describedby={err ? 'auth-err' : 'mail-note'} />
-                <p id="mail-note" className="caption muted" style={{ margin: 0 }}>ورود با ایمیل آزمایشی است (BD-21) و فقط برای حساب‌هایی که ایمیل ثبت کرده‌اند کار می‌کند.</p></div>
+                <input id="email" className="input" type="email" autoComplete="email" dir="ltr" placeholder="name@example.com" value={email} onChange={e => setEmail(e.target.value)} aria-invalid={!!err} aria-describedby={err ? 'auth-err' : mode === 'login' ? 'mail-note' : undefined} />
+                {mode === 'login' && <p id="mail-note" className="caption muted" style={{ margin: 0 }}>ورود با ایمیل آزمایشی است (BD-21) و فقط برای حساب‌هایی که ایمیل ثبت کرده‌اند کار می‌کند.</p>}</div>
               : <div className="field"><label htmlFor="phone">شماره موبایل</label>
                 <input id="phone" className="input" inputMode="tel" autoComplete="tel" dir="ltr" placeholder="۰۹۱۲ ۳۴۵ ۶۷۸۹" value={phone} onChange={e => setPhone(e.target.value)} aria-invalid={!!err} aria-describedby={err ? 'auth-err' : undefined} /></div>}
             {err && <p id="auth-err" className="err auth__err" role="alert"><Icon name="danger-circle" size={20} />{err}</p>}

@@ -128,6 +128,7 @@ describe('AuthModal (mock OTP)', () => {
     fireEvent.click(within(dlg).getByRole('button', { name: 'ثبت‌نام کنید' }));
     const su = screen.getByRole('dialog', { name: 'عضویت' }); expect(within(su).getByLabelText('نام *')).toBeInTheDocument(); expect(within(su).getByLabelText('نام خانوادگی *')).toBeInTheDocument();
     expect(screen.queryByText(/حساب دارید/)).toBeNull();
+    fireEvent.click(within(su).getByRole('tab', { name: 'استفاده از ایمیل' })); expect(within(su).getByLabelText('ایمیل')).toBeInTheDocument(); expect(within(su).queryByText(/ورود با ایمیل آزمایشی/)).toBeNull(); // R3-1
     fireEvent.click(within(su).getByRole('tab', { name: 'استفاده از موبایل' }));
     fireEvent.click(within(su).getByRole('button', { name: 'ادامه' })); expect(await within(su).findByText('نام را وارد کنید')).toBeInTheDocument();
     expect(within(su).getByLabelText('نام *')).toHaveAttribute('aria-invalid', 'true');
