@@ -67,6 +67,8 @@ for (const [vp, width, height] of [['desktop', 1280, 800], ['mobile', 375, 812]]
 }
 await browser.close();
 writeFileSync(OUT + (ONLY ? 'partial-results.json' : 'results.json'), JSON.stringify(results, null, 2));
+// address-add deliberately submits an empty form: the API's 400 is logged by Chromium and is expected there.
+for (const r of results) if (r.page === 'address-add') { r.expectedConsole = r.consoleErrors.filter(e => /status of 400/.test(e)); r.consoleErrors = r.consoleErrors.filter(e => !/status of 400/.test(e)); }
 const bad = results.filter(r => r.axeViolations || r.consoleErrors.length || r.horizontalOverflow);
 console.log(`\n${results.length} page renders, ${results.reduce((s, r) => s + r.axeViolations, 0)} axe violations, ${bad.length} with issues`);
 process.exit(bad.length ? 1 : 0);

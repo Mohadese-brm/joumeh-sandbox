@@ -1,0 +1,22 @@
+PASS   desktop: size required before add
+PASS   desktop: add to cart shows toast
+PASS   desktop: cart qty + remove/undo
+PASS   desktop: checkout requires login (BD-07), OTP via modal
+PASS   desktop: checkout validation then submit
+PASS   desktop: mock payment failure then success → confirmation
+PASS   desktop: new order appears in account orders
+PASS   desktop: pagination next(<) goes to page 2, keyboard reachable
+PASS   desktop: favourite toggle then listed
+PASS   desktop: logout confirm
+PASS   mobile: size required before add
+PASS   mobile: add to cart shows toast
+PASS   mobile: cart qty + remove/undo
+PASS   mobile: checkout requires login (BD-07), OTP via modal
+PASS   mobile: checkout validation then submit
+PASS   mobile: mock payment failure then success → confirmation
+PASS   mobile: new order appears in account orders
+PASS   mobile: pagination next(<) goes to page 2, keyboard reachable
+PASS   mobile: favourite toggle then listed
+PASS   mobile: logout confirm
+
+20/20 flow steps passed
