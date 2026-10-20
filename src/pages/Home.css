@@ -24,9 +24,9 @@
 @media (min-width: 1024px) { .feature__in { grid-template-columns: 1fr 488px; gap: 80px; } .feature__text { order: 0; } .feature__img { border-radius: 244px 244px 28px 28px; } }
 .story { padding-block-end: var(--section-gap); }
 @media (min-width: 1024px) { .feature--flip .feature__in { grid-template-columns: 488px 1fr; } .feature--flip .feature__text { order: 2; } }
-/* Round-1 M4 — symmetric arch: top radius = w/2, bottom = w × 0.057 (Emma 02:16) */
-.story__img { aspect-ratio: 4 / 5; border-radius: 50% 50% 0 0 / 40% 40% 0 0; border-end-start-radius: 5.7% 4.56%; border-end-end-radius: 5.7% 4.56%; }
-@media (min-width: 1024px) { .story .feature__in { grid-template-columns: 480px 1fr; } .story__img { inline-size: 480px; border-radius: 240px 240px 27px 27px; } }
-@media (max-width: 1023px) { .story__img { border-radius: 50% 50% 0 0 / 40% 40% 0 0; border-end-start-radius: 5.7% 4.56%; border-end-end-radius: 5.7% 4.56%; } }
+/* M4 — symmetric arch: top radius = w/2, bottom = w × 0.057 (Emma 02:16). Round 2: clip on a frame, image scaled 3% so the PNG's own masked edge is cut off */
+.story__frame { display: block; overflow: hidden; inline-size: 100%; aspect-ratio: 4 / 5; border-radius: 50% 50% 5.7% 5.7% / 40% 40% 4.56% 4.56%; isolation: isolate; }
+.story__img { display: block; inline-size: 100%; block-size: 100%; object-fit: cover; transform: scale(1.03); }
+@media (min-width: 1024px) { .story .feature__in { grid-template-columns: 480px 1fr; } .story__frame { inline-size: 480px; border-radius: 240px 240px 27px 27px; } }
 /* Round-1 m6 — no cream band between story and footer (55:282) */
 main:has(.story) + .ftr { margin-block-start: 0; }

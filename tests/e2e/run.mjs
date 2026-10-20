@@ -42,6 +42,12 @@ const PAGES = [
   ['men-filter', '/men', false, false, async pg => { await pg.getByRole('button', { name: /فیلترها/ }).click(); await pg.waitForSelector('.filters__act'); await pg.waitForTimeout(400); }],
   ['auth-code', '/', false, false, async (pg, mobile) => { if (mobile) await pg.getByRole('navigation', { name: 'ناوبری پایین' }).getByRole('button', { name: 'پروفایل' }).click(); else await pg.getByRole('button', { name: 'ورود یا ثبت‌نام' }).click();
     await pg.fill('#phone', mobile ? '09120000002' : '09120000001'); await pg.getByRole('button', { name: 'ادامه' }).click(); await pg.waitForSelector('.otp'); }],
+  ['signup', '/', false, false, async (pg, mobile) => { if (mobile) await pg.getByRole('navigation', { name: 'ناوبری پایین' }).getByRole('button', { name: 'پروفایل' }).click(); else await pg.getByRole('button', { name: 'ورود یا ثبت‌نام' }).click();
+    await pg.getByRole('button', { name: 'ثبت‌نام کنید' }).click(); await pg.waitForSelector('#su-first'); }],
+  ['signup-error', '/', false, false, async (pg, mobile) => { if (mobile) await pg.getByRole('navigation', { name: 'ناوبری پایین' }).getByRole('button', { name: 'پروفایل' }).click(); else await pg.getByRole('button', { name: 'ورود یا ثبت‌نام' }).click();
+    await pg.getByRole('button', { name: 'ثبت‌نام کنید' }).click(); await pg.fill('#su-first', 'سارا'); await pg.fill('#su-last', 'احمدی'); await pg.fill('#phone', '123'); await pg.getByRole('button', { name: 'ادامه' }).click(); await pg.waitForSelector('#auth-err'); }],
+  ['signup-email', '/', false, false, async (pg, mobile) => { if (mobile) await pg.getByRole('navigation', { name: 'ناوبری پایین' }).getByRole('button', { name: 'پروفایل' }).click(); else await pg.getByRole('button', { name: 'ورود یا ثبت‌نام' }).click();
+    await pg.getByRole('button', { name: 'ثبت‌نام کنید' }).click(); await pg.getByRole('tab', { name: 'استفاده از ایمیل' }).click(); await pg.waitForSelector('#email'); }],
   ['size-required', '/women', false, false, async pg => { await pg.locator('.pc__cart').first().click(); await pg.waitForSelector('#pdp-err'); }],
   ['size-guide', '/product/women-1', false, false, async pg => { await pg.getByRole('button', { name: 'راهنمای سایز' }).click(); await pg.waitForSelector('.sg'); await pg.waitForTimeout(300); }],
   ['size-guide-page', '/info/size-guide'],

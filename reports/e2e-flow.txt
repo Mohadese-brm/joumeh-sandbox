@@ -9,6 +9,7 @@ PASS   desktop: pagination next(<) goes to page 2, keyboard reachable
 PASS   desktop: favourite toggle then listed, then red remove link (127:468)
 PASS   desktop: card bag button → PDP size-required state (P9)
 PASS   desktop: filter Apply via «نمایش N محصول» updates URL; «پاک کردن» resets
+PASS   desktop: signup (107:773) requires names, then creates the account
 PASS   desktop: logout confirm
 PASS   mobile: size required before add
 PASS   mobile: add to cart shows toast
@@ -21,6 +22,7 @@ PASS   mobile: pagination next(<) goes to page 2, keyboard reachable
 PASS   mobile: favourite toggle then listed, then red remove link (127:468)
 PASS   mobile: card bag button → PDP size-required state (P9)
 PASS   mobile: filter Apply via «نمایش N محصول» updates URL; «پاک کردن» resets
+PASS   mobile: signup (107:773) requires names, then creates the account
 PASS   mobile: logout confirm
 
-24/24 flow steps passed
+26/26 flow steps passed

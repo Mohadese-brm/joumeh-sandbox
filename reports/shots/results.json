@@ -392,6 +392,51 @@
     "horizontalOverflow": false
   },
   {
+    "page": "signup",
+    "viewport": "desktop 1280",
+    "path": "/",
+    "screenshot": "shots/signup-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "signup-error",
+    "viewport": "desktop 1280",
+    "path": "/",
+    "screenshot": "shots/signup-error-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "signup-email",
+    "viewport": "desktop 1280",
+    "path": "/",
+    "screenshot": "shots/signup-email-desktop.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
     "page": "size-required",
     "viewport": "desktop 1280",
     "path": "/women",
@@ -908,6 +953,51 @@
     "viewport": "mobile 375",
     "path": "/",
     "screenshot": "shots/auth-code-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "signup",
+    "viewport": "mobile 375",
+    "path": "/",
+    "screenshot": "shots/signup-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "signup-error",
+    "viewport": "mobile 375",
+    "path": "/",
+    "screenshot": "shots/signup-error-mobile.png",
+    "axeViolations": 0,
+    "violations": [],
+    "consoleErrors": [],
+    "langDir": [
+      "fa",
+      "rtl"
+    ],
+    "font": "Vazirmatn, system-ui, sans-serif",
+    "horizontalOverflow": false
+  },
+  {
+    "page": "signup-email",
+    "viewport": "mobile 375",
+    "path": "/",
+    "screenshot": "shots/signup-email-mobile.png",
     "axeViolations": 0,
     "violations": [],
     "consoleErrors": [],

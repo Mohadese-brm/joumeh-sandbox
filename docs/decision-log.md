@@ -18,3 +18,8 @@ All times Asia/Tehran.
 - Placeholder rulings P3, P6 (FAQ + Contact only), P8 and P9 applied. P7 Support ticket pages are NOT built (waiting on the CEO).
 - OTP code length 6 (Figma 107:941). Sale-only filter toggle removed (not in the design).
 - BD-11: one sample numeric order-number format app-wide; the final format is the CEO's call.
+
+## Round 2 (2026-10-21)
+- Signup per Auth/Modal Mode=Signup 107:773 (title «عضویت», footer «قبلاً عضو شده‌اید؟ ورود»). E-mail signup is a BD-21 stub.
+- Demo OTP code box is dev-only (`src/config/dev.ts`) and never appears in production builds.
+- Timer ۰۲:۰۰ accepted by Emma (BD-13). Desktop filter stays interim. Sample categories stay labelled BD-18.

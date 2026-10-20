@@ -24,6 +24,9 @@ desktop payment-info   axe=0 console=0 overflow=false
 desktop settings       axe=0 console=0 overflow=false
 desktop men-filter     axe=0 console=0 overflow=false
 desktop auth-code      axe=0 console=0 overflow=false
+desktop signup         axe=0 console=0 overflow=false
+desktop signup-error   axe=0 console=0 overflow=false
+desktop signup-email   axe=0 console=0 overflow=false
 desktop size-required  axe=0 console=0 overflow=false
 desktop size-guide     axe=0 console=0 overflow=false
 desktop size-guide-page axe=0 console=0 overflow=false
@@ -59,6 +62,9 @@ mobile  payment-info   axe=0 console=0 overflow=false
 mobile  settings       axe=0 console=0 overflow=false
 mobile  men-filter     axe=0 console=0 overflow=false
 mobile  auth-code      axe=0 console=0 overflow=false
+mobile  signup         axe=0 console=0 overflow=false
+mobile  signup-error   axe=0 console=0 overflow=false
+mobile  signup-email   axe=0 console=0 overflow=false
 mobile  size-required  axe=0 console=0 overflow=false
 mobile  size-guide     axe=0 console=0 overflow=false
 mobile  size-guide-page axe=0 console=0 overflow=false
@@ -69,4 +75,4 @@ mobile  account-guest  axe=0 console=0 overflow=false
 mobile  not-found      axe=0 console=0 overflow=false
 mobile  info           axe=0 console=0 overflow=false
 
-70 page renders, 0 axe violations, 0 with issues
+76 page renders, 0 axe violations, 0 with issues

@@ -15,7 +15,9 @@ for (const [vp, width] of [['desktop', 1280], ['mobile', 375]]) {
     await step(`${vp}: checkout requires login (BD-07), OTP via modal`, async () => {
       await pg.getByRole('button', { name: 'ادامه فرایند خرید' }).click(); await pg.getByRole('heading', { name: 'اطلاعات ارسال' }).waitFor();
       await pg.getByRole('button', { name: 'ورود / ثبت‌نام' }).click(); await pg.getByLabel('شماره موبایل').last().fill(phone);
-      await pg.getByRole('dialog').getByRole('button', { name: 'ادامه' }).click(); const code = (await pg.getByTestId('dev-otp').locator('bdi').textContent()).trim();
+      // Round 2: the demo-code box is dev-only (absent in this production build); read the mock code from the local API response instead.
+      const [resp] = await Promise.all([pg.waitForResponse(r => r.url().endsWith('/api/auth/otp/request')), pg.getByRole('dialog').getByRole('button', { name: 'ادامه' }).click()]);
+      const code = (await resp.json()).data.devCode; if (await pg.getByTestId('dev-otp').count()) throw new Error('dev OTP box visible in production build');
       await pg.getByLabel('رقم ۱ کد تأیید').fill(code); await pg.getByRole('dialog').getByRole('button', { name: 'تأیید و ورود' }).click(); await pg.getByText('ورود موفق').waitFor(); await pg.getByRole('dialog').waitFor({ state: 'detached' }); });
     await step(`${vp}: checkout validation then submit`, async () => {
       await pg.getByRole('button', { name: 'ادامه و پرداخت' }).click(); await pg.locator('.err').first().waitFor();
@@ -41,6 +43,17 @@ for (const [vp, width] of [['desktop', 1280], ['mobile', 375]]) {
       await pg.goto(BASE + '/women'); await pg.getByRole('button', { name: /فیلترها/ }).click(); await pg.getByRole('checkbox', { name: 'مانتو' }).check();
       const btn = pg.getByRole('button', { name: /^نمایش .* محصول$/ }); await pg.waitForFunction(() => /نمایش [۰-۹]+ محصول/.test(document.querySelector('.filters__act .btn--primary')?.textContent ?? ''));
       await btn.click(); await pg.waitForURL(/type=/); await pg.getByRole('button', { name: /فیلترها/ }).click(); await pg.getByRole('button', { name: 'پاک کردن' }).click(); await pg.waitForURL(u => !u.search.includes('type=')); });
+    await step(`${vp}: signup (107:773) requires names, then creates the account`, async () => {
+      await pg.goto(BASE + '/account'); await pg.getByRole('button', { name: 'خروج' }).first().click(); await pg.getByRole('dialog').getByRole('button', { name: 'خروج' }).click(); await pg.waitForURL(BASE + '/');
+      if (vp === 'mobile') await pg.getByRole('navigation', { name: 'ناوبری پایین' }).getByRole('button', { name: 'پروفایل' }).click(); else await pg.getByRole('button', { name: 'ورود یا ثبت‌نام' }).click();
+      await pg.getByRole('button', { name: 'ثبت‌نام کنید' }).click(); const d = pg.getByRole('dialog', { name: 'عضویت' });
+      await d.getByRole('button', { name: 'ادامه' }).click(); await d.getByText('نام را وارد کنید').waitFor();
+      await d.getByLabel('نام *').fill('نگار'); await d.getByLabel('نام خانوادگی *').fill('رضایی'); const ph = vp === 'desktop' ? '09127777771' : '09127777772'; await d.getByLabel('شماره موبایل').fill(ph);
+      const [resp] = await Promise.all([pg.waitForResponse(r => r.url().endsWith('/api/auth/otp/request')), d.getByRole('button', { name: 'ادامه' }).click()]);
+      const code = (await resp.json()).data.devCode; const f = pg.getByLabel('رقم ۱ کد تأیید');
+      if (!(await f.evaluate(e => e === document.activeElement))) throw new Error('first OTP box not focused');
+      await f.fill(code); await pg.getByRole('button', { name: 'تأیید و ورود' }).click(); await pg.getByText('ورود موفق').waitFor(); await pg.getByRole('dialog').waitFor({ state: 'detached' });
+      await pg.goto(BASE + '/account'); await pg.getByText('خوش آمدید، نگار').waitFor(); });
     await step(`${vp}: logout confirm`, async () => { await pg.goto(BASE + '/account'); await pg.getByRole('button', { name: 'خروج' }).click(); await pg.getByRole('dialog').getByRole('button', { name: 'خروج' }).click(); await pg.waitForURL(BASE + '/'); });
   } catch { /* recorded */ }
   await pg.close();

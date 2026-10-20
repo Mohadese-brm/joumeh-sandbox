@@ -172,7 +172,11 @@ export function createApp(db: Database, deps: Deps = {}) {
     if (!PHONE_RE.test(phone) || !CODE_RE.test(code)) return bad(res, 'invalid_body');
     if (!check(res, phone, code)) return;
     let u = one<{ id: number }>(db, 'SELECT id FROM users WHERE phone=?', [phone]);
-    if (!u) { db.run('INSERT INTO users (phone) VALUES (?)', [phone]); u = { id: lastId(db) }; }
+    // Signup (107:773) sends نام/نام خانوادگی; stored only for a new account or one without a name (never overwrites).
+    const nm = (v: unknown) => (typeof v === 'string' && v.trim() && v.trim().length <= 50 ? v.trim() : null);
+    const fn = nm(req.body?.firstName), ln = nm(req.body?.lastName);
+    if (!u) { db.run('INSERT INTO users (phone, first_name, last_name) VALUES (?,?,?)', [phone, fn, ln]); u = { id: lastId(db) }; }
+    else if (fn || ln) db.run('UPDATE users SET first_name=COALESCE(first_name, ?), last_name=COALESCE(last_name, ?) WHERE id=?', [fn, ln, u.id]);
     session(res, u.id);
   });
   // BD-21 STUB: e-mail OTP is undecided. Mock only: sign-in for an existing account e-mail; nothing is e-mailed (code logged locally).

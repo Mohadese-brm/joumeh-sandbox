@@ -102,3 +102,65 @@ Most FAILs clear with one fix (M1).
 5. BD-14/BD-04 info and legal page content.
 6. Whether the Support pages (246:*) are in build scope.
 7. Pending in my chat: confirmation of the R-01/02/03 decisions relayed by Alex (20% badge, carousel, Apply filters).
+
+---
+## Round 1 verification (commit 7caa267) — 2026-10-21 03:15 Tehran
+Method: same as above. New build screenshots (1280/375) compared with Figma renders pulled read-only (107:773, 107:941, 107:973, 245:61044, 246:15454, 246:15613) plus the round-0 references. Visual evidence only; no interaction testing, no 1440 check.
+
+### Majors
+| # | Status | Evidence |
+|---|---|---|
+| M1 account nav icons | FIXED | All account, FAQ and contact shots show the 9 icons with teal active state and red logout, matching 124:4322. |
+| M2 mobile filter sheet | FIXED | women/men-filter-mobile: drag handle, «دسته‌بندی» checkboxes, size chips, two-handle price slider, unlabelled swatches, «نمایش N محصول» + outline «پاک کردن»; sale toggle gone (69:15362). The category count is a separate question (Q-b). |
+| M3 payment-info empty state | FIXED | Icon circle, «کارت بانکی ذخیره نشده است», explainer, green secure line (125:4203). |
+| M4 story arch | FIXED | Symmetric arch and new crop on home-desktop. Note: a faint light line runs along the top edge of the image; check that it isn't an export edge. |
+| M5 favourites remove link | FIXED | Red «حذف از علاقه‌مندی‌ها» with trash icon under each card (127:468). |
+
+### Minors
+| # | Status | Evidence |
+|---|---|---|
+| m1 toast | FIXED | Under the header, right side, «مانتو کتان کویری» به سبد اضافه شد + «مشاهده سبد» + close (244:24767). |
+| m2 cart trash | FIXED | Trash icon on every row. |
+| m3 empty cart | FIXED | Bag in a grey circle + single «مشاهده محصولات» (119:383). |
+| m4 404 | FIXED | «۴۰۴», bag icon, designed copy and CTA (260:66609). |
+| m5 auth footer + blur | FIXED | «هنوز عضو نیستید؟ ثبت‌نام کنید» link; backdrop blurred. But the Signup screen itself does not follow the existing design. See Q-a: **new item R1-2**. |
+| m6 cream band | FIXED | The story section sits on white straight into the footer. |
+| m7 city field | ACCEPTED interim (D2), unchanged | |
+| m8 PDP gallery | FIXED (proportion, at 1280) | The gallery column is now narrower; Alex reports 480/76/644 per 57:282. I didn't measure it. |
+| m9 search cap | FIXED | 3 results; the count line shows the total matches. |
+| m10 hamburger icon | FIXED | Hicon icon in the mobile header. |
+
+### Placeholder rulings
+| # | Status | Evidence / gap |
+|---|---|---|
+| P1/P2 payment, confirmation | Interim kept (not designed) | — |
+| P3 code step | PARTIAL | Matches 107:941 for title, sent line, «ویرایش شماره», 6 boxes and «تأیید و ورود». Gaps: (1) **R1-3** the boxes are wider spaced than the design's tight row, and the first box shows no focus ring (107:941 shows it focused); (2) **R1-4** a grey «SMS آزمایشی (BD-13)… کد محلی: 591020» box isn't in the design. It's fine for the local demo, but it must sit behind a dev flag and never ship; (3) the countdown starts at ۰۲:۰۰ (see Q-c). |
+| P4 filter | Mobile FIXED. Desktop: interim accepted (inline panel, no design). |
+| P5 carousel controls | Interim kept (not designed) | Arrows + dots visible on search-desktop. |
+| P6 FAQ / contact | FIXED | Matches 246:15454 and 246:15613 (layout, accordion, help card, 4 contact cards, support nav active). Both «ثبت درخواست پشتیبانی» buttons are disabled pending P7; the design shows them enabled, which is acceptable while P7 waits. |
+| P7 tickets | Not built, BLOCKED (CEO scope) | — |
+| P8 size guide | FIXED with notes | Layout matches 245:61044: product line, subtitle, chips, table, sample note, info box, support line. Differences: **R1-5 (Minor)** an extra «راهنمای سایز» title row above the product line that isn't in the design; rows are S–XXL vs the design's sample ۱/۲/۳ (content is BD-18). |
+| P9 card cart → size required | FIXED | size-required-desktop shows the red «لطفاً سایز را انتخاب کنید.» under the sizes (260:62447); no extra toast. |
+| D3 order number | One format app-wide, final format BLOCKED (BD-11) | |
+
+### Answers to Alex
+- **Q-a Signup.** **It is designed.** Alex's note "only Mode=Login exists" is wrong. The Auth/Modal set has Mode=Signup variants:
+  - Mobile: Default 107:773, Error 107:851.
+  - Email: Default 107:812, Error 107:896.
+  - Mobile size: 107:1375, 107:1453, 107:1414, 107:1498.
+  - The design: title «عضویت» (not «ثبت‌نام»), the same mobile/email tabs, required fields «نام *», «نام خانوادگی *» and «شماره موبایل», «ادامه», and footer «قبلاً عضو شده‌اید؟ ورود».
+  - The footer copy «حساب دارید؟» does **not** exist in the design.
+  - **R1-2 (Major):** rebuild Signup from 107:773 and its variants.
+- **Q-b 9 sample categories vs 3.** Acceptable as a labelled interim (the «داده نمونه (BD-18)» chip is shown). The design's 3 (مانتو / پیراهن / کیمونو) are themselves samples, and there's no taxonomy, so neither list is authoritative. Keep the sample label. Don't invent a category taxonomy; the real list comes from BD-18. For release, the list is BLOCKED on the CEO.
+- **Q-c Countdown.** All of 107:941 (Default), 107:973 (Resend) and the other Verify variants show the timer as a static «ارسال مجدد کد تا ۰۱:۵۹». Nothing in the design states a start value or duration; 01:59 is a snapshot of a running timer. The intended start can't be derived from the design. The 120-second lifetime is an engineering/SMS-provider value (BD-13). Showing ۰۲:۰۰ and counting down is consistent with it, so it is accepted. The final duration is to be confirmed with BD-13.
+- **Q-d Desktop filter.** Confirmed again: **no desktop filter design exists.** Women Shop / Desktop 56:282 has only the sort Select v2 56:286 in its title row. The screen inventory lists only the mobile Filter sheets 69:15332 / 69:15505 (Bottom Sheet/Filter 69:15362). The Bottom Sheet set 54:650 has only Sort and Size guide types. The inline panel stays an interim.
+
+### Remaining fixes for Alex (round 2)
+1. **R1-2 Major:** Signup per Auth/Modal Mode=Signup (107:773 / 107:851 / 107:812 / 107:896; mobile 107:1375…). Title «عضویت», fields نام* / نام خانوادگی* / شماره موبایل, footer «قبلاً عضو شده‌اید؟ ورود».
+2. **R1-3 Minor:** OTP row spacing as in 107:941, and the first box focused on open.
+3. **R1-4 Minor:** hide the SMS demo code box behind a dev-only flag.
+4. **R1-5 Minor:** remove the extra «راهنمای سایز» title row in the size guide modal/sheet (245:61044 / 245:61112), unless the sheet's handle title needs it. Check 245:61112.
+5. Check the faint line at the top edge of the story image (M4).
+
+### Round 1 counts
+Majors 5/5 FIXED. Minors 9 FIXED, 1 accepted interim. Placeholders: P3 PARTIAL; P4 mobile, P6, P8, P9 FIXED; P1, P2, P5 and desktop P4 interim; P7 BLOCKED. New: 1 Major (R1-2) and 3 Minors (R1-3, R1-4, R1-5), plus 1 check (story-image edge line).

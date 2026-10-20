@@ -82,3 +82,6 @@ Emma's review fixes applied; see `reports/fixes-round-1.md` for the item→evide
 Re-run: tsc clean, build OK, vitest 56/56, axe 0 violations across 70 renders (35 pages/states × 1280 + 375), browser flow 24/24.
 Superseded deviations: account icons (M1, now exported), filter UI (M2, now designed), payment-info (M3), OTP step (P3), size guide (P8), card quick-add toast (P9), FAQ/Contact placeholders (P6).
 Remaining: payment, confirmation, carousel controls, info pages (shipping/returns/terms/careers/blog/story), support tickets (P7), signup-mode copy, desktop filter layout.
+
+## Round 2 update
+See reports/fixes-round-2.md. vitest 57/57, axe 0 across 76 renders, flow 26/26.

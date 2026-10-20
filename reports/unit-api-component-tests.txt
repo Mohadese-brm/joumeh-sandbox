@@ -1,9 +1,9 @@
 
  RUN  v2.1.9 /workspace/company/clients/CLI-002/build
 
+ ✓ tests/api-vercel.test.ts (2 tests) 313ms
+ ✓ tests/db.test.ts (5 tests) 424ms
  ✓ tests/format.test.ts (4 tests) 3ms
- ✓ tests/db.test.ts (5 tests) 354ms
- ✓ tests/api-vercel.test.ts (2 tests) 255ms
 stderr | tests/round1.test.tsx > round 1 > M3 payment-info designed empty state (125:4203), static
 ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
 ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
@@ -12,16 +12,16 @@ stderr | tests/components.test.tsx > ProductCard > sale: struck original + teal 
 ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
 ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
 
- ✓ tests/round1.test.tsx (4 tests) 300ms
+ ✓ tests/round1.test.tsx (4 tests) 288ms
 stdout | tests/api.test.ts > auth — e-mail OTP mock (BD-21 stub) and filters (round 1) > e-mail sign-in works only for an existing account e-mail; 6-digit code
-[mock e-mail BD-21] code for sara@example.com: 160058
+[mock e-mail BD-21] code for sara@example.com: 650113
 
- ✓ tests/api.test.ts (27 tests) 1527ms
- ✓ tests/components.test.tsx (14 tests) 1479ms
-   ✓ AuthModal (mock OTP) > phone → code → signed in; shows labelled mock-SMS code; e-mail tab is a BD-21 stub 1041ms
+ ✓ tests/api.test.ts (28 tests) 1604ms
+ ✓ tests/components.test.tsx (14 tests) 1515ms
+   ✓ AuthModal (mock OTP) > phone → code → signed in; shows labelled mock-SMS code; e-mail tab is a BD-21 stub 1084ms
 
  Test Files  6 passed (6)
-      Tests  56 passed (56)
-   Start at  02:59:22
-   Duration  2.63s (transform 540ms, setup 1.39s, collect 1.23s, tests 3.92s, environment 1.09s, prepare 345ms)
+      Tests  57 passed (57)
+   Start at  03:11:32
+   Duration  2.69s (transform 513ms, setup 1.37s, collect 1.26s, tests 4.15s, environment 1.16s, prepare 312ms)
 

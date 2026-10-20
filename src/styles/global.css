@@ -123,10 +123,15 @@ textarea.input { padding-block: 10px; min-block-size: 88px; }
 .otp__d { inline-size: 48px; block-size: 56px; border: 1px solid var(--n-500); border-radius: var(--r-12); text-align: center; font: inherit; font-size: 20px; font-weight: 700; background: #fff; }
 .otp__d:focus { outline: none; border: 2px solid var(--teal-700); }
 .otp__d--err { border-color: var(--red-600); }
-@media (max-width: 380px) { .otp { grid-template-columns: repeat(6, minmax(0, 44px)); gap: 6px; } .otp__d { inline-size: 100%; } }
+
 .auth__edit { margin-block-start: 8px; } .auth__err { display: flex; gap: 6px; align-items: center; margin: 0; }
 .auth__resend { text-align: center; margin: 0; }
 .auth__done { display: grid; justify-items: center; gap: 8px; padding-block: 8px 16px; } .auth__done p { margin: 0; color: var(--green-700); font-weight: 700; }
 .auth__doneic { inline-size: 48px; block-size: 48px; border-radius: 99px; border: 2px solid var(--green-700); display: grid; place-items: center; color: var(--green-700); }
 .spin { inline-size: 20px; block-size: 20px; border: 2px solid rgb(255 255 255 / .4); border-top-color: #fff; border-radius: 99px; display: inline-block; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+/* Round 2 */
+@media (min-width: 768px) { .modal__title--mobileonly { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } .modal__box:has(.modal__title--mobileonly) .modal__head { justify-content: flex-end; margin-block-end: 8px; } }
+.otp { display: flex; gap: 8px; justify-content: center; }
+.otp__d { flex: 0 1 48px; min-inline-size: 0; }
+.otp__d:focus { box-shadow: 0 0 0 3px var(--teal-200); }

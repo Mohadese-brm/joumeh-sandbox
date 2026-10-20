@@ -125,15 +125,21 @@ describe('AuthModal (mock OTP)', () => {
     const dlg = await screen.findByRole('dialog', { name: 'ورود' });
     expect(await axe(container)).toHaveNoViolations();
     fireEvent.click(within(dlg).getByRole('tab', { name: 'استفاده از ایمیل' })); expect(within(dlg).getByText(/BD-21/)).toBeInTheDocument();
-    fireEvent.click(within(dlg).getByRole('button', { name: 'ثبت‌نام کنید' })); expect(screen.getByRole('dialog', { name: 'ثبت‌نام' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'وارد شوید' }));
+    fireEvent.click(within(dlg).getByRole('button', { name: 'ثبت‌نام کنید' }));
+    const su = screen.getByRole('dialog', { name: 'عضویت' }); expect(within(su).getByLabelText('نام *')).toBeInTheDocument(); expect(within(su).getByLabelText('نام خانوادگی *')).toBeInTheDocument();
+    expect(screen.queryByText(/حساب دارید/)).toBeNull();
+    fireEvent.click(within(su).getByRole('tab', { name: 'استفاده از موبایل' }));
+    fireEvent.click(within(su).getByRole('button', { name: 'ادامه' })); expect(await within(su).findByText('نام را وارد کنید')).toBeInTheDocument();
+    expect(within(su).getByLabelText('نام *')).toHaveAttribute('aria-invalid', 'true');
+    expect(await axe(container)).toHaveNoViolations();
+    fireEvent.click(within(su).getByRole('button', { name: 'ورود' })); expect(screen.getByRole('dialog', { name: 'ورود' })).toBeInTheDocument();
     fireEvent.click(within(dlg).getByRole('tab', { name: 'استفاده از موبایل' }));
     fireEvent.change(within(dlg).getByLabelText('شماره موبایل'), { target: { value: '09123456789' } });
     fireEvent.click(within(dlg).getByRole('button', { name: 'ادامه' }));
     expect(await screen.findByTestId('dev-otp')).toHaveTextContent('BD-13');
     expect(screen.getByRole('dialog', { name: 'کد تأیید' })).toBeInTheDocument();
     expect(screen.getByText(/ارسال مجدد کد تا/)).toBeInTheDocument();
-    const first = screen.getByLabelText('رقم ۱ کد تأیید');
+    const first = screen.getByLabelText('رقم ۱ کد تأیید'); expect(document.activeElement).toBe(first); // 107:941 first box focused
     fireEvent.change(first, { target: { value: '000000' } }); // paste fills all 6 digits
     expect(screen.getByLabelText('رقم ۶ کد تأیید')).toHaveValue('۰');
     expect(await axe(container)).toHaveNoViolations();

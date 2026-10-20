@@ -48,8 +48,9 @@ export function Home() {
           <p className="muted small">جومه از دل کویر آمده است؛ از رنگ خاک، نور گرم بعدازظهر و صدای آرام دار قالی. هر پارچه را با دست و با حوصله می‌بافیم تا لباسی بسازیم که سال‌ها با تو بماند.</p>
           <Link to="/info/story" className="btn btn--secondary">بیشتر بخوانید</Link>
         </div>
-        {/* Round-1 M4: crop exported read-only from ArchImage/Story 69:1456 (55:282); arch radii top w/2, bottom w×0.057 */}
-        <img className="feature__img story__img" src="/img/story-arch@1x.webp" srcSet="/img/story-arch@1x.webp 1x, /img/story-arch@2x.webp 2x" alt="دار بافندگی با نخ‌های آبی و زرد" width={480} height={600} loading="lazy" />
+        {/* Round-1 M4: crop exported read-only from ArchImage/Story 69:1456 (55:282); arch radii top w/2, bottom w×0.057.
+            Round 2: the export carries its own anti-aliased arch mask; the image is scaled 3% inside a clipping frame so that edge never shows. */}
+        <span className="story__frame"><img className="story__img" src="/img/story-arch@1x.webp" srcSet="/img/story-arch@1x.webp 1x, /img/story-arch@2x.webp 2x" alt="دار بافندگی با نخ‌های آبی و زرد" width={480} height={600} loading="lazy" /></span>
       </div>
     </section>
   </>);

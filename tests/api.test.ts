@@ -104,6 +104,17 @@ describe('auth — e-mail OTP mock (BD-21 stub) and filters (round 1)', () => {
   });
 });
 
+describe('signup (round 2, 107:773)', () => {
+  it('new phone + names creates the account with names; existing names are never overwritten', async () => {
+    const r = await request(app).post('/api/auth/otp/request').send({ phone: '09125555555' });
+    const v = await request(app).post('/api/auth/otp/verify').send({ phone: '09125555555', code: r.body.data.devCode, firstName: ' نگار ', lastName: 'رضایی' });
+    expect(v.status).toBe(200); expect(v.body.data.user.firstName).toBe('نگار'); expect(v.body.data.user.lastName).toBe('رضایی');
+    const r2 = await request(app).post('/api/auth/otp/request').send({ phone: '09123456789' });
+    const v2 = await request(app).post('/api/auth/otp/verify').send({ phone: '09123456789', code: r2.body.data.devCode, firstName: 'دیگر', lastName: 'نام' });
+    expect(v2.body.data.user.firstName).toBe('سارا');
+  });
+});
+
 describe('auth (mock SMS OTP)', () => {
   it('requests and verifies, accepts Persian digits, creates session', async () => {
     const r = await request(app).post('/api/auth/otp/request').send({ phone: '۰۹۱۲۰۰۰۰۰۰۰' });
