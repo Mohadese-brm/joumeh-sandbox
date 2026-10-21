@@ -1,9 +1,9 @@
 import initSqlJs, { type Database } from 'sql.js';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
-import { SCHEMA } from '../db/schema';
-import { seed } from '../db/seed';
-import { config } from './config';
+import { SCHEMA } from '../db/schema.js';
+import { seed } from '../db/seed.js';
+import { config } from './config.js';
 const require = createRequire(import.meta.url);
 // Resolve the wasm next to sql.js so it works locally and in a Vercel function bundle (see vercel.json includeFiles).
 const wasmDir = dirname(require.resolve('sql.js/dist/sql-wasm.wasm'));

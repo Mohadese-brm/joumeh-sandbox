@@ -1,11 +1,11 @@
 import express, { type Request, type Response, type NextFunction } from 'express';
 import type { Database } from 'sql.js';
 import { createHash, randomBytes, randomInt } from 'node:crypto';
-import { all } from './db';
-import { config } from './config';
-import { stub, SAMPLE_SHIPPING_METHODS } from './stubs';
-import { MockProvider, type PaymentProvider } from './payment';
-import { ConsoleSmsAdapter, type SmsAdapter } from './sms';
+import { all } from './db.js';
+import { config } from './config.js';
+import { stub, SAMPLE_SHIPPING_METHODS } from './stubs.js';
+import { MockProvider, type PaymentProvider } from './payment.js';
+import { ConsoleSmsAdapter, type SmsAdapter } from './sms.js';
 
 const sha = (s: string) => createHash('sha256').update(s).digest('hex');
 const one = <T = Record<string, unknown>>(db: Database, sql: string, p: unknown[] = []) => all<T>(db, sql, p)[0];
