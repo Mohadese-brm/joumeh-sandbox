@@ -38,7 +38,8 @@ function SortDropdown({ value, onChange }: { value: string; onChange: (v: string
       <span id="sort-lbl" className="ssel__label">مرتب‌سازی</span>
       <button ref={btn} type="button" id="sort" className={`ssel__field${open ? ' is-open' : ''}`} aria-haspopup="listbox" aria-expanded={open} aria-labelledby="sort-lbl sort"
         aria-controls="sort-menu" aria-activedescendant={open ? `sort-opt-${act}` : undefined} onClick={() => setOpen(o => !o)} onKeyDown={key}>
-        <span className="ssel__value">{SORTS[cur][1]}</span><span className="ssel__chev" aria-hidden="true"><Icon name="chev-d" size={20} /></span>
+        <span className="ssel__value">{SORTS[cur][1]}</span><span className="ssel__chev" aria-hidden="true">{/* fix2b: ChevD 52:328 path (Down 2 72:8053), drawn 16×8 inside the 20px slot; stroke stays 1.5px (non-scaling). */}
+              <svg width="16" height="8" viewBox="0.35 0.35 9.13 4.13" fill="none"><path d="M9.08333 0.75L7.62724 2.21914C6.46604 3.39075 5.88544 3.97656 5.17778 4.06676C5.00439 4.08886 4.82894 4.08886 4.65556 4.06676C3.9479 3.97656 3.3673 3.39075 2.20609 2.21914L0.75 0.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" /></svg></span>
       </button>
       {open && <ul id="sort-menu" className="ssel__menu" role="listbox" aria-labelledby="sort-lbl" data-figma="268:53271">{SORTS.map(([v, l], i) => (
         <li key={v} id={`sort-opt-${i}`} role="option" aria-selected={v === value} className={`ssel__opt${i === act ? ' is-active' : ''}`}

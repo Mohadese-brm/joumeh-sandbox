@@ -21,6 +21,7 @@ describe('Reviews (fix1 item 5, 266:71080 / 266:71357)', () => {
     fireEvent.click(screen.getByLabelText('۴ از ۵')); fireEvent.change(screen.getByLabelText('متن نظر'), { target: { value: 'خوب بود' } });
     fireEvent.click(dlg.querySelector('button[type=submit]')!);
     expect(await screen.findByText('نظر شما ثبت شد', {}, { timeout: 2000 })).toBeInTheDocument();
+    expect(screen.getByText('ممنون از اینکه تجربه‌تان را با ما به اشتراک گذاشتید.')).toBeInTheDocument(); expect(document.body.textContent).not.toMatch(/بررسی/);
   });
   it('failure state offers retry', async () => {
     render(<ReviewForm onClose={() => {}} submit={async () => 'fail'} />);

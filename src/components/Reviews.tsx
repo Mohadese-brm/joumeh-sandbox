@@ -10,7 +10,7 @@ import './Reviews.css';
  *  and Review / Form 266:71357 (d: 266:71081…71195 · m: 266:71221…71331).
  *  fix2: reviews SHIP (CEO 2026-10-21). Persisted through the local in-memory API (/api/products/:slug/reviews), like favourites.
  *  DEFAULTS (changeable, not final policy — see docs/decision-log.md): signed-in users only; rating 1–5 + text 1–1000 chars required;
- *  published immediately (no moderation); multiple reviews per user allowed; average = mean rounded to 1 decimal. */
+ *  published immediately, no moderation (CEO decision 2026-10-21); multiple reviews per user allowed; average = mean rounded to 1 decimal. */
 export type Review = { id: number | string; name: string; rating: number; body: string; createdAt?: string; meta?: string };
 export type Summary = { reviews: Review[]; average: number; count: number };
 export type SectionState = { kind: 'loading' } | { kind: 'error'; onRetry: () => void } | { kind: 'ready'; reviews: Review[]; average?: number; count?: number };
@@ -47,7 +47,7 @@ export function ReviewForm({ onClose, submit = stubSubmit, demoFail = false }: {
         <div className="revf" data-figma="266:71187">
           <div className="revf__ok" role="status"><span className="revf__okic" aria-hidden="true">✓</span>
             <p className="revf__okt">نظر شما ثبت شد</p>
-            <p className="revf__oks">پس از بررسی منتشر می‌شود (نمونه — قوانین بررسی هنوز تصمیم‌گیری نشده).</p></div>
+            <p className="revf__oks">ممنون از اینکه تجربه‌تان را با ما به اشتراک گذاشتید.</p></div>
           <button type="button" className="btn btn--primary revf__full" onClick={onClose} data-autofocus>بستن</button>
         </div>
       ) : (
@@ -58,7 +58,7 @@ export function ReviewForm({ onClose, submit = stubSubmit, demoFail = false }: {
             <textarea id="revf-text" maxLength={MAX_LEN} className={`revf__ta${phase === 'invalid' && !text.trim() ? ' is-err' : ''}`} placeholder="—" value={text}
               aria-invalid={phase === 'invalid' && !text.trim() ? true : undefined} aria-describedby="revf-help revf-err"
               onChange={e => { setText(e.target.value); if (phase === 'invalid') setPhase('edit'); }} />
-            <p id="revf-help" className="revf__help">قوانین طول متن و بررسی نظر هنوز تعیین نشده است (تصمیم باز).</p>
+            <p id="revf-help" className="revf__help">قوانین طول متن هنوز تعیین نشده است (تصمیم باز).</p>
             {phase === 'invalid' && <p id="revf-err" className="revf__err" role="alert">لطفاً امتیاز و متن نظر را وارد کنید.</p>}
             {phase === 'fail' && <p id="revf-err" className="revf__fail" role="alert">ثبت نظر انجام نشد. دوباره تلاش کنید.</p>}
           </div>

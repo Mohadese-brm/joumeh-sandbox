@@ -52,3 +52,6 @@ Mohadeseh confirmed reviews ship with the default Figma design (266:71080 / 266:
 | Helper copy | Kept Figma's «قوانین طول متن و بررسی نظر هنوز تعیین نشده است (تصمیم باز).» | `Reviews.tsx` |
 | Success copy | Kept Figma's «پس از بررسی منتشر می‌شود (نمونه — …)» although no moderation runs by default; she should pick final copy | `Reviews.tsx` |
 Other fix2 decisions (CEO, relayed by Emma 17:50 Tehran): no heart on any card incl. Favorites (heart on the PDP only); filters removed; pressed heart #E7E5E2 is provisional.
+
+## fix2b — CEO DECISION (2026-10-21 ~18:02 Tehran, relayed by Emma): reviews publish immediately, no moderation
+Replaces the moderation DEFAULT above: this is now Mohadeseh's decision, not a default. Success state copy: title «نظر شما ثبت شد», body «ممنون از اینکه تجربه‌تان را با ما به اشتراک گذاشتید.». All "checked before publishing" wording removed; form helper is now «قوانین طول متن هنوز تعیین نشده است (تصمیم باز).» (length rule stays a DEFAULT). Figma 266:71187 / 266:71323 still carry the old copy (read-only).

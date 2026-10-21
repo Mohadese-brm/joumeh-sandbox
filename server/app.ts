@@ -252,7 +252,7 @@ export function createApp(db: Database, deps: Deps = {}) {
   // ---------- Favourites ----------
   const favs = (uid: number) => all(db, PRODUCT_SQL + ' JOIN favorites f ON f.product_id=p.id WHERE f.user_id=? ORDER BY f.created_at DESC, p.id', [uid]);
   // fix2 reviews — DEFAULTS (not policy; BD-15 open): signed-in only · rating integer 1–5 · text 1–1000 chars after trim ·
-  // published immediately (REVIEW_DEFAULTS.moderation = 'none') · multiple reviews per user allowed · average = mean rounded to 1 decimal.
+  // published immediately — CEO DECISION 2026-10-21: no moderation (REVIEW_DEFAULTS.moderation = 'none') · multiple reviews per user allowed · average = mean rounded to 1 decimal.
   const REVIEW_DEFAULTS = { minLen: 1, maxLen: 1000, moderation: 'none' as 'none' | 'pre' };
   const reviewSummary = (pid: number) => {
     const reviews = all<{ id: number; rating: number; body: string; createdAt: string; firstName: string | null; lastName: string | null }>(db,
