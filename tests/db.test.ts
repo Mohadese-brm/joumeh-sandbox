@@ -7,7 +7,7 @@ describe('database (sql.js, in-memory, sample seed)', () => {
   it('creates all tables', async () => {
     const db = await createDb(false);
     const t = all<{ name: string }>(db, "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").map(r => r.name);
-    expect(t).toEqual(['addresses', 'carts', 'cart_items', 'categories', 'favorites', 'images', 'order_items', 'orders', 'otp_requests', 'payments', 'prices', 'products', 'returns', 'sessions', 'users', 'variants'].sort());
+    expect(t).toEqual(['addresses', 'carts', 'cart_items', 'categories', 'favorites', 'images', 'order_items', 'orders', 'otp_requests', 'payments', 'prices', 'products', 'returns', 'reviews', 'sessions', 'users', 'variants'].sort());
   });
   it('seeds labelled sample data only; one price row per product (BD-10)', async () => {
     const db = await createDb();

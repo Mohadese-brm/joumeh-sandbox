@@ -23,9 +23,15 @@
 .search__box input::placeholder { color: #57534e; }
 .search__panel { position: absolute; inset-inline: 0; inset-block-start: 70px; /* 116:2442 top 88 in the header = field top 18 + 70 */ background: #fff; border: 1px solid #e7e5e2; border-radius: 16px; box-shadow: 0 8px 24px rgb(0 0 0 / .10); padding: 8px; }
 .search__panel ul { list-style: none; margin: 0; padding: 0; }
-.search__item { display: flex; gap: 12px; align-items: center; inline-size: 100%; border: 0; background: none; padding-block: 6px; cursor: pointer; text-align: start; border-radius: 8px; }
-.search__item img { border-radius: 18px 18px 4px 4px; object-fit: cover; }
-.search__name { display: block; font-weight: 600; font-size: 14px; } .search__price { font-size: 13px; font-weight: 600; }
+/* fix2: result rows per 116:2627 — count row (caption 12/20 secondary, padding 4/8/8), rows 64h, padding 8, gap 12, radius 12; thumb 48 (radii 24/24/8/8), name 15 Medium, price 14 Medium (sale #1C7477), original 12 line-through. */
+.search__count { margin: 0; padding: 4px 8px 8px; font-size: 12px; line-height: 20px; color: #57534e; }
+.search__item { display: flex; gap: 12px; align-items: center; inline-size: 100%; block-size: 64px; box-sizing: border-box; border: 2px solid transparent; background: none; padding: 6px; cursor: pointer; text-align: start; border-radius: 12px; font: inherit; }
+.search__item:hover, .search__item:focus-visible { background: #f4f3f1; border-color: #15595b; outline: none; }
+.search__thumb { inline-size: 48px; block-size: 48px; flex: none; object-fit: cover; border-radius: 24px 24px 8px 8px; }
+.search__text { display: flex; flex-direction: column; gap: 2px; min-inline-size: 0; }
+.search__name { font-size: 15px; font-weight: 500; line-height: 1.5; color: #1c1917; }
+.search__price { display: flex; gap: 8px; align-items: center; } .search__now { font-size: 14px; font-weight: 500; line-height: 1.5; color: #1c1917; } .search__now--sale { color: #1c7477; }
+.search__old { font-size: 12px; color: #57534e; }
 .pc__now--sale { color: var(--price-sale); }
 .ftr { background: var(--brown-800); color: #fff; margin-block-start: var(--section-gap); padding-block: 48px 88px; }
 @media (min-width: 768px) { .ftr { padding-block-end: 32px; } }
@@ -48,6 +54,7 @@
 /* fix1 item 1 mobile: Search panel 116:2553 drops below the 64px bar — top 64, full width, padding 12/16/16, white, border-bottom border/subtle. */
 @media (max-width: 767px) {
   .hdr__actions { position: static; }
-  .search { inset-inline: 0; inset-block-start: 100%; transform: none; inline-size: auto; background: #fff; padding: 12px 16px 16px; border-block-end: 1px solid #e7e5e2; }
-  .search__panel { inset-inline: 16px; inset-block-start: calc(100% - 4px); }
+  .search { inset-inline: 0; inset-block-start: 100%; transform: none; inline-size: auto; background: #fff; padding: 12px 16px 16px; border-block-end: 1px solid #e7e5e2; display: flex; flex-direction: column; gap: 8px; }
+  /* fix2: flat, full width under the field (116:2624): no border, shadow or radius; padding-block 8. */
+  .search__panel { position: static; border: 0; border-radius: 0; box-shadow: none; padding: 8px 0; background: #fff; }
 }

@@ -1,17 +1,23 @@
 import { useState } from 'react';
+import { api } from '../lib/api';
+import { useApi } from '../lib/useApi';
+import { useStore } from '../lib/store';
 import { Modal } from './Modal';
 import { faNumber } from '../lib/format';
 import './Reviews.css';
 
-/** fix1 item 5 — Review / Section 266:71080 (d: 266:70942 / 70976 / 70987 / 71001 · m: 266:71012 / 71044 / 71055 / 71069)
- *  and Review / Form 266:71357 (d: 266:71081…71195 · m: 266:71221…71331). UI ONLY.
- *  BLOCKED BD-15: whether reviews ship, who may review, moderation, length rules, average/count rounding. No review API exists,
- *  so the section shows the designed «No reviews» state (Figma sample reviews are not shipped) and submit does not persist anything. */
-export type Review = { id: string; name: string; rating: number; meta: string; body: string };
+/** Review / Section 266:71080 (d: 266:70942 / 70976 / 70987 / 71001 · m: 266:71012 / 71044 / 71055 / 71069)
+ *  and Review / Form 266:71357 (d: 266:71081…71195 · m: 266:71221…71331).
+ *  fix2: reviews SHIP (CEO 2026-10-21). Persisted through the local in-memory API (/api/products/:slug/reviews), like favourites.
+ *  DEFAULTS (changeable, not final policy — see docs/decision-log.md): signed-in users only; rating 1–5 + text 1–1000 chars required;
+ *  published immediately (no moderation); multiple reviews per user allowed; average = mean rounded to 1 decimal. */
+export type Review = { id: number | string; name: string; rating: number; body: string; createdAt?: string; meta?: string };
+export type Summary = { reviews: Review[]; average: number; count: number };
 export type SectionState = { kind: 'loading' } | { kind: 'error'; onRetry: () => void } | { kind: 'ready'; reviews: Review[]; average?: number; count?: number };
 type SubmitResult = 'ok' | 'fail';
-/** STUB (BD-15): no backend. Resolves 'ok' after a short delay so the Submitting → Success states can be seen. */
-const stubSubmit = (_r: { rating: number; text: string }) => new Promise<SubmitResult>(res => setTimeout(() => res('ok'), 600));
+export const MAX_LEN = 1000; // DEFAULT
+const fmtDate = (iso?: string) => { if (!iso) return ''; const d = new Date(iso.replace(' ', 'T') + 'Z'); return isNaN(+d) ? '' : d.toLocaleDateString('fa-IR', { year: 'numeric', month: 'long', day: 'numeric' }); };
+const stubSubmit = async (_r: { rating: number; text: string }): Promise<SubmitResult> => 'ok';
 
 const stars = (n: number) => '★'.repeat(Math.round(n)) + '☆'.repeat(5 - Math.round(n));
 
@@ -28,12 +34,12 @@ export function StarRating({ value, onChange, invalid }: { value: number; onChan
   );
 }
 
-export function ReviewForm({ onClose, submit = stubSubmit }: { onClose: () => void; submit?: typeof stubSubmit }) {
+export function ReviewForm({ onClose, submit = stubSubmit, demoFail = false }: { onClose: () => void; submit?: typeof stubSubmit; demoFail?: boolean }) {
   const [rating, setRating] = useState(0); const [text, setText] = useState('');
   const [phase, setPhase] = useState<'edit' | 'invalid' | 'sending' | 'done' | 'fail'>('edit');
   const send = async () => {
     if (!rating || !text.trim()) { setPhase('invalid'); return; }
-    setPhase('sending'); setPhase((await submit({ rating, text: text.trim() })) === 'ok' ? 'done' : 'fail');
+    setPhase('sending'); let r: SubmitResult = 'fail'; try { r = demoFail ? 'fail' : await submit({ rating, text: text.trim() }); } catch { r = 'fail'; } setPhase(r === 'ok' ? 'done' : 'fail');
   };
   return (
     <Modal title="ثبت نظر" onClose={onClose} labelId="revf-title" sheet>
@@ -49,7 +55,7 @@ export function ReviewForm({ onClose, submit = stubSubmit }: { onClose: () => vo
           <div className="revf__grp"><span className="revf__lbl" id="revf-rate">امتیاز شما</span>
             <StarRating value={rating} onChange={n => { setRating(n); if (phase === 'invalid') setPhase('edit'); }} invalid={phase === 'invalid' && !rating} /></div>
           <div className="revf__grp"><label className="revf__lbl" htmlFor="revf-text">متن نظر</label>
-            <textarea id="revf-text" className={`revf__ta${phase === 'invalid' && !text.trim() ? ' is-err' : ''}`} placeholder="—" value={text}
+            <textarea id="revf-text" maxLength={MAX_LEN} className={`revf__ta${phase === 'invalid' && !text.trim() ? ' is-err' : ''}`} placeholder="—" value={text}
               aria-invalid={phase === 'invalid' && !text.trim() ? true : undefined} aria-describedby="revf-help revf-err"
               onChange={e => { setText(e.target.value); if (phase === 'invalid') setPhase('edit'); }} />
             <p id="revf-help" className="revf__help">قوانین طول متن و بررسی نظر هنوز تعیین نشده است (تصمیم باز).</p>
@@ -67,16 +73,16 @@ export function ReviewForm({ onClose, submit = stubSubmit }: { onClose: () => vo
   );
 }
 
-export function ReviewsSection({ state = { kind: 'ready', reviews: [] } }: { state?: SectionState }) {
-  const [open, setOpen] = useState(false);
+export function ReviewsSection({ state = { kind: 'ready', reviews: [] }, onSubmit, onAdd, open: openProp, setOpen: setOpenProp }: { state?: SectionState; onSubmit?: typeof stubSubmit; onAdd?: () => void; open?: boolean; setOpen?: (b: boolean) => void }) {
+  const [openLocal, setOpenLocal] = useState(false); const open = openProp ?? openLocal; const setOpen = setOpenProp ?? setOpenLocal;
   const fig = state.kind === 'loading' ? '266:70987' : state.kind === 'error' ? '266:71001' : state.reviews.length ? '266:70942' : '266:70976';
   return (
     <section className="revs" aria-labelledby="rev-h" data-figma={fig}>
       <div className="revs__head"><h2 id="rev-h" className="revs__title">نظرات کاربران</h2>
-        <button type="button" className="btn btn--secondary revs__add" onClick={() => setOpen(true)}>ثبت نظر</button></div>
+        <button type="button" className="btn btn--secondary revs__add" onClick={() => (onAdd ? onAdd() : setOpen(true))}>ثبت نظر</button></div>
       {state.kind === 'loading' && <div className="revs__box" aria-busy="true"><span className="revs__sk" /><span className="revs__sk revs__sk--s" /><span className="sr-only">در حال بارگذاری نظرات</span></div>}
       {state.kind === 'error' && <div className="revs__box" role="alert"><p className="revs__errt">بارگذاری نظرات انجام نشد.</p><button type="button" className="revs__retry" onClick={state.onRetry}>تلاش دوباره</button></div>}
-      {state.kind === 'ready' && state.reviews.length === 0 && <div className="revs__box"><p className="revs__nt">هنوز نظری برای این محصول ثبت نشده است.</p><p className="revs__ns">اولین نفری باشید که نظر می‌دهد.</p></div>}
+      {state.kind === 'ready' && state.reviews.length === 0 && <div className="revs__box revs__box--empty" data-figma="266:70984"><p className="revs__nt">هنوز نظری برای این محصول ثبت نشده است.</p><p className="revs__ns">اولین نفری باشید که نظر می‌دهد.</p></div>}
       {state.kind === 'ready' && state.reviews.length > 0 && <>
         <div className="revs__sum"><div className="revs__avg">
           <span className="revs__score">{faNumber(state.average ?? 0).replace('.', '٫')}</span>
@@ -84,8 +90,18 @@ export function ReviewsSection({ state = { kind: 'ready', reviews: [] } }: { sta
           <span className="revs__based">از ۵ · بر اساس {faNumber(state.count ?? state.reviews.length)} نظر</span></div></div>
         <ul className="revs__list">{state.reviews.map(r => (
           <li key={r.id} className="revc"><div className="revc__top"><span className="revc__name">{r.name}</span><span className="revc__stars" aria-label={`${faNumber(r.rating)} از ۵`}>{stars(r.rating)}</span></div>
-            <p className="revc__meta">{r.meta}</p><p className="revc__body">{r.body}</p></li>))}</ul></>}
-      {open && <ReviewForm onClose={() => setOpen(false)} />}
+            <p className="revc__meta">{r.meta ?? fmtDate(r.createdAt)}</p><p className="revc__body">{r.body}</p></li>))}</ul></>}
+      {open && <ReviewForm onClose={() => setOpen(false)} submit={onSubmit} />}
     </section>
   );
+}
+
+/** Connected section for the PDP: loads + posts through the local API; logged-out «ثبت نظر» opens sign-in first (DEFAULT). */
+export function ProductReviews({ slug }: { slug: string }) {
+  const r = useApi<Summary>(`/products/${slug}/reviews`); const { user, openAuth } = useStore(); const [open, setOpen] = useState(false);
+  const state: SectionState = r.loading && !r.data ? { kind: 'loading' } : r.error ? { kind: 'error', onRetry: r.reload } : { kind: 'ready', reviews: r.data?.reviews ?? [], average: r.data?.average, count: r.data?.count };
+  const submit = async ({ rating, text }: { rating: number; text: string }): Promise<SubmitResult> => {
+    try { const res = await api<Summary>(`/products/${slug}/reviews`, { method: 'POST', body: { rating, text } }); r.setData(res.data); return 'ok'; } catch { return 'fail'; }
+  };
+  return <ReviewsSection state={state} onSubmit={submit} open={open} setOpen={setOpen} onAdd={() => (user ? setOpen(true) : openAuth(() => setOpen(true)))} />;
 }

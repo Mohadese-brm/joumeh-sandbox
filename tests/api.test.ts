@@ -235,3 +235,21 @@ describe('checkout + mock payment', () => {
   });
   it('unknown API path → 404 JSON', async () => { const r = await request(app).get('/api/nope'); expect(r.status).toBe(404); expect(r.body.error).toBe('not_found'); });
 });
+
+describe('reviews (fix2, DEFAULT rules — BD-15 open)', () => {
+  it('starts empty, requires sign-in, validates, persists and updates count + average', async () => {
+    const e = await request(app).get('/api/products/women-1/reviews'); expect(e.status).toBe(200); expect(e.body.data).toEqual({ reviews: [], count: 0, average: 0 });
+    expect((await request(app).post('/api/products/women-1/reviews').send({ rating: 5, text: 'x' })).status).toBe(401);
+    const { token } = await login();
+    const bad = await request(app).post('/api/products/women-1/reviews').set(auth(token)).send({ rating: 0, text: '  ' });
+    expect(bad.status).toBe(400); expect(bad.body.fields).toEqual({ rating: 'required', text: 'required' });
+    expect((await request(app).post('/api/products/women-1/reviews').set(auth(token)).send({ rating: 4, text: 'x'.repeat(1001) })).body.fields.text).toBe('too_long');
+    expect((await request(app).post('/api/products/women-1/reviews').set(auth(token)).send({ rating: 4, text: 'خوب' })).status).toBe(201);
+    const other = await login('09129999999');
+    const r = await request(app).post('/api/products/women-1/reviews').set(auth(other.token)).send({ rating: 5, text: 'عالی' });
+    expect(r.body.data.count).toBe(2); expect(r.body.data.average).toBe(4.5); expect(r.body.data.reviews[0].body).toBe('عالی');
+    const g = (await request(app).get('/api/products/women-1/reviews')).body.data; expect(g.count).toBe(2); expect(g.reviews.map((x: { rating: number }) => x.rating).sort()).toEqual([4, 5]);
+    expect((await request(app).get('/api/products/women-2/reviews')).body.data.count).toBe(0); // per product
+    expect((await request(app).get('/api/products/nope/reviews')).status).toBe(404);
+  });
+});

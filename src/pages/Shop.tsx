@@ -38,7 +38,7 @@ function SortDropdown({ value, onChange }: { value: string; onChange: (v: string
       <span id="sort-lbl" className="ssel__label">مرتب‌سازی</span>
       <button ref={btn} type="button" id="sort" className={`ssel__field${open ? ' is-open' : ''}`} aria-haspopup="listbox" aria-expanded={open} aria-labelledby="sort-lbl sort"
         aria-controls="sort-menu" aria-activedescendant={open ? `sort-opt-${act}` : undefined} onClick={() => setOpen(o => !o)} onKeyDown={key}>
-        <span className="ssel__value">{SORTS[cur][1]}</span><span className="ssel__chev" aria-hidden="true"><Icon name="left-2" size={20} /></span>
+        <span className="ssel__value">{SORTS[cur][1]}</span><span className="ssel__chev" aria-hidden="true"><Icon name="chev-d" size={20} /></span>
       </button>
       {open && <ul id="sort-menu" className="ssel__menu" role="listbox" aria-labelledby="sort-lbl" data-figma="268:53271">{SORTS.map(([v, l], i) => (
         <li key={v} id={`sort-opt-${i}`} role="option" aria-selected={v === value} className={`ssel__opt${i === act ? ' is-active' : ''}`}

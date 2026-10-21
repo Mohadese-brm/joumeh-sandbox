@@ -32,11 +32,11 @@ function SearchBox({ onClose }: { onClose: () => void }) {
           {err ? <p className="small">جستجو انجام نشد. <button className="link" onClick={() => setQ(q + ' ')}>تلاش دوباره</button></p>
             : res!.length === 0 ? <p className="small">نتیجه‌ای برای «{q.trim()}» پیدا نشد.</p>
             : <>
-              <p className="caption muted">{faNumber(res!.length)} نتیجه برای «{q.trim()}»</p>
-              <ul>{res!.slice(0, 3).map(p => <li key={p.id}><button type="button" className="search__item" onClick={() => { onClose(); nav(`/product/${p.slug}`); }}>
-                <img src={p.imageUrl} alt="" width={36} height={48} />
-                <span><span className="search__name">{p.name}</span>
-                  <span className="search__price">{p.originalPrice && p.status === 'sale' && <s className="caption muted">{faNumber(p.originalPrice)}</s>} <span className={p.status === 'sale' ? 'pc__now--sale' : ''}>{formatPrice(p.price)}</span></span></span>
+              <p className="search__count">{faNumber(res!.length)} نتیجه برای «{q.trim()}»</p>
+              <ul>{res!.slice(0, 3).map(p => <li key={p.id}><button type="button" className="search__item" data-figma="116:2627" onClick={() => { onClose(); nav(`/product/${p.slug}`); }}>
+                <img className="search__thumb" src={p.imageUrl} alt="" width={48} height={48} />
+                <span className="search__text"><span className="search__name">{p.name}</span>
+                  <span className="search__price"><span className={p.status === 'sale' ? 'search__now search__now--sale' : 'search__now'}>{formatPrice(p.price)}</span>{p.originalPrice && p.status === 'sale' && <s className="search__old">{faNumber(p.originalPrice)}</s>}</span></span>
               </button></li>)}</ul>
             </>}
         </div>)}
@@ -63,7 +63,9 @@ export function Header() {
         </nav>
         <Link to="/" className="hdr__logo" aria-label="جومه — صفحه‌ی اصلی">{LOGO}</Link>
         <div className="hdr__actions">
-          {search ? <SearchBox onClose={() => setSearch(false)} /> : <button type="button" className="icon-btn" onClick={() => setSearch(true)} aria-label="جستجو"><Icon name="search-1" /></button>}
+          {/* fix2: the search icon stays in the header (mobile order bag · search · logo · menu, 54:342 / 116:2607); the field opens over it on desktop and in a panel below on mobile. */}
+          <button type="button" className="icon-btn hdr__search" onClick={() => setSearch(s => !s)} aria-label="جستجو" aria-expanded={search}><Icon name="search-1" /></button>
+          {search && <SearchBox onClose={() => setSearch(false)} />}
           <Link to="/cart" className="icon-btn" aria-label={`سبد خرید، ${faNumber(count)} کالا`}><Icon name="bag-1" />{count > 0 && <span className="count-dot" aria-hidden="true">{faNumber(count)}</span>}</Link>
           <button type="button" className="icon-btn hdr__profile" onClick={account} aria-label={user ? 'حساب کاربری من' : 'ورود یا ثبت‌نام'}><Icon name="profile-1" />{user && <span className="hdr__dot" aria-hidden="true" />}</button>
         </div>

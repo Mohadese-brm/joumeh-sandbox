@@ -251,6 +251,28 @@ export function createApp(db: Database, deps: Deps = {}) {
 
   // ---------- Favourites ----------
   const favs = (uid: number) => all(db, PRODUCT_SQL + ' JOIN favorites f ON f.product_id=p.id WHERE f.user_id=? ORDER BY f.created_at DESC, p.id', [uid]);
+  // fix2 reviews — DEFAULTS (not policy; BD-15 open): signed-in only · rating integer 1–5 · text 1–1000 chars after trim ·
+  // published immediately (REVIEW_DEFAULTS.moderation = 'none') · multiple reviews per user allowed · average = mean rounded to 1 decimal.
+  const REVIEW_DEFAULTS = { minLen: 1, maxLen: 1000, moderation: 'none' as 'none' | 'pre' };
+  const reviewSummary = (pid: number) => {
+    const reviews = all<{ id: number; rating: number; body: string; createdAt: string; firstName: string | null; lastName: string | null }>(db,
+      `SELECT r.id, r.rating, r.body, r.created_at AS createdAt, u.first_name AS firstName, u.last_name AS lastName FROM reviews r JOIN users u ON u.id=r.user_id
+       WHERE r.product_id=? AND r.status='published' ORDER BY r.created_at DESC, r.id DESC`, [pid]);
+    const count = reviews.length; const average = count ? Math.round((reviews.reduce((a, r) => a + r.rating, 0) / count) * 10) / 10 : 0;
+    return { reviews: reviews.map(r => ({ id: r.id, rating: r.rating, body: r.body, createdAt: r.createdAt,
+      name: r.firstName ? `${r.firstName}${r.lastName ? ` ${r.lastName.slice(0, 1)}.` : ''}` : 'کاربر جومه' })), count, average };
+  };
+  const productId = (slug: string) => one<{ id: number }>(db, 'SELECT id FROM products WHERE slug=?', [slug])?.id;
+  app.get('/api/products/:slug/reviews', (req, res) => { const pid = productId(req.params.slug); if (!pid) return res.status(404).json({ error: 'not_found' }); res.json({ data: reviewSummary(pid), defaults: REVIEW_DEFAULTS }); });
+  app.post('/api/products/:slug/reviews', auth, (req: AuthedReq, res) => {
+    const pid = productId(req.params.slug); if (!pid) return res.status(404).json({ error: 'not_found' });
+    const rating = Number(req.body?.rating); const text = String(req.body?.text ?? '').trim(); const fields: Record<string, string> = {};
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) fields.rating = 'required';
+    if (text.length < REVIEW_DEFAULTS.minLen) fields.text = 'required'; else if (text.length > REVIEW_DEFAULTS.maxLen) fields.text = 'too_long';
+    if (Object.keys(fields).length) return bad(res, 'invalid_review', fields);
+    db.run('INSERT INTO reviews (product_id,user_id,rating,body,status) VALUES (?,?,?,?,?)', [pid, req.userId!, rating, text, REVIEW_DEFAULTS.moderation === 'none' ? 'published' : 'pending']);
+    res.status(201).json({ data: reviewSummary(pid) });
+  });
   app.get('/api/favorites', auth, (req: AuthedReq, res) => res.json({ data: favs(req.userId!) }));
   app.put('/api/favorites/:productId', auth, (req: AuthedReq, res) => {
     const pid = Number(req.params.productId); if (!one(db, 'SELECT id FROM products WHERE id=?', [pid])) return res.status(404).json({ error: 'not_found' });

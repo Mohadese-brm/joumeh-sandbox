@@ -4,16 +4,18 @@
 .revs__title { margin: 0; font-size: 24px; font-weight: 700; line-height: 36px; color: #1c1917; }
 .revs__add.btn { background: #ffe8d3; color: #5b4438; min-block-size: 48px; padding: 12px 24px; border-radius: 12px; font-size: 16px; line-height: 24px; font-weight: 500; }
 .revs__box, .revs__sum { background: #f4f3f1; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 4px; }
-.revs__nt { margin: 0; font-weight: 700; color: #1c1917; } .revs__ns { margin: 0; color: #57534e; font-size: 14px; }
+/* fix2: Empty 266:70984 — padding 24, gap 8, content centred; title 16 Medium, sub 14 Regular secondary. */
+.revs__box--empty { padding: 24px; gap: 8px; align-items: center; text-align: center; }
+.revs__nt { margin: 0; font-size: 16px; font-weight: 500; color: #1c1917; } .revs__ns { margin: 0; color: #57534e; font-size: 14px; }
 .revs__errt { margin: 0; color: #b41c1c; } .revs__retry { align-self: flex-start; border: 0; background: none; padding: 0; color: #15595b; text-decoration: underline; cursor: pointer; font: inherit; min-block-size: 24px; }
 .revs__sk { display: block; block-size: 14px; border-radius: 7px; background: #78716c; opacity: .35; inline-size: 60%; } .revs__sk--s { inline-size: 35%; }
 .revs__avg { display: flex; flex-direction: column; gap: 4px; }
 .revs__score { font-size: 36px; font-weight: 700; color: #1c1917; line-height: 1.2; } .revs__stars { font-size: 18px; font-weight: 500; color: #15595b; } .revs__based { font-size: 12px; color: #57534e; }
-.revs__list { list-style: none; margin: 0; padding: 0; display: flex; gap: 16px; }
-.revc { flex: 1 1 0; background: #fff; border: 1px solid #78716c; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 8px; }
+.revs__list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 16px; } /* 3 cards per row as in 266:70957; more than 3 wrap (not designed) */
+.revc { flex: 0 1 389px; box-sizing: border-box; background: #fff; border: 1px solid #78716c; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 8px; }
 .revc__top { display: flex; justify-content: space-between; font-size: 14px; font-weight: 500; } .revc__name { color: #1c1917; } .revc__stars { color: #15595b; }
 .revc__meta { margin: 0; font-size: 12px; color: #57534e; } .revc__body { margin: 0; font-size: 14px; color: #1c1917; }
-@media (max-width: 767px) { .revs { margin-block-start: 48px; gap: 16px; } .revs__list { flex-direction: column; } }
+@media (max-width: 767px) { .revs { margin-block-start: 48px; gap: 16px; } .revs__list { flex-direction: column; } .revc { flex-basis: auto; } }
 /* Form */
 .modal__box:has(.revf) { inline-size: min(560px, 100%); border-radius: 16px; padding: 24px; }
 @media (max-width: 767px) { .modal__box--sheet:has(.revf) { inline-size: 100%; border-radius: 16px 16px 0 0; } }

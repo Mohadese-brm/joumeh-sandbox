@@ -30,3 +30,32 @@ describe('Reviews (fix1 item 5, 266:71080 / 266:71357)', () => {
     expect(screen.getByRole('button', { name: 'تلاش دوباره' })).toBeInTheDocument();
   });
 });
+
+describe('ProductReviews persistence via the local API (fix2)', () => {
+  it('a submitted review appears in the list and updates count + average', async () => {
+    const { MemoryRouter } = await import('react-router-dom'); const { StoreProvider } = await import('../src/lib/store'); const { ProductReviews } = await import('../src/components/Reviews');
+    let store = { reviews: [{ id: 1, name: 'سارا م.', rating: 4, body: 'قبلی', createdAt: '2026-10-20 10:00:00' }], count: 1, average: 4 };
+    localStorage.setItem('joumeh.token', 't');
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
+      const ok = (data: unknown, status = 200) => ({ ok: status < 400, status, json: async () => ({ data }) });
+      if (url.endsWith('/reviews') && init?.method === 'POST') { const b = JSON.parse(String(init.body));
+        store = { reviews: [{ id: 2, name: 'نگار ر.', rating: b.rating, body: b.text, createdAt: '2026-10-21 10:00:00' }, ...store.reviews], count: 2, average: (4 + b.rating) / 2 }; return ok(store, 201); }
+      if (url.endsWith('/reviews')) return ok(store);
+      if (url.endsWith('/me')) return ok({ id: 1, phone: '09120000000', firstName: 'نگار', lastName: 'رضایی', email: null, emailVerified: 0 });
+      if (url.includes('/favorites')) return ok([]);
+      return ok(null);
+    }));
+    render(<MemoryRouter><StoreProvider><ProductReviews slug="women-1" /></StoreProvider></MemoryRouter>);
+    expect(await screen.findByText('قبلی')).toBeInTheDocument(); expect(screen.getByText(/بر اساس ۱ نظر/)).toBeInTheDocument();
+    await waitFor(() => expect(document.querySelector('.revs__add')).not.toBeNull());
+    await new Promise(r => setTimeout(r, 50));
+    fireEvent.click(screen.getByRole('button', { name: 'ثبت نظر' }));
+    const dlg = await screen.findByRole('dialog', { name: 'ثبت نظر' });
+    fireEvent.click(screen.getByLabelText('۵ از ۵')); fireEvent.change(screen.getByLabelText('متن نظر'), { target: { value: 'جدید و عالی' } });
+    fireEvent.click(dlg.querySelector('button[type=submit]')!);
+    expect(await screen.findByText('نظر شما ثبت شد')).toBeInTheDocument();
+    fireEvent.click(document.querySelector('.revf__full')!);
+    expect(await screen.findByText('جدید و عالی')).toBeInTheDocument(); expect(screen.getByText(/بر اساس ۲ نظر/)).toBeInTheDocument(); expect(screen.getByText('۴٫۵')).toBeInTheDocument();
+    vi.unstubAllGlobals(); localStorage.clear();
+  });
+});

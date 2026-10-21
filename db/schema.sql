@@ -48,3 +48,7 @@ CREATE TABLE payments (id INTEGER PRIMARY KEY, order_id INTEGER NOT NULL REFEREN
   created_at TEXT NOT NULL DEFAULT (datetime('now'))); -- BD-01 STUB
 CREATE TABLE returns (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id), order_id INTEGER NOT NULL REFERENCES orders(id), product_id INTEGER NOT NULL REFERENCES products(id),
   return_number TEXT, status TEXT NOT NULL CHECK (status IN ('reviewing','approved','rejected','refunded')), reason TEXT, created_at TEXT NOT NULL); -- BD-04 STUB: policy undecided
+-- fix2 reviews (BD-15 still open). DEFAULT rules, changeable: signed-in users only, rating 1–5, text 1–1000 chars, published immediately (status 'published'; no moderation queue by default).
+CREATE TABLE reviews (id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL REFERENCES products(id), user_id INTEGER NOT NULL REFERENCES users(id),
+  rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5), body TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'published' CHECK (status IN ('pending','published','rejected')),
+  created_at TEXT NOT NULL DEFAULT (datetime('now')));

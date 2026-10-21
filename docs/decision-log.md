@@ -33,3 +33,22 @@ All times Asia/Tehran.
 - **Card heart removed**; heart stays only on the PDP (Favorite Toggle 266:67491 / m 266:70611). Figma Card Shop 87:16741 still has it → follow-up. Favourites page keeps the red remove link (127:468); whether Favorites cards should have a heart: open (CEO).
 - **Reviews**: UI built per 266:71080 / 266:71357 with no backend. BD-15 (ship or not, eligibility, moderation, length rules) still open; section shows the designed «No reviews» state; submit is a labelled stub that does not persist.
 
+
+## fix2 — Reviews: DEFAULT rules (2026-10-21, Alex; changeable — NOT final policy)
+Mohadeseh confirmed reviews ship with the default Figma design (266:71080 / 266:71357). The rules below are **engineering DEFAULTS** chosen so the flow works; BD-15 sub-questions remain hers to decide. Each lives in one place in code so it can be changed.
+| Rule | DEFAULT | Where to change |
+|---|---|---|
+| Who may review | Signed-in users only; a guest tapping «ثبت نظر» gets the sign-in modal first, then the form opens | `ProductReviews` in `src/components/Reviews.tsx`; `auth` on `POST /api/products/:slug/reviews` |
+| Purchase required | No (any signed-in user) | `server/app.ts` review POST |
+| Rating | Required, whole stars 1–5 | `server/app.ts`, `StarRating` |
+| Text length | Required, 1–1000 characters after trimming (textarea `maxLength` 1000) | `REVIEW_DEFAULTS.minLen/maxLen` (server), `MAX_LEN` (client) |
+| Moderation | None: published immediately (`REVIEW_DEFAULTS.moderation = 'none'`; `'pre'` would store as `pending`, which the list hides) | `server/app.ts` |
+| Reviews per user | Unlimited (no one-per-product limit) | `server/app.ts` |
+| Average | Mean of published ratings, rounded to 1 decimal; count = published reviews | `reviewSummary` in `server/app.ts` |
+| Display name | First name + initial of last name («نگار ر.»); «کاربر جومه» if the profile has no name | `reviewSummary` |
+| Meta line | Date only (fa-IR). Figma also shows «سایز M»; there is no data source for the reviewer's size, so it is omitted | `fmtDate` in `Reviews.tsx` |
+| List | Newest first, all reviews, 3 per row on desktop, stacked on mobile; no paging, sorting, photos, votes, replies, edit or delete (not designed) | `Reviews.tsx` / `Reviews.css` |
+| Storage | Local in-memory API (sql.js `reviews` table), same as favourites. **Resets when the server restarts; on Vercel serverless it is not durable** | `db/schema.sql` |
+| Helper copy | Kept Figma's «قوانین طول متن و بررسی نظر هنوز تعیین نشده است (تصمیم باز).» | `Reviews.tsx` |
+| Success copy | Kept Figma's «پس از بررسی منتشر می‌شود (نمونه — …)» although no moderation runs by default; she should pick final copy | `Reviews.tsx` |
+Other fix2 decisions (CEO, relayed by Emma 17:50 Tehran): no heart on any card incl. Favorites (heart on the PDP only); filters removed; pressed heart #E7E5E2 is provisional.

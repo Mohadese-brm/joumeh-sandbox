@@ -8,7 +8,7 @@ import { Icon } from '../components/Icon';
 import { ProductGrid } from '../components/Grid';
 import { Modal } from '../components/Modal';
 import { Stub } from '../components/Stub';
-import { ReviewsSection } from '../components/Reviews';
+import { ProductReviews } from '../components/Reviews';
 import { SizeGuide } from '../components/SizeGuide';
 import { flags } from '../config/flags';
 import { NotFound } from './NotFound';
@@ -83,8 +83,8 @@ export function Product() {
             <button type="button" key={k} aria-label={`نمایش عکس ${faNumber(k + 1)}`} aria-current={k === img} onClick={() => setImg(k)}><img src={im.url} alt="" width={96} height={120} loading="lazy" /></button>))}</div>}
         </div>
       </div>
-      {/* fix1 item 5: Reviews 266:71769 (m 266:71829). No review data source yet (BD-15) → designed «No reviews» state. */}
-      <ReviewsSection />
+      {/* Reviews 266:71769 (m 266:71829) — fix2: live via the local API. */}
+      <ProductReviews slug={p.slug} />
       {p.related.length > 0 && <section className="pdp__sec" aria-labelledby="rel-h">
         <div className="sec-head"><h2 id="rel-h" className="h-section">محصولات مشابه</h2><Link to={`/${p.category}`} className="more">مشاهده همه <Icon name="left-2" size={16} /></Link></div>
         <div className="pgrid--4"><ProductGrid products={p.related} /></div>
