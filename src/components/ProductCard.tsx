@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import bagIcon from '../assets/icons/icon-bag-1.svg?raw';
-import heartIcon from '../assets/icons/icon-heart-1.svg?raw';
 import { formatBadge, formatPrice, faNumber } from '../lib/format';
 import './ProductCard.css';
 
@@ -9,11 +8,11 @@ export type ProductCardData = {
   price: number; originalPrice?: number | null; badgePercent?: number | null;
   imageUrl: string; imageAlt: string;
 };
-type Props = { product: ProductCardData; size?: 'desktop' | 'mobile'; href?: string; onAddToCart?: (id: number) => void; onToggleFavorite?: (id: number) => void; headingLevel?: 2 | 3 | 4; favorite?: boolean; showBadge?: boolean; children?: React.ReactNode };
+type Props = { product: ProductCardData; size?: 'desktop' | 'mobile'; href?: string; onAddToCart?: (id: number) => void; headingLevel?: 2 | 3 | 4; showBadge?: boolean; children?: React.ReactNode };
 // Icons use currentColor (Figma stroke #1C1917 replaced).
 const svg = (raw: string) => raw.replace(/ id="[^"]*"/g, '').replace(/stroke="#1C1917"/gi, 'stroke="currentColor"').replace(/fill="#1C1917"/gi, 'fill="currentColor"');
 
-export function ProductCard({ product, size = 'desktop', href, onAddToCart, onToggleFavorite, headingLevel = 3, favorite = false, showBadge = true, children }: Props) {
+export function ProductCard({ product, size = 'desktop', href, onAddToCart, headingLevel = 3, showBadge = true, children }: Props) {
   const isSale = product.status === 'sale' && product.originalPrice != null;
   const H = `h${headingLevel}` as 'h2' | 'h3' | 'h4';
   const w = size === 'desktop' ? 282 : 171, h = size === 'desktop' ? 376 : 228;
@@ -33,9 +32,7 @@ export function ProductCard({ product, size = 'desktop', href, onAddToCart, onTo
       {children}
       {showBadge && product.status === 'sale' && product.badgePercent != null && <span className="pc__badge">{formatBadge(product.badgePercent)}</span>}
       {product.status === 'new' && <span className="pc__badge pc__badge--new">جدید</span>}
-      <button type="button" className="pc__icon pc__fav" aria-pressed={favorite} aria-label={`${product.name} در علاقه‌مندی‌ها`} onClick={() => onToggleFavorite?.(product.id)}>
-        <span aria-hidden="true" dangerouslySetInnerHTML={{ __html: svg(heartIcon) }} />
-      </button>
+      {/* fix1 item 2 (CEO review 2026-10-21): no favourite on cards; the heart lives only on the PDP (Favorite Toggle 266:67491). */}
       <button type="button" className="pc__icon pc__cart" aria-label={`افزودن ${product.name} به سبد خرید`} onClick={() => onAddToCart?.(product.id)}>
         <span aria-hidden="true" dangerouslySetInnerHTML={{ __html: svg(bagIcon) }} />
       </button>

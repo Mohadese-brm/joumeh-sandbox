@@ -28,7 +28,7 @@ const token = await session();
 const PAGES = [
   // name, path, needsAuth, needsCart, action
   ['home', '/'], ['women', '/women'], ['women-p2', '/women?page=2'], ['men', '/men'],
-  ['women-filter', '/women', false, false, async (pg, mobile) => { await pg.getByRole('button', { name: /فیلترها/ }).click(); await pg.waitForTimeout(400); }],
+  ['women-sort', '/women', false, false, async (pg, mobile) => { if (mobile) { await pg.getByRole('button', { name: /^مرتب‌سازی:/ }).click(); await pg.waitForTimeout(400); } }],
   ['product', '/product/women-1'], ['product-added', '/product/women-1', false, false, async pg => { await pg.locator('input[name=size][value=M]').check(); await pg.getByRole('button', { name: 'افزودن به سبد خرید' }).click(); await pg.waitForSelector('.toast'); }],
   ['search', '/', false, false, async pg => { await pg.getByRole('button', { name: 'جستجو' }).click(); await pg.fill('#q', 'کتان'); await pg.waitForSelector('.search__item'); }],
   ['auth-modal', '/', false, false, async (pg, mobile) => { if (mobile) await pg.getByRole('navigation', { name: 'ناوبری پایین' }).getByRole('button', { name: 'پروفایل' }).click(); else await pg.getByRole('button', { name: 'ورود یا ثبت‌نام' }).click(); await pg.waitForSelector('[role=dialog]'); }],
@@ -39,7 +39,7 @@ const PAGES = [
   ['addresses', '/account/addresses', true], ['address-add', '/account/addresses', true, false, async pg => { await pg.getByRole('button', { name: 'افزودن آدرس جدید' }).click(); await pg.getByRole('button', { name: 'ذخیره آدرس' }).click(); await pg.waitForSelector('.err'); }],
   ['favorites', '/account/favorites', true], ['payment-info', '/account/payment', true], ['settings', '/account/settings', true],
   // Round 1 additions
-  ['men-filter', '/men', false, false, async pg => { await pg.getByRole('button', { name: /فیلترها/ }).click(); await pg.waitForSelector('.filters__act'); await pg.waitForTimeout(400); }],
+  ['men-sort', '/men', false, false, async (pg, mobile) => { if (mobile) { await pg.getByRole('button', { name: /^مرتب‌سازی:/ }).click(); await pg.waitForTimeout(400); } }],
   ['auth-code', '/', false, false, async (pg, mobile) => { if (mobile) await pg.getByRole('navigation', { name: 'ناوبری پایین' }).getByRole('button', { name: 'پروفایل' }).click(); else await pg.getByRole('button', { name: 'ورود یا ثبت‌نام' }).click();
     await pg.fill('#phone', mobile ? '09120000002' : '09120000001'); await pg.getByRole('button', { name: 'ادامه' }).click(); await pg.waitForSelector('.otp'); }],
   ['signup', '/', false, false, async (pg, mobile) => { if (mobile) await pg.getByRole('navigation', { name: 'ناوبری پایین' }).getByRole('button', { name: 'پروفایل' }).click(); else await pg.getByRole('button', { name: 'ورود یا ثبت‌نام' }).click();

@@ -36,16 +36,24 @@ for (const [vp, width] of [['desktop', 1280], ['mobile', 375]]) {
       await pg.goto(BASE + '/women'); await pg.getByRole('button', { name: 'صفحه‌ی بعد' }).focus(); await pg.keyboard.press('Enter'); await pg.waitForURL(/page=2/);
       const box = await pg.getByRole('button', { name: 'صفحه‌ی بعد' }).boundingBox(), box1 = await pg.getByRole('button', { name: 'صفحه‌ی ۱' }).boundingBox();
       if (!(box.x < box1.x)) throw new Error('next arrow is not left of page 1'); });
-    await step(`${vp}: favourite toggle then listed, then red remove link (127:468)`, async () => {
-      await pg.goto(BASE + '/women'); await pg.getByRole('button', { name: /^مانتو کتان کویری در علاقه‌مندی‌ها$/ }).click(); await pg.getByText('به علاقه‌مندی‌ها اضافه شد').waitFor();
+    await step(`${vp}: fix1 — no heart on cards; heart on PDP toggles, then listed, then red remove link (127:468)`, async () => {
+      await pg.goto(BASE + '/women'); await pg.locator('.pc').first().waitFor();
+      if (await pg.locator('.pc__fav, .pc button[aria-label*="علاقه‌مندی"]').count()) throw new Error('heart still on product cards');
+      await pg.goto(BASE + '/product/women-1'); const heart = pg.locator('.pdp__fav'); if ((await heart.count()) !== 1) throw new Error('heart missing on PDP');
+      await heart.click(); await pg.getByText('به علاقه‌مندی‌ها اضافه شد').waitFor();
       await pg.goto(BASE + '/account/favorites'); await pg.getByRole('heading', { name: 'مانتو کتان کویری' }).waitFor();
       await pg.getByRole('button', { name: /حذف از علاقه‌مندی‌ها — مانتو کتان کویری/ }).click(); await pg.getByRole('heading', { name: 'مانتو کتان کویری' }).waitFor({ state: 'detached' }); });
     await step(`${vp}: card bag button → PDP size-required state (P9)`, async () => {
       await pg.goto(BASE + '/women'); await pg.getByRole('button', { name: 'افزودن مانتو کتان کویری به سبد خرید' }).click(); await pg.waitForURL(/product\/women-1/); await pg.getByText('لطفاً سایز را انتخاب کنید.').waitFor(); });
-    await step(`${vp}: filter Apply via «نمایش N محصول» updates URL; «پاک کردن» resets`, async () => {
-      await pg.goto(BASE + '/women'); await pg.getByRole('button', { name: /فیلترها/ }).click(); await pg.getByRole('checkbox', { name: 'مانتو' }).check();
-      const btn = pg.getByRole('button', { name: /^نمایش .* محصول$/ }); await pg.waitForFunction(() => /نمایش [۰-۹]+ محصول/.test(document.querySelector('.filters__act .btn--primary')?.textContent ?? ''));
-      await btn.click(); await pg.waitForURL(/type=/); await pg.getByRole('button', { name: /فیلترها/ }).click(); await pg.getByRole('button', { name: 'پاک کردن' }).click(); await pg.waitForURL(u => !u.search.includes('type=')); });
+    await step(`${vp}: fix1 — no filter UI; sort (56:286 / 56:621 + 56:951) reorders by price`, async () => {
+      await pg.goto(BASE + '/women'); await pg.locator('.pc').first().waitFor();
+      if (await pg.locator('.filters, .shop__panel, .shop__fbtn').count() || await pg.getByRole('button', { name: /فیلتر/ }).count()) throw new Error('filter UI present');
+      const prices = async () => pg.locator('.pc__now').evaluateAll(els => els.map(e => +e.textContent.replace(/[^۰-۹]/g, '').replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))));
+      if (vp === 'desktop') { if (await pg.locator('select').count()) throw new Error('native select present'); await pg.locator('#sort').click(); await pg.locator('.ssel__opt[aria-selected=true]', { hasText: 'جدیدترین' }).waitFor(); await pg.getByRole('option', { name: 'ارزان‌ترین' }).click(); }
+      else { await pg.getByRole('button', { name: /^مرتب‌سازی:/ }).click(); await pg.getByRole('radio', { name: 'ارزان‌ترین' }).click(); }
+      await pg.waitForURL(/sort=price-asc/); await pg.waitForFunction(() => document.querySelectorAll('.pc').length > 0);
+      await pg.waitForTimeout(300); const p = await prices(); if (!p.length || p.some((v, i) => i && v < p[i - 1])) throw new Error('not ascending: ' + p);
+      if (vp === 'mobile' && !(await pg.getByRole('button', { name: 'مرتب‌سازی: ارزان‌ترین' }).count())) throw new Error('mobile sort label not updated'); });
     await step(`${vp}: signup (107:773) requires names, then creates the account`, async () => {
       await pg.goto(BASE + '/account'); await pg.getByRole('button', { name: 'خروج' }).first().click(); await pg.getByRole('dialog').getByRole('button', { name: 'خروج' }).click(); await pg.waitForURL(BASE + '/');
       if (vp === 'mobile') await pg.getByRole('navigation', { name: 'ناوبری پایین' }).getByRole('button', { name: 'پروفایل' }).click(); else await pg.getByRole('button', { name: 'ورود یا ثبت‌نام' }).click();
@@ -57,15 +65,15 @@ for (const [vp, width] of [['desktop', 1280], ['mobile', 375]]) {
       if (!(await f.evaluate(e => e === document.activeElement))) throw new Error('first OTP box not focused');
       await f.fill(code); await pg.getByRole('button', { name: 'تأیید و ورود' }).click(); await pg.getByText('ورود موفق').waitFor(); await pg.getByRole('dialog').waitFor({ state: 'detached' });
       await pg.goto(BASE + '/account'); await pg.getByText('خوش آمدید، نگار').waitFor(); });
-    if (vp === 'mobile') await step(`mobile: auth dialogs are a centred 343px card, filter stays a bottom sheet (R2-1, 108:6003)`, async () => {
+    if (vp === 'mobile') await step(`mobile: auth dialogs are a centred 343px card, sort stays a bottom sheet (R2-1, 108:6003)`, async () => {
       const tok = await pg.evaluate(() => { const t = localStorage.getItem('joumeh.token'); localStorage.removeItem('joumeh.token'); return t; });
       await pg.goto(BASE + '/'); await pg.getByRole('navigation', { name: 'ناوبری پایین' }).getByRole('button', { name: 'پروفایل' }).click(); await pg.getByRole('dialog').waitFor();
       for (const open of [async () => {}, async () => pg.getByRole('button', { name: 'ثبت‌نام کنید' }).click()]) {
         await open(); const r = await pg.locator('.modal__box').boundingBox(); const vh = pg.viewportSize().height;
         if (Math.round(r.width) !== 343 || r.x < 15 || vh - (r.y + r.height) < 15 || (await pg.locator('.modal__grip').count())) throw new Error('auth modal not a centred card: ' + JSON.stringify(r));
       }
-      await pg.keyboard.press('Escape'); await pg.goto(BASE + '/women'); await pg.getByRole('button', { name: /فیلترها/ }).click();
-      const f = await pg.locator('.modal__box').boundingBox(); if (Math.round(f.y + f.height) < pg.viewportSize().height - 1 || Math.round(f.width) !== 375) throw new Error('filter not a bottom sheet');
+      await pg.keyboard.press('Escape'); await pg.goto(BASE + '/women'); await pg.getByRole('button', { name: /^مرتب‌سازی:/ }).click();
+      const f = await pg.locator('.modal__box').boundingBox(); if (Math.round(f.y + f.height) < pg.viewportSize().height - 1 || Math.round(f.width) !== 375) throw new Error('sort not a bottom sheet');
       await pg.keyboard.press('Escape'); await pg.evaluate(t => t && localStorage.setItem('joumeh.token', t), tok); });
     await step(`${vp}: logout confirm`, async () => { await pg.goto(BASE + '/account'); await pg.getByRole('button', { name: 'خروج' }).click(); await pg.getByRole('dialog').getByRole('button', { name: 'خروج' }).click(); await pg.waitForURL(BASE + '/'); });
   } catch { /* recorded */ }

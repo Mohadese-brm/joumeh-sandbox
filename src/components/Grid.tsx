@@ -7,13 +7,12 @@ import type { Product } from '../lib/api';
 /** Shared product grid. Card add-to-cart (P9 ruling): no quick-add is designed, so the bag button opens the PDP and shows
  *  the designed size-required state 260:62447 (mobile 260:63048) — no extra toast copy. */
 export function ProductGrid({ products, headingLevel = 3, onFavoriteToggled, removable = false }: { products: Product[]; headingLevel?: 2 | 3; onFavoriteToggled?: (id: number) => void; removable?: boolean }) {
-  const mobile = useIsMobile(); const { favorites, toggleFavorite } = useStore(); const nav = useNavigate();
+  const mobile = useIsMobile(); const { toggleFavorite } = useStore(); const nav = useNavigate();
   return (
     <ul className="pgrid">
       {products.map(p => (
         <li key={p.id}>
-          <ProductCard product={p} size={mobile ? 'mobile' : 'desktop'} headingLevel={headingLevel} favorite={favorites.has(p.id)} showBadge={flags.showDiscountBadge}
-            onToggleFavorite={async id => { await toggleFavorite(id); onFavoriteToggled?.(id); }}
+          <ProductCard product={p} size={mobile ? 'mobile' : 'desktop'} headingLevel={headingLevel} showBadge={flags.showDiscountBadge}
             onAddToCart={() => nav(`/product/${p.slug}#options`, { state: { sizeRequired: true } })}>
             {removable && <button type="button" className="fav-remove" data-figma="127:468" onClick={async () => { await toggleFavorite(p.id); onFavoriteToggled?.(p.id); }}>
               <Icon name="trash" size={20} /><span>حذف از علاقه‌مندی‌ها</span><span className="sr-only"> — {p.name}</span></button>}

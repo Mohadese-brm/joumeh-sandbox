@@ -13,11 +13,15 @@
 .mmenu ul { list-style: none; margin: 0; padding-block: 8px; } .mmenu a { display: block; padding-block: 12px; color: var(--text); text-decoration: none; font-weight: 600; }
 @media (min-width: 1024px) { .hdr__links { display: flex; } .hdr__menu { display: none; } .hdr__logo img { inline-size: 48px; block-size: 48px; } .mmenu { display: none; } }
 @media (max-width: 767px) { .hdr__profile { display: none; } }
-.search { position: absolute; inset-inline-end: 0; inset-block-start: 50%; transform: translateY(-50%); inline-size: min(380px, calc(100vw - 32px)); z-index: 5; }
-.search__box { display: flex; align-items: center; gap: 8px; background: #fff; border: 1.5px solid var(--teal-600); border-radius: 999px; padding-inline: 14px 4px; block-size: 44px; }
+/* fix1 item 1: Search field per Figma 116:26240 (Header 116:26290 › Search field 116:2267): 424×44, top 18 in the 80 header, 96px in from the actions edge (x216 in 1440), 2px border/focus #15595b, radius 22, padding 14 (icon side) / 2 (close side), gap 8, 40px round close. */
+.search { position: absolute; inset-inline-end: 0; inset-block-start: 50%; transform: translateY(-50%); inline-size: min(424px, calc(100vw - 32px)); z-index: 5; }
+@media (min-width: 1024px) { .search { inset-inline-end: 96px; } }
+.search__box { display: flex; align-items: center; gap: 8px; background: #fff; border: 2px solid var(--search-border, #15595b); border-radius: 22px; padding-inline: 14px 2px; block-size: 44px; box-sizing: border-box; }
+.search__close { inline-size: 40px; block-size: 40px; border-radius: 20px; border: 0; background: transparent; display: grid; place-items: center; cursor: pointer; flex: none; color: var(--text); }
+.search__close:focus-visible { outline: 3px solid var(--teal-600); outline-offset: 1px; }
 .search__box input { flex: 1; border: 0; outline: none; background: transparent; min-inline-size: 0; }
-.search__box:focus-within { box-shadow: var(--focus); }
-.search__panel { position: absolute; inset-inline: 0; inset-block-start: 52px; background: #fff; border-radius: var(--r-16); box-shadow: var(--shadow-2); padding: 12px 16px; }
+.search__box input::placeholder { color: #57534e; }
+.search__panel { position: absolute; inset-inline: 0; inset-block-start: 70px; /* 116:2442 top 88 in the header = field top 18 + 70 */ background: #fff; border: 1px solid #e7e5e2; border-radius: 16px; box-shadow: 0 8px 24px rgb(0 0 0 / .10); padding: 8px; }
 .search__panel ul { list-style: none; margin: 0; padding: 0; }
 .search__item { display: flex; gap: 12px; align-items: center; inline-size: 100%; border: 0; background: none; padding-block: 6px; cursor: pointer; text-align: start; border-radius: 8px; }
 .search__item img { border-radius: 18px 18px 4px 4px; object-fit: cover; }
@@ -40,3 +44,10 @@
 .bnav a, .bnav button { display: grid; justify-items: center; gap: 2px; padding-block: 8px; min-block-size: 56px; color: var(--n-600); text-decoration: none; font-size: 12px; border: 0; background: none; cursor: pointer; }
 .bnav .active { color: var(--teal-700); font-weight: 600; }
 @media (min-width: 768px) { .bnav { display: none; } }
+
+/* fix1 item 1 mobile: Search panel 116:2553 drops below the 64px bar — top 64, full width, padding 12/16/16, white, border-bottom border/subtle. */
+@media (max-width: 767px) {
+  .hdr__actions { position: static; }
+  .search { inset-inline: 0; inset-block-start: 100%; transform: none; inline-size: auto; background: #fff; padding: 12px 16px 16px; border-block-end: 1px solid #e7e5e2; }
+  .search__panel { inset-inline: 16px; inset-block-start: calc(100% - 4px); }
+}

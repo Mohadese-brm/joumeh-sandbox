@@ -30,7 +30,12 @@
 .size input:focus-visible + span { outline: 3px solid var(--teal-600); outline-offset: 2px; }
 .pdp__buy { display: flex; gap: 12px; align-items: center; inline-size: 100%; }
 .pdp__add { flex: 1; }
-.pdp__fav { border: 1px solid var(--n-300); } .pdp__fav[aria-pressed="true"] { color: var(--teal-700); background: var(--teal-50); border-color: var(--teal-600); }
+/* fix1 item 2: Product / Favorite Toggle Style=Outline 266:67451 (PDP 266:67491, mobile 266:70611) */
+.pdp__fav { flex: none; inline-size: 44px; block-size: 44px; display: grid; place-items: center; padding: 0; border-radius: 999px; border: 1px solid #78716c; background: transparent; color: #1c1917; cursor: pointer; }
+.pdp__fav:hover { background: #f4f3f1; } .pdp__fav:active { background: #e7e5e2; }
+.pdp__fav[aria-pressed="true"] { color: #1c7477; }
+.pdp__fav:disabled { opacity: .4; cursor: not-allowed; background: transparent; }
+.pdp__fav:focus-visible { outline: 3px solid var(--teal-600); outline-offset: 2px; }
 .qty { display: inline-flex; align-items: center; border: 1px solid var(--n-500); border-radius: 999px; block-size: var(--control); }
 .qty button { inline-size: 44px; block-size: 100%; border: 0; background: none; cursor: pointer; display: grid; place-items: center; border-radius: 999px; }
 .qty button:disabled { color: var(--n-400); cursor: not-allowed; }

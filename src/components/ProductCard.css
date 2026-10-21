@@ -32,7 +32,7 @@
   color: var(--color-v2-text-primary); display: grid; place-items: center; cursor: pointer; filter: drop-shadow(0 2px 4px rgb(0 0 0 / 0.08)); padding: 0; }
 .pc__icon span { display: grid; inline-size: 24px; block-size: 24px; place-items: center; }
 .pc__icon:focus-visible { outline: 3px solid var(--price-sale); outline-offset: 2px; }
-.pc__fav { inset-inline-end: 10px; inset-block-start: 10px; }
+
 .pc__cart { inset-inline-end: 8px; inset-block-start: calc(var(--h) - 44px - var(--cart-b)); }
 
 .pc__badge.pc__badge--new { background: var(--color-v2-badge-new-bg, #1c7477); color: #fff; } /* token badge/new-bg teal/600 */

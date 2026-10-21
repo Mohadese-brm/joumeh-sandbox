@@ -1,18 +1,25 @@
-.shop__head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-block: 8px 32px; flex-wrap: wrap; }
-.shop__count { margin: 4px 0 0; }
-.shop__tools { display: flex; gap: 12px; align-items: flex-end; }
-.shop__sort { min-inline-size: 180px; gap: 2px; }
-@media (max-width: 767px) { .shop__tools { inline-size: 100%; display: grid; grid-template-columns: 1fr 1fr; } .shop__tools .btn { padding-inline: 8px; font-size: 14px; } }
-.shop__panel { margin-block-end: 32px; }
-.filters { display: grid; gap: 20px; }
-.filters fieldset { border: 0; padding: 0; margin: 0; } .filters legend { font-weight: 700; font-size: 15px; margin-block-end: 8px; display: flex; gap: 8px; align-items: center; }
-.chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.chk { position: relative; display: inline-flex; } .chk input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
-.chk span { display: inline-flex; align-items: center; gap: 6px; min-block-size: 44px; min-inline-size: 44px; justify-content: center; padding-inline: 14px; border: 1px solid var(--n-500); border-radius: var(--r-8); font-size: 14px; background: #fff; }
-.chk input:checked + span { border-color: var(--teal-600); background: var(--teal-50); color: var(--teal-700); font-weight: 600; box-shadow: inset 0 0 0 1px var(--teal-600); }
-.chk input:focus-visible + span { outline: 3px solid var(--teal-600); outline-offset: 2px; }
-.sw { inline-size: 16px; block-size: 16px; border-radius: 99px; border: 1px solid var(--n-300); display: inline-block; }
-.filters__act { display: flex; gap: 8px; flex-wrap: wrap; }
+/* fix1 item 3 — sort per Figma 56:293 / 56:286 (desktop) and 56:611 / 56:627 / 56:621 (mobile). Filter styles removed with the filter UI (item 4). */
+.shop__head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-block: 32px; }
+.shop__t { display: flex; flex-direction: column; gap: 8px; }
+.shop__title { margin: 0; font-size: 30px; font-weight: 700; line-height: 1.4; color: #1c1917; }
+.shop__count { margin: 0; font-size: 14px; line-height: 1.6; color: #57534e; }
+.ssel { inline-size: 240px; flex: none; display: flex; flex-direction: column; gap: 8px; }
+.ssel__label { font-size: 14px; font-weight: 500; line-height: 1.5; color: #1c1917; }
+.ssel { position: relative; }
+.ssel__field { display: flex; align-items: center; gap: 8px; inline-size: 100%; min-block-size: 48px; box-sizing: border-box; padding: 12px 16px; font: inherit; color: #1c1917; background: #fff; border: 1px solid #78716c; border-radius: 12px; cursor: pointer; text-align: start; }
+.ssel__field:focus-visible, .ssel__field.is-open { outline: none; border: 2px solid #15595b; padding: 11px 15px; }
+.ssel__value { flex: 1; font-size: 16px; line-height: 28px; }
+.ssel__chev { display: grid; place-items: center; inline-size: 20px; block-size: 20px; rotate: -90deg; transition: rotate .15s; }
+.ssel__field.is-open .ssel__chev { rotate: 90deg; }
+.ssel__menu { position: absolute; z-index: 10; inset-inline-start: 0; inset-block-start: calc(100% + 4px); inline-size: 242px; box-sizing: border-box; margin: 0; list-style: none; display: flex; flex-direction: column; gap: 2px; padding: 6px; background: #fff; border: 1px solid #78716c; border-radius: 12px; box-shadow: 0 8px 24px rgb(0 0 0 / .12); }
+.ssel__opt { display: flex; justify-content: space-between; align-items: center; min-block-size: 42px; box-sizing: border-box; padding: 10px 14px; border-radius: 8px; font-size: 14px; line-height: 22px; color: #1c1917; cursor: pointer; }
+.ssel__opt.is-active { background: #f4f3f1; } .ssel__opt:active { background: #78716c; color: #fff; }
+.ssel__opt[aria-selected="true"] { background: #f4f3f1; color: #1c7477; font-weight: 500; }
+.ssel__tick { color: #0c652d; font-weight: 700; }
+.shop__toolbar { margin-block: 0 48px; }
+.sbtn { inline-size: 100%; min-block-size: 46px; padding: 10px 20px; border: 1px solid #1c7477; border-radius: 12px; background: #fff; color: #15595b; font: inherit; font-size: 16px; font-weight: 500; line-height: 24px; cursor: pointer; }
+.sbtn:focus-visible { outline: 3px solid var(--teal-600); outline-offset: 2px; }
+@media (max-width: 767px) { .shop__head { margin-block: 32px; } .shop__title { font-size: 24px; } }
 .radios { display: grid; gap: 4px; }
 .radio { display: flex; align-items: center; gap: 12px; min-block-size: 48px; cursor: pointer; font-size: 16px; }
 .radio input { inline-size: 20px; block-size: 20px; accent-color: var(--teal-600); margin: 0; }
@@ -21,36 +28,3 @@
 .pager__num[aria-current="page"] { background: var(--teal-600); color: #fff; }
 .pager button:disabled { color: var(--n-400); cursor: not-allowed; }
 .pager__gap { color: var(--n-500); }
-/* Round-1 M2 — filter sheet per Figma 69:15362 */
-.filters { gap: 24px; }
-.filters legend { font-size: 16px; margin-block-end: 12px; }
-.filters__checks { display: grid; gap: 4px; }
-.fchk { position: relative; display: flex; align-items: center; gap: 12px; min-block-size: 56px; cursor: pointer; font-size: 16px; }
-.fchk input { position: absolute; opacity: 0; inline-size: 24px; block-size: 24px; margin: 0; cursor: pointer; }
-.fchk__box { inline-size: 24px; block-size: 24px; border: 1.5px solid var(--n-500); border-radius: var(--r-4, 4px); display: grid; place-items: center; color: transparent; flex: none; }
-.fchk__box .icon { color: inherit; }
-.fchk input:checked + .fchk__box { background: var(--teal-600); border-color: var(--teal-600); color: #fff; }
-.fchk input:focus-visible + .fchk__box { outline: 3px solid var(--teal-600); outline-offset: 2px; }
-.fsizes { display: flex; flex-wrap: wrap; gap: 8px; }
-.fsize { position: relative; } .fsize input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
-.fsize span { display: grid; place-items: center; min-inline-size: 44px; block-size: 44px; padding-inline: 8px; border: 1px solid var(--n-500); border-radius: var(--r-12); font-weight: 700; font-size: 15px; background: #fff; }
-.fsize input:checked + span { background: var(--teal-600); border-color: var(--teal-600); color: #fff; }
-.fsize input:focus-visible + span { outline: 3px solid var(--teal-600); outline-offset: 2px; }
-.frange { position: relative; padding-block: 12px 0; }
-.frange__track { position: relative; block-size: 4px; background: var(--n-200); border-radius: 4px; margin-inline: 12px; }
-.frange__track i { position: absolute; inset-block: 0; inset-inline-start: var(--a); inset-inline-end: calc(100% - var(--b)); background: var(--teal-600); border-radius: 4px; }
-.frange input[type=range] { position: absolute; inset-inline: 0; inset-block-start: 2px; inline-size: 100%; block-size: 24px; margin: 0; background: none; pointer-events: none; -webkit-appearance: none; appearance: none; }
-.frange input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; pointer-events: auto; inline-size: 24px; block-size: 24px; border-radius: 99px; background: #fff; border: 2px solid var(--teal-600); cursor: pointer; }
-.frange input[type=range]::-moz-range-thumb { pointer-events: auto; inline-size: 20px; block-size: 20px; border-radius: 99px; background: #fff; border: 2px solid var(--teal-600); cursor: pointer; }
-.frange input[type=range]::-webkit-slider-runnable-track { background: none; }
-.frange input[type=range]:focus-visible { outline: none; } .frange input[type=range]:focus-visible::-webkit-slider-thumb { outline: 3px solid var(--teal-600); outline-offset: 2px; }
-.frange__labels { display: flex; justify-content: space-between; margin-block-start: 16px; color: var(--n-600); }
-.fswatches { display: flex; flex-wrap: wrap; gap: 4px; }
-.fswatch { position: relative; inline-size: 44px; block-size: 44px; display: grid; place-items: center; border-radius: 99px; }
-.fswatch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
-.fswatch span { inline-size: 32px; block-size: 32px; border-radius: 99px; border: 1px solid rgb(0 0 0 / .08); }
-.fswatch:has(input:checked) { box-shadow: inset 0 0 0 2px var(--teal-600); }
-.fswatch:has(input:focus-visible) { outline: 3px solid var(--teal-600); outline-offset: 2px; }
-.filters__act { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
-.modal__box--sheet .filters__act { position: sticky; inset-block-end: -24px; background: #fff; padding-block: 12px 24px; margin-block-end: -24px; }
-@media (min-width: 768px) { .shop__panel .filters { grid-template-columns: repeat(2, 1fr); gap: 24px 48px; } .shop__panel .filters__act { grid-column: 1 / -1; justify-self: start; grid-template-columns: auto auto; } }

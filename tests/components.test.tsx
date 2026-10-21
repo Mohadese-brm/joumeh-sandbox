@@ -16,7 +16,7 @@ const sale = { id: 1, slug: 'women-1', name: 'مانتو کتان کویری', s
 const rtl = (ui: React.ReactElement, path = '/') => render(<div lang="fa" dir="rtl"><MemoryRouter initialEntries={[path]}>{ui}</MemoryRouter></div>);
 
 describe('flags (decision log)', () => {
-  it('defaults match CEO/Emma decisions', () => { expect(flags).toEqual({ showDiscountBadge: true, filterMode: 'apply', heroMode: 'carousel', priceSize: '17px' }); });
+  it('defaults match CEO/Emma decisions', () => { expect(flags).toEqual({ showDiscountBadge: true, filterMode: 'off', heroMode: 'carousel', priceSize: '17px' }); });
 });
 
 describe('ProductCard', () => {
@@ -30,11 +30,11 @@ describe('ProductCard', () => {
     rerender(<div lang="fa" dir="rtl"><MemoryRouter><ProductCard product={{ ...sale, status: 'new', originalPrice: null, badgePercent: null }} /></MemoryRouter></div>);
     expect(screen.getByText('جدید')).toHaveClass('pc__badge--new');
   });
-  it('add-to-cart and favourite are buttons outside the link; favourite exposes aria-pressed', () => {
-    const add = vi.fn(), fav = vi.fn();
-    rtl(<ProductCard product={sale} onAddToCart={add} onToggleFavorite={fav} favorite />);
+  it('add-to-cart is a button outside the link; no favourite on cards (fix1 item 2)', () => {
+    const add = vi.fn();
+    rtl(<ProductCard product={sale} onAddToCart={add} />);
     const b = screen.getByRole('button', { name: /سبد خرید/ }); expect(b.closest('a')).toBeNull(); fireEvent.click(b); expect(add).toHaveBeenCalledWith(1);
-    const f = screen.getByRole('button', { name: /علاقه‌مندی/ }); expect(f).toHaveAttribute('aria-pressed', 'true'); fireEvent.click(f); expect(fav).toHaveBeenCalledWith(1);
+    expect(screen.queryByRole('button', { name: /علاقه‌مندی/ })).toBeNull(); expect(document.querySelector('.pc__fav')).toBeNull();
     expect(screen.getByRole('link')).toHaveAttribute('href', '/product/women-1');
   });
   it('image dimensions desktop/mobile', () => {
@@ -78,36 +78,21 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 const Loc = () => { const l = useLocation(); return <output data-testid="loc">{l.pathname + l.search}</output>; };
 
-describe('Shop filters: select-then-Apply (R-2 decided)', () => {
-  it('selections stay pending until Apply; Apply updates URL + request; reset clears', async () => {
-    const calls: string[] = [];
-    handler = url => {
-      if (url.startsWith('/api/products?')) { if (url.includes('page=')) calls.push(url); return { json: { data: [sale], total: url.includes('size=M') ? 1 : 9, totalPages: 1, page: 1 } }; }
-      if (url.startsWith('/api/filters')) return { json: { data: { types: ['مانتو'], sizes: ['S', 'M'], colors: [{ name: 'مشکی', hex: '#000' }], price: { min: 500000, max: 3000000 } } } };
-      return { status: 404, json: { error: 'not_found' } };
-    };
+describe('Shop: no filter UI, designed sort (fix1 items 3–4)', () => {
+  it('renders no filter controls', async () => {
+    handler = url => url.startsWith('/api/products?') ? { json: { data: [sale], total: 9, totalPages: 1, page: 1 } } : { status: 404, json: { error: 'not_found' } };
     rtl(<StoreProvider><Routes><Route path="/women" element={<><Shop category="women" /><Loc /></>} /></Routes></StoreProvider>, '/women');
     await screen.findByText('مانتو کتان کویری');
-    fireEvent.click(screen.getByRole('button', { name: /فیلترها/ }));
-    fireEvent.click(await screen.findByRole('checkbox', { name: 'M' }));
-    const before = calls.length;
-    await new Promise(r => setTimeout(r, 50));
-    expect(calls.length).toBe(before); expect(screen.getByTestId('loc').textContent).toBe('/women'); // pending, not applied
-    expect(await screen.findByRole('button', { name: 'نمایش ۱ محصول' })).toBeInTheDocument(); // live pending count
-    expect(screen.getByRole('checkbox', { name: 'مانتو' })).toBeInTheDocument(); expect(screen.getByRole('slider', { name: 'حداقل قیمت' })).toBeInTheDocument();
-    expect(screen.getByRole('checkbox', { name: 'مشکی' })).toBeInTheDocument(); expect(screen.queryByText('فقط کالاهای حراج')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'نمایش ۱ محصول' }));
-    await waitFor(() => expect(screen.getByTestId('loc').textContent).toBe('/women?size=M'));
-    await waitFor(() => expect(calls.at(-1)).toContain('size=M'));
-    fireEvent.click(screen.getByRole('button', { name: /فیلترها/ }));
-    fireEvent.click(await screen.findByRole('button', { name: 'پاک کردن' }));
-    await waitFor(() => expect(screen.getByTestId('loc').textContent).toBe('/women'));
+    expect(screen.queryByRole('button', { name: /فیلتر/ })).toBeNull(); expect(document.querySelector('.filters, .shop__panel')).toBeNull();
+    expect(document.querySelector('[data-figma="268:53379"]')).not.toBeNull();
   });
   it('sort change updates URL and resets page', async () => {
     handler = url => url.startsWith('/api/products?') ? { json: { data: [sale], total: 20, totalPages: 3, page: 2 } } : { json: { data: { sizes: [], colors: [] } } };
     rtl(<StoreProvider><Routes><Route path="/women" element={<><Shop category="women" /><Loc /></>} /></Routes></StoreProvider>, '/women?page=2');
     await screen.findByText('مانتو کتان کویری');
-    fireEvent.change(screen.getByLabelText('مرتب‌سازی'), { target: { value: 'price-asc' } });
+    fireEvent.click(document.getElementById('sort')!);
+    expect(screen.getByRole('option', { name: /جدیدترین/ })).toHaveAttribute('aria-selected', 'true');
+    fireEvent.click(screen.getByRole('option', { name: 'ارزان‌ترین' }));
     await waitFor(() => expect(screen.getByTestId('loc').textContent).toBe('/women?sort=price-asc'));
   });
 });

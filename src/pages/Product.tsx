@@ -8,6 +8,7 @@ import { Icon } from '../components/Icon';
 import { ProductGrid } from '../components/Grid';
 import { Modal } from '../components/Modal';
 import { Stub } from '../components/Stub';
+import { ReviewsSection } from '../components/Reviews';
 import { SizeGuide } from '../components/SizeGuide';
 import { flags } from '../config/flags';
 import { NotFound } from './NotFound';
@@ -68,7 +69,7 @@ export function Product() {
               <button type="button" onClick={() => setQty(q => Math.max(1, q - 1))} disabled={qty <= 1} aria-label="کاهش تعداد"><Icon name="minus" size={18} /></button>
             </div>
             <button type="button" className="btn btn--primary pdp__add" onClick={add} disabled={busy}><Icon name="bag-1" size={20} />{busy ? 'در حال افزودن…' : 'افزودن به سبد خرید'}</button>
-            <button type="button" className="icon-btn pdp__fav" aria-pressed={favorites.has(p.id)} aria-label={`${p.name} در علاقه‌مندی‌ها`} onClick={() => toggleFavorite(p.id)}><Icon name="heart-1" /></button>
+            <button type="button" className="pdp__fav" data-figma={favorites.has(p.id) ? '266:67406' : '266:67401'} aria-pressed={favorites.has(p.id)} aria-label={`${p.name} در علاقه‌مندی‌ها`} onClick={() => toggleFavorite(p.id)}><Icon name={favorites.has(p.id) ? 'heart-2' : 'heart-1'} /></button>
           </div>
           <ul className="pdp__facts">
             <li><Icon name="tick" size={18} /><span>موجودی: در انتظار تصمیم کسب‌وکار (BD-16)</span></li>
@@ -82,10 +83,8 @@ export function Product() {
             <button type="button" key={k} aria-label={`نمایش عکس ${faNumber(k + 1)}`} aria-current={k === img} onClick={() => setImg(k)}><img src={im.url} alt="" width={96} height={120} loading="lazy" /></button>))}</div>}
         </div>
       </div>
-      <section className="pdp__sec" aria-labelledby="rev-h">
-        <h2 id="rev-h" className="h-section">نظرات کاربران</h2>
-        <Stub code="BD-15">نظرات و امتیازها پس از تصمیم درباره‌ی بخش نظرات نمایش داده می‌شوند. نظرهای نمونه‌ی فیگما عمداً نمایش داده نشده‌اند.</Stub>
-      </section>
+      {/* fix1 item 5: Reviews 266:71769 (m 266:71829). No review data source yet (BD-15) → designed «No reviews» state. */}
+      <ReviewsSection />
       {p.related.length > 0 && <section className="pdp__sec" aria-labelledby="rel-h">
         <div className="sec-head"><h2 id="rel-h" className="h-section">محصولات مشابه</h2><Link to={`/${p.category}`} className="more">مشاهده همه <Icon name="left-2" size={16} /></Link></div>
         <div className="pgrid--4"><ProductGrid products={p.related} /></div>

@@ -60,10 +60,10 @@
     "horizontalOverflow": false
   },
   {
-    "page": "women-filter",
+    "page": "women-sort",
     "viewport": "desktop 1280",
     "path": "/women",
-    "screenshot": "shots/women-filter-desktop.png",
+    "screenshot": "shots/women-sort-desktop.png",
     "axeViolations": 0,
     "violations": [],
     "consoleErrors": [],
@@ -362,10 +362,10 @@
     "horizontalOverflow": false
   },
   {
-    "page": "men-filter",
+    "page": "men-sort",
     "viewport": "desktop 1280",
     "path": "/men",
-    "screenshot": "shots/men-filter-desktop.png",
+    "screenshot": "shots/men-sort-desktop.png",
     "axeViolations": 0,
     "violations": [],
     "consoleErrors": [],
@@ -632,10 +632,10 @@
     "horizontalOverflow": false
   },
   {
-    "page": "women-filter",
+    "page": "women-sort",
     "viewport": "mobile 375",
     "path": "/women",
-    "screenshot": "shots/women-filter-mobile.png",
+    "screenshot": "shots/women-sort-mobile.png",
     "axeViolations": 0,
     "violations": [],
     "consoleErrors": [],
@@ -934,10 +934,10 @@
     "horizontalOverflow": false
   },
   {
-    "page": "men-filter",
+    "page": "men-sort",
     "viewport": "mobile 375",
     "path": "/men",
-    "screenshot": "shots/men-filter-mobile.png",
+    "screenshot": "shots/men-sort-mobile.png",
     "axeViolations": 0,
     "violations": [],
     "consoleErrors": [],

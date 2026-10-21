@@ -11,7 +11,7 @@ for (const [k, v] of Object.entries(raw)) {
   const F = FRAME[name] ?? 24;
   icons[name] = v.replace(/viewBox="[^"]*"/, `viewBox="${(-(F - w) / 2).toFixed(3)} ${(-(F - h) / 2).toFixed(3)} ${F} ${F}"`).replace(/ overflow="visible"/, '').replace(/ id="[^"]*"/g, '').replace(/(stroke|fill)="#[0-9A-F]{6}"/gi, '$1="currentColor"').replace(/ style="[^"]*"/g, '').replace(/preserveAspectRatio="none"/, '').replace(/ width="[^"]*" height="[^"]*"/, ' width="100%" height="100%"');
 }
-export type IconName = 'add' | 'bag-1' | 'category' | 'close-circle' | 'close' | 'danger-circle' | 'heart-1' | 'home-1' | 'information-circle' | 'left-2' | 'minus' | 'profile-1' | 'right-2' | 'search-1' | 'send-1' | 'tick'
+export type IconName = 'add' | 'bag-1' | 'category' | 'close-circle' | 'close' | 'danger-circle' | 'heart-1' | 'heart-2' | 'home-1' | 'information-circle' | 'left-2' | 'minus' | 'profile-1' | 'right-2' | 'search-1' | 'send-1' | 'tick'
   | 'nav-home' | 'nav-orders' | 'nav-returns' | 'nav-location' | 'nav-heart' | 'nav-card' | 'nav-support' | 'nav-settings' | 'nav-logout' | 'trash' | 'shield-tick' | 'card-lg' | 'menu';
 export function Icon({ name, size = 24, className = '' }: { name: IconName; size?: number; className?: string }) {
   return <span className={`icon ${className}`} style={{ inlineSize: size, blockSize: size }} aria-hidden="true" dangerouslySetInnerHTML={{ __html: icons[name] ?? '' }} />;

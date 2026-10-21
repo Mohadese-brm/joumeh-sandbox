@@ -1,0 +1,39 @@
+/* fix1 item 5 — Review / Section 266:71080, Review / Form 266:71357, Star Rating 266:70941 (spec: reports/fix-spec-5-mismatches-2026-10-21.md §5) */
+.revs { display: flex; flex-direction: column; gap: 24px; margin-block-start: 80px; }
+.revs__head { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.revs__title { margin: 0; font-size: 24px; font-weight: 700; line-height: 36px; color: #1c1917; }
+.revs__add.btn { background: #ffe8d3; color: #5b4438; min-block-size: 48px; padding: 12px 24px; border-radius: 12px; font-size: 16px; line-height: 24px; font-weight: 500; }
+.revs__box, .revs__sum { background: #f4f3f1; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 4px; }
+.revs__nt { margin: 0; font-weight: 700; color: #1c1917; } .revs__ns { margin: 0; color: #57534e; font-size: 14px; }
+.revs__errt { margin: 0; color: #b41c1c; } .revs__retry { align-self: flex-start; border: 0; background: none; padding: 0; color: #15595b; text-decoration: underline; cursor: pointer; font: inherit; min-block-size: 24px; }
+.revs__sk { display: block; block-size: 14px; border-radius: 7px; background: #78716c; opacity: .35; inline-size: 60%; } .revs__sk--s { inline-size: 35%; }
+.revs__avg { display: flex; flex-direction: column; gap: 4px; }
+.revs__score { font-size: 36px; font-weight: 700; color: #1c1917; line-height: 1.2; } .revs__stars { font-size: 18px; font-weight: 500; color: #15595b; } .revs__based { font-size: 12px; color: #57534e; }
+.revs__list { list-style: none; margin: 0; padding: 0; display: flex; gap: 16px; }
+.revc { flex: 1 1 0; background: #fff; border: 1px solid #78716c; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 8px; }
+.revc__top { display: flex; justify-content: space-between; font-size: 14px; font-weight: 500; } .revc__name { color: #1c1917; } .revc__stars { color: #15595b; }
+.revc__meta { margin: 0; font-size: 12px; color: #57534e; } .revc__body { margin: 0; font-size: 14px; color: #1c1917; }
+@media (max-width: 767px) { .revs { margin-block-start: 48px; gap: 16px; } .revs__list { flex-direction: column; } }
+/* Form */
+.modal__box:has(.revf) { inline-size: min(560px, 100%); border-radius: 16px; padding: 24px; }
+@media (max-width: 767px) { .modal__box--sheet:has(.revf) { inline-size: 100%; border-radius: 16px 16px 0 0; } }
+.modal__box:has(.revf) .modal__title { font-size: 20px; font-weight: 700; }
+.revf { display: flex; flex-direction: column; gap: 16px; }
+.revf__grp { display: flex; flex-direction: column; gap: 8px; }
+.revf__lbl { font-size: 14px; line-height: 20px; font-weight: 500; color: #1c1917; }
+.revf__ta { block-size: 120px; box-sizing: border-box; padding: 12px 16px; border: 1px solid #78716c; border-radius: 12px; font: inherit; font-size: 16px; resize: vertical; background: #fff; }
+.revf__ta:focus-visible { outline: none; border: 2px solid #15595b; padding: 11px 15px; }
+.revf__ta.is-err { border: 2px solid #b41c1c; padding: 11px 15px; }
+.revf__help { margin: 0; font-size: 12px; color: #57534e; } .revf__err { margin: 0; font-size: 12px; color: #b41c1c; } .revf__fail { margin: 0; font-size: 14px; font-weight: 500; color: #b41c1c; }
+.revf__act { display: flex; gap: 12px; } .revf__act .btn { min-block-size: 48px; border-radius: 12px; }
+.revf__act .btn--outline { border: 1px solid #1c7477; color: #15595b; }
+.revf__ok { background: #f4f3f1; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+.revf__okic { inline-size: 48px; block-size: 48px; border-radius: 99px; background: #0c652d; color: #fff; display: grid; place-items: center; font-size: 24px; font-weight: 700; }
+.revf__okt { margin: 0; font-size: 18px; font-weight: 700; } .revf__oks { margin: 0; font-size: 14px; color: #57534e; }
+.revf__full { inline-size: 100%; min-block-size: 48px; border-radius: 12px; }
+.stars { display: flex; gap: 4px; }
+.stars__s { position: relative; display: grid; place-items: center; min-inline-size: 27px; block-size: 44px; font-size: 28px; font-weight: 500; color: #e7e5e2; cursor: pointer; }
+.stars__s.is-on { color: #15595b; }
+.stars__s input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.stars__s:has(input:focus-visible) { outline: 3px solid var(--teal-600); outline-offset: 2px; border-radius: 6px; }
+.stars[aria-invalid] .stars__s:not(.is-on) { color: #d6d3cf; }

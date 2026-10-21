@@ -27,3 +27,9 @@ All times Asia/Tehran.
 ## Round 3 (2026-10-21)
 - Mobile auth dialogs are a centred 343px card (108:6003); sheets only for filter, sort and size guide.
 - Demo OTP: explicit opt-in JOUMEH_DEMO_OTP=1, off by default, forced off on Vercel.
+
+## fix1 — CEO review 2026-10-21 17:34 Tehran (relayed by Totoro; spec: reports/fix-spec-5-mismatches-2026-10-21.md by Emma)
+- **Filter removed** (desktop panel + mobile sheet + «فیلترها» button). Supersedes R-2 select-then-Apply (row above) and P4/M2. `flags.filterMode: 'off'`. API filter params remain (unused by the UI). Figma still shows filter UI on 56:921 / 56:1968 / 69:15332 / 69:15505 → Figma follow-up for the CEO.
+- **Card heart removed**; heart stays only on the PDP (Favorite Toggle 266:67491 / m 266:70611). Figma Card Shop 87:16741 still has it → follow-up. Favourites page keeps the red remove link (127:468); whether Favorites cards should have a heart: open (CEO).
+- **Reviews**: UI built per 266:71080 / 266:71357 with no backend. BD-15 (ship or not, eligibility, moderation, length rules) still open; section shows the designed «No reviews» state; submit is a labelled stub that does not persist.
+

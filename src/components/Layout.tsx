@@ -20,12 +20,12 @@ function SearchBox({ onClose }: { onClose: () => void }) {
     return () => clearTimeout(t);
   }, [q]);
   return (
-    <div className="search" role="search" onKeyDown={e => e.key === 'Escape' && onClose()}>
+    <div className="search" data-figma="116:2267" role="search" onKeyDown={e => e.key === 'Escape' && onClose()}>
       <div className="search__box">
         <Icon name="search-1" size={20} />
         <label htmlFor="q" className="sr-only">جستجو</label>
-        <input id="q" ref={ref} value={q} onChange={e => setQ(e.target.value)} placeholder="جستجو در جومه" autoComplete="off" aria-controls="search-results" />
-        <button type="button" className="icon-btn" onClick={onClose} aria-label="بستن جستجو"><Icon name="close" size={20} /></button>
+        <input id="q" ref={ref} value={q} onChange={e => setQ(e.target.value)} placeholder="جست‌وجوی محصولات..." autoComplete="off" aria-controls="search-results" />
+        <button type="button" className="search__close" onClick={onClose} aria-label="بستن جستجو"><Icon name="close" size={20} /></button>
       </div>
       {(res || err) && (
         <div className="search__panel" id="search-results" aria-live="polite">
