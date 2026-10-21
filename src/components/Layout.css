@@ -58,3 +58,6 @@
   /* fix2: flat, full width under the field (116:2624): no border, shadow or radius; padding-block 8. */
   .search__panel { position: static; border: 0; border-radius: 0; box-shadow: none; padding: 8px 0; background: #fff; }
 }
+/* fix2c: header search icon has no fill in any state (Figma 54:333 / 116:2609); keyboard focus keeps a ring only. */
+.hdr__search, .hdr__search:hover, .hdr__search:active, .hdr__search:focus, .hdr__search[aria-expanded="true"] { background: transparent; }
+.hdr__search:focus-visible { outline: 3px solid var(--teal-600); outline-offset: -3px; background: transparent; }
