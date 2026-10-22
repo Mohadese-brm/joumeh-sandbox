@@ -3,7 +3,7 @@
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
 const BASE = process.env.BASE ?? 'http://127.0.0.1:4180';
-const OUT = new URL('../../../reports/shots/', import.meta.url).pathname; mkdirSync(OUT, { recursive: true });
+const OUT = new URL(process.env.SHOTS ?? '../../../reports/shots/', import.meta.url).pathname; mkdirSync(OUT, { recursive: true });
 const b = await chromium.launch(); const page = await b.newPage({ viewport: { width: 1440, height: 900 } });
 // JS exceptions fail the run; HTTP 4xx console lines come from the intentional error-path checks (403/400/409) and are only listed.
 const errors = []; const httpErr = []; page.on('pageerror', e => errors.push(String(e))); page.on('console', m => m.type() === 'error' && (m.text().startsWith('Failed to load resource') ? httpErr : errors).push(m.text()));
@@ -21,67 +21,87 @@ await page.fill('input[inputmode=numeric]', '09120000001'); await page.click('bu
 await page.waitForLoadState('networkidle'); await shot('dashboard');
 ok('dashboard: KPIs + recent orders', (await page.locator('.adm-kpi').count()) === 8 && (await page.locator('.adm-table tbody tr').count()) === 5);
 ok('dashboard: banner on every screen', await banner());
+ok('r2 S1: dashboard nav item active on /admin', (await page.locator('.adm-side a.on').innerText()).includes('داشبورد'));
+ok('r2 S2: open-orders count pill on Orders nav', (await page.locator('.adm-side a', { hasText: 'سفارش‌ها' }).locator('.cnt').count()) === 1);
+ok('r2 D1: KPI chart icons', (await page.locator('.adm-kpi img[src*="Chart"]').count()) === 8);
 
 await go('/admin/products', 'products');
 ok('products: list 10 rows, 43 total', (await page.locator('tbody tr').count()) === 10 && (await text()).includes('۴۳ محصول'));
 await page.click('role=tab[name=/پیش‌نویس/]'); await page.waitForTimeout(300);
 ok('products: draft tab filters', (await page.locator('tbody tr').count()) === 2);
+ok('r2 P2: filters row with more-filters ghost', (await page.locator('.adm-filters button:has-text("فیلترهای بیشتر")').count()) === 1);
 await go('/admin/products/new'); await page.click('text=ذخیره پیش‌نویس'); await page.waitForTimeout(300);
 ok('products: create validation errors', (await page.locator('.err').count()) >= 3); await shot('products-create-error');
+ok('r2 E4: top danger banner, no red toast', (await page.locator('.adm-banner.danger').innerText()).includes('خطا') && !(await page.locator('.adm-toast.err, .adm-toast.error').count()));
 const inputs = page.locator('.adm-card input.adm-input');
 await inputs.nth(0).fill('مانتو آزمایشی'); await inputs.nth(1).fill('test-e2e'); await page.selectOption('.adm-card select >> nth=0', '1');
 await page.locator('input[inputmode=numeric]').first().fill('990000'); await page.click('text=ذخیره پیش‌نویس'); await page.waitForURL(/\/admin\/products\/\d+$/); await page.waitForLoadState('networkidle');
 ok('products: draft created', (await text()).includes('پیش‌نویس'));
 await page.click('button:has-text("انتشار")'); await page.click('.adm-modal button:has-text("انتشار")'); await page.waitForTimeout(400);
-ok('products: published', (await page.locator('.adm-head .adm-badge').innerText()).includes('منتشر شده'));
+ok('products: published', (await page.locator('section:has(h2:text-is("وضعیت")) .adm-badge').innerText()).includes('منتشر شده'));
 const shop = await (await page.request.get(BASE + '/api/products/test-e2e')).json(); ok('products: visible in shop after publish', shop.data?.name === 'مانتو آزمایشی');
 await go('/admin/products/1', 'product-edit');
 ok('products: edit shows variants + BD-10 stub', (await text()).includes('BD-10') && (await page.locator('tbody tr').count()) === 10);
+ok('r2 E1: status + publish checklist side cards', (await text()).includes('چک‌لیست انتشار') && (await page.locator('.adm-check-list li').count()) === 6);
+ok('r2 E2/E3: archive is danger, variant status badges', (await page.locator('.adm-btn.danger', { hasText: 'بایگانی' }).count()) === 1 && (await page.locator('tbody .adm-badge').count()) === 10);
 await go('/admin/categories', 'categories'); ok('categories: list', (await page.locator('tbody tr').count()) >= 2);
+await page.click('button:has-text("افزودن دسته")'); await shot('categories-modal');
+await page.locator('.adm-modal input').nth(0).fill('زیردسته آزمایشی'); await page.locator('.adm-modal input').nth(1).fill('e2e-sub');
+await page.selectOption('.adm-modal select', { index: 1 }); await page.click('.adm-modal .adm-modal-foot button:has-text("افزودن دسته")'); await page.waitForTimeout(400);
+ok('r2 C1: add-category modal creates a child row in the tree', (await page.locator('tbody tr.child', { hasText: 'زیردسته آزمایشی' }).count()) === 1);
+await page.locator('tbody tr >> nth=0').locator('.adm-ovf-btn').click();
+ok('r2 C1: overflow has ویرایش, delete disabled', (await page.locator('[role=menuitem]:has-text("ویرایش")').count()) === 1 && await page.locator('[role=menuitem]:has-text("حذف")').isDisabled());
+await page.keyboard.press('Escape'); await page.mouse.click(5, 5);
 
 await go('/admin/orders', 'orders'); ok('orders: list 10', (await page.locator('tbody tr').count()) === 10);
+ok('r2 O1: channel + fulfilment columns, export disabled', (await text()).includes('کانال') && (await page.locator('th', { hasText: 'ارسال' }).count()) >= 1 && await page.locator('button:has-text("خروجی")').isDisabled());
 await page.fill('input[placeholder*="شماره سفارش"]', '10124'); await page.waitForTimeout(400); ok('orders: search', (await page.locator('tbody tr').count()) === 1);
 await go('/admin/orders/10124', 'order-detail');
 ok('orders: detail with BD stubs', (await text()).includes('BD-02') && (await text()).includes('BD-06'));
 await page.click('button:has-text("ثبت ارسال")'); await page.click('.adm-modal button:has-text("تأیید")'); await page.waitForTimeout(400);
 ok('orders: status → shipped', (await page.locator('.adm-badge', { hasText: 'ارسال شده' }).count()) >= 1);
 await page.fill('textarea', 'یادداشت آزمایشی'); await page.click('button:has-text("ثبت یادداشت")'); await page.waitForTimeout(300); ok('orders: note added', (await text()).includes('یادداشت آزمایشی'));
-await go('/admin/orders/10122'); await page.click('button:has-text("لغو سفارش")'); await page.click('.adm-modal button:has-text("لغو سفارش")'); await page.waitForTimeout(300);
-ok('orders: cancel requires reason', (await page.locator('.adm-modal .err').count()) === 1); await shot('order-cancel-modal');
-await page.fill('.adm-modal textarea', 'درخواست مشتری'); await page.click('.adm-modal button:has-text("لغو سفارش")'); await page.waitForTimeout(400);
+await go('/admin/orders/10122'); await page.click('.adm-actions button:has-text("بیشتر")'); await page.click('[role=menuitem]:has-text("لغو سفارش")'); await page.click('.adm-modal button:has-text("لغو سفارش")'); await page.waitForTimeout(300);
+ok('orders: cancel requires reason', (await page.locator('.adm-modal .err').count()) === 1);
+await page.mouse.move(5, 5);
+ok('r2 M1–M3: modal 560 + ×, reason select, warning banner, tinted danger', (await page.locator('.adm-modal').evaluate(e => Math.round(e.getBoundingClientRect().width))) === 560 && (await page.locator('.adm-modal .adm-x').count()) === 1 && (await page.locator('.adm-modal select').count()) === 1 && (await page.locator('.adm-modal .adm-banner.warning').innerText()).includes('BD-05') && (await page.locator('.adm-modal .adm-btn.danger').evaluate(e => getComputedStyle(e).backgroundColor)) === 'rgb(253, 242, 242)');
+await page.selectOption('.adm-modal select', 'درخواست مشتری'); await shot('order-cancel-modal'); await page.fill('.adm-modal textarea', 'توضیح آزمایشی'); await page.click('.adm-modal button:has-text("لغو سفارش")'); await page.waitForTimeout(400);
 ok('orders: cancelled', (await page.locator('.adm-head ~ div .adm-badge', { hasText: 'لغو شده' }).count()) === 1);
 
 await go('/admin/customers', 'customers'); ok('customers: list 6', (await page.locator('tbody tr').count()) === 6);
 await page.click('tbody tr >> nth=0'); await page.waitForLoadState('networkidle'); await shot('customer-profile'); ok('customers: profile', (await text()).includes('آدرس‌ها'));
+await page.fill('textarea', 'یادداشت مشتری آزمایشی'); await page.click('button:has-text("ثبت یادداشت")'); await page.waitForTimeout(300); ok('r2 CU2: customer internal note', (await text()).includes('یادداشت مشتری آزمایشی'));
 
 await go('/admin/reviews', 'reviews');
 ok('reviews: pending-design label', (await text()).includes('در انتظار طراحی'));
 ok('reviews: 5 rows', (await page.locator('tbody tr').count()) === 5);
-const hidden0 = await page.locator('tbody .adm-badge', { hasText: 'پنهان' }).count();
-await page.locator('button:has-text("پنهان کردن")').first().click(); await page.waitForTimeout(400);
-ok('reviews: hide', (await page.locator('tbody .adm-badge', { hasText: 'پنهان' }).count()) === hidden0 + 1);
+ok('r2 reviews: hide/delete disabled, labelled pending decision', await page.locator('button:has-text("پنهان کردن")').first().isDisabled() && await page.locator('tbody button:has-text("حذف")').first().isDisabled() && (await text()).includes('در انتظار تصمیم'));
 
 await go('/admin/content', 'content'); ok('content: hero form + 3 sections', (await page.locator('.adm-sec').count()) === 3);
+ok('r2 CT1: preview button next to publish', (await page.locator('.adm-actions a:has-text("پیش‌نمایش")').count()) === 1);
 await page.click('role=tab[name="صفحات و قوانین"]'); await page.waitForTimeout(200); await shot('content-pages');
 await page.click('tbody tr >> nth=0'); await page.waitForLoadState('networkidle');
 await page.fill('textarea', 'متن آزمایشی ارسال'); await page.click('button:has-text("انتشار")'); await page.waitForTimeout(400); await shot('content-edit');
 await go('/info/shipping'); ok('content: published page shows in shop', (await text()).includes('متن آزمایشی ارسال'));
 
 await go('/admin/settings/users', 'settings-users'); ok('settings: 4 admin users + matrix', (await page.locator('tbody tr').count()) >= 4 + 6);
-await page.click('button:has-text("دعوت کاربر")'); await page.click('.adm-modal button:has-text("ثبت دعوت")'); await page.waitForTimeout(300);
-ok('settings: invite validation', (await page.locator('.adm-modal .err').count()) >= 2); await shot('settings-invite');
+await page.click('button:has-text("دعوت کاربر")'); await page.click('.adm-modal button:has-text("ارسال دعوت")'); await page.waitForTimeout(300);
+ok('settings: invite validation', (await page.locator('.adm-modal .err').count()) >= 2);
+await page.click('.adm-modal [role=combobox]'); await page.click('.adm-ms-list label >> nth=1'); await page.click('.adm-ms-list label >> nth=2'); await page.click('.adm-modal h2, .adm-modal-head');
+ok('r2 U2: multi-select tags + BD-13 info banner', (await page.locator('.adm-ms-tag').count()) === 2 && (await page.locator('.adm-modal .adm-banner.info').innerText()).includes('BD-13')); await shot('settings-invite');
 await page.keyboard.press('Escape');
-await page.click('tbody tr >> nth=0 >> button:has-text("ویرایش")'); await page.uncheck('.adm-modal label:has-text("مدیر کل") input'); await page.click('.adm-modal button:has-text("ذخیره")'); await page.waitForTimeout(300);
+await page.locator('tbody tr >> nth=0').locator('.adm-ovf-btn').click(); await page.click('[role=menuitem]:has-text("ویرایش")'); await page.uncheck('.adm-modal label:has-text("مدیر کل") input'); await page.click('.adm-modal button:has-text("ذخیره")'); await page.waitForTimeout(300);
 ok('settings: last-owner protection', (await text()).includes('حداقل یک مدیر کل')); await page.keyboard.press('Escape');
 await go('/admin/settings/audit', 'settings-audit'); ok('audit: entries logged', (await page.locator('tbody tr').count()) >= 6);
+ok('r2 U3: audit filters + disabled export', (await page.locator('.adm-filters').count()) === 1 && await page.locator('button:has-text("خروجی")').isDisabled());
 
 // Role check: catalog manager
 await page.click('button[aria-label="خروج"]'); await page.waitForSelector('.adm-login');
 await page.click('.adm-accts button:has-text("مسئول محصولات")'); await page.waitForSelector('.adm-side');
-ok('roles: deep link to a forbidden page after login shows no-permission', (await text()).includes('به این بخش دسترسی ندارید'));
+ok('roles: deep link to a forbidden page after login shows no-permission', (await page.locator('.adm-noperm').count()) === 1);
 await go('/admin'); await page.waitForSelector('.adm-kpis');
 ok('roles: catalog manager sees no Orders/Settings nav', !(await page.locator('.adm-side a', { hasText: 'سفارش‌ها' }).count()) && !(await page.locator('.adm-side a', { hasText: 'تنظیمات' }).count()));
-await go('/admin/orders', 'no-permission'); ok('roles: no-permission state', (await text()).includes('به این بخش دسترسی ندارید'));
+await go('/admin/orders', 'no-permission'); ok('r2 N1: no-permission card under the page title', (await page.locator('.adm-head h1').innerText()) === 'سفارش‌ها' && (await page.locator('.adm-noperm').innerText()).includes('دسترسی ندارید') && (await text()).includes('این بخش برای نقش شما فعال نیست.') && (await page.locator('.adm-noperm .adm-lock img').count()) === 1);
 
 // Shop smoke (unchanged storefront)
 await go('/'); ok('shop: home renders, no admin banner', !(await page.locator('.adm-demo').count()) && (await page.locator('header').count()) >= 1);

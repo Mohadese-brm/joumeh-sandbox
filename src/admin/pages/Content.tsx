@@ -11,7 +11,7 @@ export function Content() {
   const { data, error, loading, reload } = useLoad<any>(can(me, 'content') ? '/content' : null);
   const [h, setH] = useState<any>(null); const [errs, setErrs] = useState<Record<string, string>>({});
   useEffect(() => { if (data) setH(data.home); }, [data]);
-  if (!can(me, 'content')) return <NoPermission />;
+  if (!can(me, 'content')) return <NoPermission crumb="مالی و بازاریابی / محتوای سایت" title="محتوای سایت" />;
   if (loading && !data) return <Loading />; if (error) return <ErrorState retry={reload} />;
   const edit = can(me, 'content', 'edit');
   const save = async () => { setErrs({}); try { await aapi('/content/home', { method: 'PUT', body: h }); toast('محتوای صفحه اصلی ذخیره شد'); reload(); } catch (e) { setErrs((e as AdminApiError).fields ?? {}); toast('ذخیره انجام نشد', true); } };
@@ -19,7 +19,7 @@ export function Content() {
   const move = (i: number, d: number) => { const s = [...h.sections]; const j = i + d; if (j < 0 || j >= s.length) return; [s[i], s[j]] = [s[j], s[i]]; setH({ ...h, sections: s }); };
   return <>
     <PageTitle crumb="مالی و بازاریابی / محتوای سایت" title={tab === 'home' ? 'محتوای صفحه اصلی' : 'صفحات و قوانین'} sub="تغییرات فقط پس از «انتشار» در سایت دیده می‌شود"
-      actions={tab === 'home' && edit && <Button kind="primary" onClick={save}>انتشار</Button>} />
+      actions={tab === 'home' && edit && <><Button kind="primary" ico="Upload" onClick={save}>انتشار</Button><a className="adm-btn" href="/" target="_blank" rel="noreferrer"><img src="/admin-icons/Show.svg" alt="" />پیش‌نمایش</a></>} />
     <Tabs items={[['home', 'صفحه اصلی'], ['pages', 'صفحات و قوانین']]} value={tab} onChange={setTab} />
     {tab === 'home' && h && <>
       <section className="adm-card"><h2>بنر اصلی (ثابت)</h2>
@@ -46,7 +46,7 @@ export function ContentPage() {
   const { data, error, loading, reload } = useLoad<any>(can(me, 'content') ? `/content/pages/${slug}` : null);
   const [p, setP] = useState<any>(null); const [errs, setErrs] = useState<Record<string, string>>({});
   useEffect(() => { if (data) setP(data); }, [data]);
-  if (!can(me, 'content')) return <NoPermission />;
+  if (!can(me, 'content')) return <NoPermission crumb="مالی و بازاریابی / محتوای سایت" title="محتوای سایت" />;
   if (loading && !p) return <Loading />; if (error) return error.status === 404 ? <Empty title="صفحه پیدا نشد" /> : <ErrorState retry={reload} />;
   const edit = can(me, 'content', 'edit');
   const save = async (published: boolean) => { setErrs({}); try { const r = await aapi(`/content/pages/${slug}`, { method: 'PUT', body: { ...p, published } }); setP(r.data); toast(published ? 'صفحه منتشر شد' : 'پیش‌نویس ذخیره شد'); } catch (e) { setErrs((e as AdminApiError).fields ?? {}); toast('ذخیره انجام نشد', true); } };

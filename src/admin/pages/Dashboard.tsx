@@ -19,8 +19,10 @@ export function Dashboard() {
     ['نظرات', faNumber(d.reviews), 'همه‌ی نظرات ثبت‌شده'],
   ];
   return <>
-    <PageTitle crumb="داشبورد" title="داشبورد" sub={<>سلام {me.name}! کارهای امروز اینجاست. همه اعداد «داده نمونه» هستند. <Stub code="ADMIN-PH-KPI">تعریف شاخص‌ها</Stub></>} />
-    <div className="adm-kpis">{k.map(([l, v, s]) => <div key={l} className="adm-kpi"><span className="lab">{l}</span><span className="val">{v}</span><small>{s}</small></div>)}</div>
+    <PageTitle crumb="داشبورد" title="داشبورد" sub={<>سلام {me.name}! کارهای امروز اینجاست. همه اعداد «داده نمونه» هستند. <Stub code="ADMIN-PH-KPI">تعریف شاخص‌ها</Stub></>}
+      actions={<label className="adm-field" title="بازه‌ی زمانی در نسخه‌ی نمایشی فعال نیست (فاز ۲)"><span>بازه</span>
+        <span className="adm-input" aria-disabled="true" style={{ display: 'flex', alignItems: 'center', gap: 8, width: 200, background: 'var(--s-neutral-bg)', color: 'var(--a-text-2)' }}><img src="/admin-icons/Calender1.svg" alt="" />امروز (نمونه)</span></label>} />
+    <div className="adm-kpis">{k.map(([l, v, s]) => <div key={l} className="adm-kpi"><div className="adm-kpi-top"><span className="lab">{l}</span><img src="/admin-icons/Chart.svg" alt="" width="20" height="20" style={{ padding: 2 }} /></div><span className="val">{v}</span><small>{s}</small></div>)}</div>
     <div className="adm-grid2">
       <section className="adm-card"><div className="adm-card-head"><h2>سفارش‌های اخیر</h2>{can(me, 'orders') && <Link className="adm-btn sm" to="/admin/orders">مشاهده همه</Link>}</div>
         <Table head={['سفارش', 'مشتری', 'اقلام', 'مبلغ (تومان)', 'پرداخت', 'وضعیت سفارش', 'زمان']}>

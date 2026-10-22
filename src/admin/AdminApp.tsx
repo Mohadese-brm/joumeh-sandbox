@@ -4,6 +4,7 @@ import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'reac
 import './admin.css';
 import { aapi, getAdminToken, setAdminToken, AdminApiError, type Me, type Level } from './api';
 import { Button, Field, Ico, Toasts, fa } from './ui';
+import { faNumber } from '../lib/format';
 import { Dashboard } from './pages/Dashboard';
 import { ProductsList, ProductEdit, Categories } from './pages/Products';
 import { OrdersList, OrderDetail } from './pages/Orders';
@@ -29,26 +30,29 @@ const NAV: Nav[] = [
 ];
 
 function Shell({ me, onLogout }: { me: Me; onLogout: () => void }) {
-  const nav = useNavigate();
+  const nav = useNavigate(); const loc = useLocation();
+  const [counts, setCounts] = useState<{ openOrders: number }>({ openOrders: 0 });
+  useEffect(() => { aapi('/me').then(r => setCounts(r.counts ?? { openOrders: 0 })).catch(() => {}); }, [loc.pathname]);
   const [q, setQ] = useState('');
   return <div className="adm-shell">
     <aside className="adm-side" aria-label="منوی مدیریت">
       <div className="adm-brand"><div className="adm-logo">ج</div><div><b>جومه</b><small>پنل مدیریت</small></div></div>
       {NAV.map((n, i) => n.length === 1 ? <div key={i} className="adm-group">{n[0]}</div>
-        : n[0] === '#' ? <span key={i} className="adm-nav off" title="فاز ۲ — خارج از دامنه‌ی MVP"><Ico n={n[2]} />{n[1]}<span className="cnt">فاز ۲</span></span>
+        : n[0] === '#' ? <span key={i} className="adm-nav off" title="فاز ۲ — خارج از دامنه‌ی MVP"><Ico n={n[2]} />{n[1]}<span className="adm-badge neutral nodot" style={{ marginInlineStart: 'auto' }}>فاز ۲</span></span>
         : n[3] && !can(me, n[3]) ? null
-        : <NavLink key={i} end={n[0] === ''} to={`/admin/${n[0]}`} className={({ isActive }) => `adm-nav${isActive ? ' on' : ''}`}><Ico n={n[2]} />{n[1]}</NavLink>)}
+        : <NavLink key={i} end={n[0] === ''} to={n[0] ? `/admin/${n[0]}` : '/admin'} className={({ isActive }) => `adm-nav${isActive ? ' on' : ''}`}><Ico n={n[2]} />{n[1]}
+          {n[0] === 'orders' && counts.openOrders > 0 && <span className="cnt" aria-label={`${counts.openOrders} سفارش باز`}>{faNumber(counts.openOrders)}</span>}</NavLink>)}
       <div className="adm-me"><div className="adm-avatar"><img src="/admin-icons/Profile1.svg" alt="" /></div><div className="who"><b>{me.name}</b><small>{me.roleLabels.join('، ')}</small></div>
         <button className="adm-btn sm" onClick={onLogout} aria-label="خروج"><img src="/admin-icons/Logout.svg" alt="" /></button></div>
     </aside>
     <div className="adm-main">
       <header className="adm-top">
         <form className="adm-search" role="search" onSubmit={e => { e.preventDefault(); if (q.trim()) nav(`/admin/orders?q=${encodeURIComponent(q.trim())}`); }}>
-          <img src="/admin-icons/Search1.svg" alt="" /><input aria-label="جستجوی سفارش" placeholder="جستجوی سفارش یا مشتری…" value={q} onChange={e => setQ(e.target.value)} /></form>
+          <img src="/admin-icons/Search1.svg" alt="" /><input aria-label="جستجوی سفارش" placeholder="جستجوی سفارش، محصول یا مشتری..." value={q} onChange={e => setQ(e.target.value)} /></form>
         <span className="sp" />
         <span className="adm-pill">داده نمونه · نمونه اولیه</span>
         <span className="adm-ico" title="اعلان‌ها — فاز ۲"><img src="/admin-icons/Notification1.svg" alt="اعلان‌ها (فاز ۲)" /></span>
-        <span style={{ fontWeight: 600 }}>{me.name}</span>
+        <span className="adm-user"><span className="adm-avatar sm"><img src="/admin-icons/Profile1.svg" alt="" /></span>{me.name}<img className="chev" src="/admin-icons/Down3.svg" alt="" /></span>
       </header>
       <main className="adm-content">
         <Routes>

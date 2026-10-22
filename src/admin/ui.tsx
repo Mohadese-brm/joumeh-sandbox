@@ -7,8 +7,33 @@ export const Ph = ({ p }: { p?: string | null }) => (p ? <bdi dir="ltr">{formatP
 export const icon = (n: string) => `/admin-icons/${n}.svg`;
 export const Ico = ({ n, alt = '' }: { n: string; alt?: string }) => <span className="adm-ico" aria-hidden={alt ? undefined : true}><img src={icon(n)} alt={alt} /></span>;
 
-export function Button({ kind = 'text', sm, children, ...p }: { kind?: 'primary' | 'secondary' | 'text' | 'danger'; sm?: boolean; children: ReactNode } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  return <button type="button" className={`adm-btn ${kind}${sm ? ' sm' : ''}`} {...p}>{children}</button>;
+/** Admin / Button 172:13811 — Primary, Secondary (stroke #1c7477), Ghost (text), Danger (fill #fdf2f2, stroke #891414). */
+export function Button({ kind = 'text', sm, ico, children, ...p }: { kind?: 'primary' | 'secondary' | 'text' | 'danger'; sm?: boolean; ico?: string; children: ReactNode } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  return <button type="button" className={`adm-btn ${kind}${sm ? ' sm' : ''}`} {...p}>{ico && <img src={icon(ico)} alt="" />}{children}</button>;
+}
+/** Banner (Info / Warning / Danger tones) with the Figma icon. */
+export const Banner = ({ tone, children }: { tone: 'info' | 'warning' | 'danger'; children: ReactNode }) =>
+  <div className={`adm-banner ${tone}`} role={tone === 'danger' ? 'alert' : 'note'}><img src={icon(tone === 'info' ? 'InformationCircle' : tone === 'warning' ? 'DangerTriangle' : 'DangerCircle')} alt="" />{children}</div>;
+/** Admin / Overflow Menu 201:15782. */
+export function Overflow({ items, label = 'بیشتر', button }: { items: { label: string; onClick: () => void; danger?: boolean; disabled?: boolean; hint?: string }[]; label?: string; button?: 'secondary' }) {
+  const [open, setOpen] = useState(false);
+  useEffect(() => { if (!open) return; const c = () => setOpen(false); setTimeout(() => window.addEventListener('click', c), 0); return () => window.removeEventListener('click', c); }, [open]);
+  return <span className="adm-ovf" onClick={e => e.stopPropagation()}>
+    {button ? <Button kind="secondary" ico="MoreCircle" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>{label}</Button>
+      : <button type="button" className="adm-ovf-btn" aria-label={label} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}><img src={icon('MoreCircle')} alt="" /></button>}
+    {open && <span className="adm-ovf-menu" role="menu">{items.map(i => <button key={i.label} role="menuitem" type="button" disabled={i.disabled} title={i.hint} className={i.danger ? 'danger' : ''} onClick={() => { setOpen(false); i.onClick(); }}>{i.label}{i.hint && <small> · {i.hint}</small>}</button>)}</span>}
+  </span>;
+}
+/** Admin / Multi-select 173:14007 — selected values as removable tags. */
+export function MultiSelect({ options, value, onChange, label }: { options: Record<string, string>; value: string[]; onChange: (v: string[]) => void; label: string }) {
+  const [open, setOpen] = useState(false);
+  return <div className="adm-ms">
+    <div className="adm-ms-box adm-input" role="combobox" aria-label={label} aria-expanded={open} tabIndex={0} onClick={e => { e.preventDefault(); setOpen(!open); }} onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), setOpen(!open))}>
+      {value.length ? value.map(v => <span key={v} className="adm-ms-tag">{options[v]}<button type="button" aria-label={`حذف ${options[v]}`} onClick={e => { e.preventDefault(); e.stopPropagation(); onChange(value.filter(x => x !== v)); }}>×</button></span>) : <span className="adm-muted">انتخاب نقش…</span>}
+      <img className="chev" src={icon('Down2')} alt="" /></div>
+    {open && <div className="adm-ms-list" role="listbox" aria-multiselectable="true">{Object.entries(options).map(([k, l]) =>
+      <label key={k} className="adm-check" role="option" aria-selected={value.includes(k)}><input type="checkbox" checked={value.includes(k)} onChange={e => onChange(e.target.checked ? [...value, k] : value.filter(x => x !== k))} />{l}</label>)}</div>}
+  </div>;
 }
 export type Tone = 'success' | 'warning' | 'danger' | 'neutral' | 'info' | 'brand' | 'accent';
 export const Badge = ({ tone, children }: { tone: Tone; children: ReactNode }) => <span className={`adm-badge ${tone}`}>{children}</span>;
@@ -38,24 +63,30 @@ export function Tabs<T extends string>({ items, value, onChange }: { items: [T, 
 export function Field({ label, req, err, grow, children }: { label: string; req?: boolean; err?: string; grow?: boolean; children: ReactNode }) {
   return <label className={`adm-field${grow ? ' grow' : ''}`}><span>{label}{req && <span className="req"> *</span>}</span>{children}{err && <span className="err" role="alert">{err}</span>}</label>;
 }
+/** Admin / Modal md 174:14307: 560 wide, r14, Modal Header 201:15833 with close ×, footer band. */
 export function Modal({ title, children, onClose, foot }: { title: string; children: ReactNode; onClose: () => void; foot: ReactNode }) {
   useEffect(() => { const k = (e: KeyboardEvent) => e.key === 'Escape' && onClose(); window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); }, [onClose]);
-  return <div className="adm-modal-bg" onClick={onClose}><div className="adm-modal" role="dialog" aria-modal="true" aria-label={title} onClick={e => e.stopPropagation()}><h2>{title}</h2>{children}<div className="foot">{foot}</div></div></div>;
+  return <div className="adm-modal-bg" onClick={onClose}><div className="adm-modal" role="dialog" aria-modal="true" aria-label={title} onClick={e => e.stopPropagation()}>
+    <div className="adm-modal-head"><h2>{title}</h2><button type="button" className="adm-x" aria-label="بستن" onClick={onClose}><img src={icon('Close')} alt="" /></button></div>
+    <div className="adm-modal-body">{children}</div><div className="adm-modal-foot">{foot}</div></div></div>;
 }
 export function Confirm({ title, body, danger, okLabel, onOk, onClose }: { title: string; body: ReactNode; danger?: boolean; okLabel: string; onOk: () => void; onClose: () => void }) {
-  return <Modal title={title} onClose={onClose} foot={<><Button kind={danger ? 'danger' : 'primary'} onClick={onOk}>{okLabel}</Button><Button onClick={onClose}>انصراف</Button></>}><div>{body}</div></Modal>;
+  return <Modal title={title} onClose={onClose} foot={<><Button kind={danger ? 'danger' : 'primary'} ico={danger ? 'CloseCircle' : 'TickWhite'} onClick={onOk}>{okLabel}</Button><Button kind="secondary" ico="CloseTeal" onClick={onClose}>انصراف</Button></>}><div>{body}</div></Modal>;
 }
 let pushToast: (m: string, err?: boolean) => void = () => {};
 export const toast = (m: string, err = false) => pushToast(m, err);
 export function Toasts() {
   const [t, setT] = useState<{ m: string; err: boolean } | null>(null);
   useEffect(() => { pushToast = (m, err = false) => { setT({ m, err }); setTimeout(() => setT(null), 3000); }; }, []);
-  return t ? <div className={`adm-toast${t.err ? ' error' : ''}`} role="status">{t.m}</div> : null;
+  // Admin / Toast 174:14387 (Success / Error tones)
+  return t ? <div className={`adm-toast ${t.err ? 'error' : 'success'}`} role="status"><img src={icon(t.err ? 'DangerCircle' : 'TickCircle')} alt="" />{t.m}</div> : null;
 }
 export const Empty = ({ title, children }: { title: string; children?: ReactNode }) => <div className="adm-state"><b>{title}</b>{children}</div>;
 export const ErrorState = ({ retry }: { retry: () => void }) => <div className="adm-state" role="alert"><b>بارگذاری انجام نشد</b>اتصال را بررسی کنید و دوباره تلاش کنید.<Button kind="secondary" onClick={retry}>تلاش دوباره</Button></div>;
 export const Loading = () => <div aria-busy="true" aria-label="در حال بارگذاری" style={{ display: 'grid', gap: 8 }}>{[0, 1, 2, 3].map(i => <div key={i} className="adm-skel" />)}</div>;
-export const NoPermission = () => <div className="adm-state"><b>به این بخش دسترسی ندارید</b>برای دسترسی با مدیر کل (مالک) هماهنگ کنید.</div>;
+/** Error State «No permission» 174:14440 inside a white card, under the normal Page Title (Figma 178:18160). */
+export const NoPermission = ({ crumb, title }: { crumb: string; title: string }) => <><PageTitle crumb={crumb} title={title} />
+  <div className="adm-card adm-noperm"><span className="adm-lock"><img src={icon('Lock1')} alt="" /></span><b>دسترسی ندارید</b><span>این بخش برای نقش شما فعال نیست.</span></div></>;
 export function Table({ head, children }: { head: ReactNode[]; children: ReactNode }) {
   return <div className="adm-table-wrap"><table className="adm-table"><thead><tr>{head.map((h, i) => <th key={i}>{h}</th>)}</tr></thead><tbody>{children}</tbody></table></div>;
 }
