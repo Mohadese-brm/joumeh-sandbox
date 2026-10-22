@@ -164,9 +164,9 @@ export function Categories() {
     <PageTitle crumb="کاتالوگ / دسته‌بندی‌ها" title="دسته‌بندی‌ها" sub="طبقه‌بندی نمونه — در انتظار تصمیم کسب‌وکار (BD-18)"
       actions={edit && <Button kind="primary" ico="Add1" onClick={() => { setErrs({}); setModal({ name: '', slug: '', parentId: '' }); }}>افزودن دسته</Button>} />
     {loading && !data ? <Loading /> : error ? <ErrorState retry={reload} /> : !data?.length ? <Empty title="هنوز دسته‌ای ساخته نشده" /> :
-      <div className="adm-tree"><Table head={['نام دسته', 'والد', 'تعداد محصول', 'نمایش', '']}>{data.map(c => <tr key={c.id} className={c.parentId ? 'child' : ''}>
+      <div className="adm-tree"><Table head={['نام دسته', 'والد', 'تعداد محصول', 'نمایش (نمونه)', '']}>{data.map(c => <tr key={c.id} className={c.parentId ? 'child' : ''}>
         <td>{c.parentId ? <span className="adm-muted">— </span> : <img src="/admin-icons/Category1.svg" alt="" style={{ marginInlineEnd: 8, verticalAlign: 'middle' }} />}{c.name}</td>
-        <td>{c.parentName ?? '—'}</td><td>{faNumber(c.products)}</td><td><Badge tone="success">فعال</Badge></td>
+        <td>{c.parentName ?? '—'}</td><td>{faNumber(c.products)}</td><td title="نمونه — دسته‌ها فیلد وضعیت ندارند (BD-18)"><Badge tone="neutral">فعال · نمونه</Badge></td>
         <td>{edit && <Overflow label={`گزینه‌های ${c.name}`} items={[{ label: 'ویرایش', onClick: () => { setErrs({}); setModal({ id: c.id, name: c.name, slug: c.slug, parentId: c.parentId ?? '' }); } },
           { label: 'حذف', onClick: () => {}, disabled: true, hint: 'در انتظار تصمیم (BD-18)' }]} />}</td></tr>)}</Table></div>}
     <span className="adm-muted">وضعیت «نمایش» و حذف دسته در این نسخه قابل تغییر نیست (BD-18).</span>

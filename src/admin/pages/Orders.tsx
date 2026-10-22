@@ -24,10 +24,10 @@ export function OrdersList() {
       <Field label="کانال"><select className="adm-select" disabled title="همه‌ی سفارش‌های نمونه از سایت است"><option>همه</option></select></Field>
     </FiltersRow>
     {loading && !data ? <Loading /> : error ? <ErrorState retry={reload} /> : !data?.length ? <Empty title="سفارشی پیدا نشد">فیلترها را تغییر دهید.</Empty> :
-      <Table head={['سفارش', 'تاریخ', 'مشتری', 'کانال', 'اقلام', 'مبلغ (تومان)', 'پرداخت', 'ارسال', 'وضعیت سفارش']}>
+      <Table head={['سفارش', 'تاریخ', 'مشتری', 'کانال (نمونه)', 'اقلام', 'مبلغ (تومان)', 'پرداخت', 'ارسال', 'وضعیت سفارش']}>
         {data.map(o => <tr key={o.id} className="click" onClick={() => nav(`/admin/orders/${o.id}`)}>
           <td style={{ color: 'var(--a-brand)', fontWeight: 600 }}>{fa(o.orderNumber)}</td><td className="adm-muted">{when(o.createdAt)}</td><td>{o.customer}<br /><small className="adm-muted"><Ph p={o.phone} /></small></td>
-          <td>سایت</td><td>{faNumber(o.items)} قلم</td><td>{toman(o.total)}</td><td><StatusBadge map={PAY_STATUS} value={o.paymentStatus} /></td><td><Fulfil s={o.orderStatus} /></td><td><StatusBadge map={ORDER_STATUS} value={o.orderStatus} /></td></tr>)}
+          <td title="داده نمونه — همه‌ی سفارش‌های نمونه از سایت است">سایت <small className="adm-muted">(نمونه)</small></td><td>{faNumber(o.items)} قلم</td><td>{toman(o.total)}</td><td><StatusBadge map={PAY_STATUS} value={o.paymentStatus} /></td><td><Fulfil s={o.orderStatus} /></td><td><StatusBadge map={ORDER_STATUS} value={o.orderStatus} /></td></tr>)}
       </Table>}
   </>;
 }

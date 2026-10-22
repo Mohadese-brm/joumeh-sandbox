@@ -18,9 +18,9 @@ export function CustomersList() {
       <Field label="کانال اولیه"><select className="adm-select" disabled title="همه‌ی مشتریان نمونه از سایت هستند"><option>همه</option></select></Field>
     </FiltersRow>
     {loading && !data ? <Loading /> : error ? <ErrorState retry={reload} /> : !data?.length ? <Empty title="مشتری‌ای پیدا نشد" /> :
-      <><Table head={['مشتری', 'موبایل', 'کانال اولیه', 'تعداد سفارش', 'مجموع خرید (تومان)', 'آخرین سفارش']}>
+      <><Table head={['مشتری', 'موبایل', 'کانال اولیه (نمونه)', 'تعداد سفارش', 'مجموع خرید (تومان)', 'آخرین سفارش']}>
         {data.slice((page - 1) * SIZE, page * SIZE).map(u => <tr key={u.id} className="click" onClick={() => nav(`/admin/customers/${u.id}`)}><td><span className="adm-avatar sm"><img src="/admin-icons/Profile1.svg" alt="" /></span> <b>{[u.firstName, u.lastName].filter(Boolean).join(' ') || 'بدون نام'}</b></td>
-          <td><Ph p={u.phone} /></td><td>سایت</td><td>{faNumber(u.orders)}</td><td>{toman(u.spent)}</td><td className="adm-muted">{when(u.lastOrder)}</td></tr>)}
+          <td><Ph p={u.phone} /></td><td title="داده نمونه">سایت <small className="adm-muted">(نمونه)</small></td><td>{faNumber(u.orders)}</td><td>{toman(u.spent)}</td><td className="adm-muted">{when(u.lastOrder)}</td></tr>)}
       </Table><Pager page={page} total={data.length} size={SIZE} onPage={setPage} /></>}
   </>;
 }
@@ -32,7 +32,7 @@ export function CustomerProfile() {
   if (loading && !u) return <Loading />; if (error) return error.status === 404 ? <Empty title="مشتری پیدا نشد" /> : <ErrorState retry={reload} />;
   const name = [u.firstName, u.lastName].filter(Boolean).join(' ') || 'بدون نام';
   return <>
-    <PageTitle crumb={`مشتریان / ${name}`} title={name} sub={<><Ph p={u.phone} /> · عضویت {when(u.createdAt)} · کانال اولیه: سایت</>} />
+    <PageTitle crumb={`مشتریان / ${name}`} title={name} sub={<><Ph p={u.phone} /> · عضویت {when(u.createdAt)} · کانال اولیه: سایت (نمونه)</>} />
     <div className="adm-info">مسدودسازی مشتری و خروجی اطلاعات در این نسخه نیست — <Stub code="ADMIN-PH-PRIVACY">قوانین حریم خصوصی</Stub></div>
     <div className="adm-grid2">
       <section className="adm-card"><h2>سفارش‌ها ({faNumber(u.orders.length)})</h2>

@@ -346,13 +346,16 @@ export function mountAdmin(app: Express, db: Database, opts: { adminDemo: boolea
 
   // ---------- Reviews (NO FIGMA DESIGN — admin table pattern, pending design). Moderation policy BD-15 open; shop auto-publishes. ----------
   const rSql = `SELECT r.id, r.rating, r.body, r.status, r.created_at AS createdAt, p.id AS productId, p.name AS product, p.slug,
+    (SELECT url FROM images i WHERE i.product_id=p.id ORDER BY position LIMIT 1) AS imageUrl, (SELECT MIN(sku) FROM variants v WHERE v.product_id=p.id) AS sku,
     u.id AS userId, COALESCE(u.first_name || ' ' || u.last_name, 'کاربر جومه') AS author, u.phone FROM reviews r JOIN products p ON p.id=r.product_id JOIN users u ON u.id=r.user_id`;
   app.get('/api/admin/reviews', admin('reviews'), (req, res) => {
-    const { q = '', status = '', rating = '' } = req.query as Record<string, string>;
+    const { q = '', status = '', rating = '', from = '', to = '' } = req.query as Record<string, string>;
     const w: string[] = []; const p: unknown[] = [];
     if (status) { w.push('r.status=?'); p.push(status); }
     if (rating) { w.push('r.rating=?'); p.push(Number(rating)); }
-    if (q) { w.push('(p.name LIKE ? OR r.body LIKE ?)'); p.push(`%${q}%`, `%${q}%`); }
+    if (q) { w.push("(p.name LIKE ? OR r.body LIKE ? OR (u.first_name || ' ' || u.last_name) LIKE ?)"); p.push(`%${q}%`, `%${q}%`, `%${q}%`); }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(from)) { w.push('date(r.created_at)>=?'); p.push(from); }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(to)) { w.push('date(r.created_at)<=?'); p.push(to); }
     const counts = Object.fromEntries(all<{ s: string; n: number }>(db, 'SELECT status AS s, COUNT(*) AS n FROM reviews GROUP BY s').map(r => [r.s, r.n]));
     res.json({ data: all(db, `${rSql}${w.length ? ' WHERE ' + w.join(' AND ') : ''} ORDER BY r.created_at DESC, r.id DESC`, p), counts, pendingDesign: true, stubs: { moderation: stub('BD-15') } });
   });

@@ -45,6 +45,7 @@ ok('products: edit shows variants + BD-10 stub', (await text()).includes('BD-10'
 ok('r2 E1: status + publish checklist side cards', (await text()).includes('چک‌لیست انتشار') && (await page.locator('.adm-check-list li').count()) === 6);
 ok('r2 E2/E3: archive is danger, variant status badges', (await page.locator('.adm-btn.danger', { hasText: 'بایگانی' }).count()) === 1 && (await page.locator('tbody .adm-badge').count()) === 10);
 await go('/admin/categories', 'categories'); ok('categories: list', (await page.locator('tbody tr').count()) >= 2);
+ok('r3 SH-2: category «فعال» labelled sample', (await page.locator('tbody .adm-badge', { hasText: 'فعال · نمونه' }).count()) >= 2);
 await page.click('button:has-text("افزودن دسته")'); await shot('categories-modal');
 await page.locator('.adm-modal input').nth(0).fill('زیردسته آزمایشی'); await page.locator('.adm-modal input').nth(1).fill('e2e-sub');
 await page.selectOption('.adm-modal select', { index: 1 }); await page.click('.adm-modal .adm-modal-foot button:has-text("افزودن دسته")'); await page.waitForTimeout(400);
@@ -54,6 +55,7 @@ ok('r2 C1: overflow has ویرایش, delete disabled', (await page.locator('[ro
 await page.keyboard.press('Escape'); await page.mouse.click(5, 5);
 
 await go('/admin/orders', 'orders'); ok('orders: list 10', (await page.locator('tbody tr').count()) === 10);
+ok('r3 SH-1: channel labelled sample', (await page.locator('th', { hasText: 'کانال (نمونه)' }).count()) === 1);
 ok('r2 O1: channel + fulfilment columns, export disabled', (await text()).includes('کانال') && (await page.locator('th', { hasText: 'ارسال' }).count()) >= 1 && await page.locator('button:has-text("خروجی")').isDisabled());
 await page.fill('input[placeholder*="شماره سفارش"]', '10124'); await page.waitForTimeout(400); ok('orders: search', (await page.locator('tbody tr').count()) === 1);
 await go('/admin/orders/10124', 'order-detail');
@@ -73,9 +75,23 @@ await page.click('tbody tr >> nth=0'); await page.waitForLoadState('networkidle'
 await page.fill('textarea', 'یادداشت مشتری آزمایشی'); await page.click('button:has-text("ثبت یادداشت")'); await page.waitForTimeout(300); ok('r2 CU2: customer internal note', (await text()).includes('یادداشت مشتری آزمایشی'));
 
 await go('/admin/reviews', 'reviews');
-ok('reviews: pending-design label', (await text()).includes('در انتظار طراحی'));
+ok('r3 RV-6: proposal note replaces PENDING DESIGN, page meta', (await text()).includes('طرح پیشنهادی — در انتظار تصمیم') && !(await text()).includes('PENDING DESIGN') && (await text()).includes('نظرات بلافاصله و بدون بررسی منتشر می‌شوند · داده نمونه'));
 ok('reviews: 5 rows', (await page.locator('tbody tr').count()) === 5);
-ok('r2 reviews: hide/delete disabled, labelled pending decision', await page.locator('button:has-text("پنهان کردن")').first().isDisabled() && await page.locator('tbody button:has-text("حذف")').first().isDisabled() && (await text()).includes('در انتظار تصمیم'));
+ok('r3 RV-1: no hide/show/delete buttons in reviews UI', !(await page.locator('main button, .adm-main button').filter({ hasText: /پنهان کردن|^نمایش$|^حذف$/ }).count()));
+ok('r3 RV-2: no status tabs, no status column', !(await page.locator('[role=tab]').count()) && !(await page.locator('th', { hasText: 'وضعیت' }).count()));
+ok('r3 RV-3: product cell thumbnail + SKU, column order', (await page.locator('tbody tr >> nth=0').locator('.adm-prod img, .adm-prod .adm-thumb').count()) === 1 && /\S/.test(await page.locator('tbody tr >> nth=0 >> .adm-prod small').innerText()) && (await page.locator('thead th').allInnerTexts()).slice(0, 5).join('|') === 'محصول|نویسنده|امتیاز|متن نظر|تاریخ');
+await page.locator('tbody tr >> nth=0').locator('.adm-ovf-btn').click();
+ok('r3 RV-3: ⋯ menu has exactly the two view items', (await page.locator('[role=menuitem]').allInnerTexts()).join('|') === 'مشاهده محصول در فروشگاه|مشاهده مشتری'); await shot('reviews-menu');
+await page.click('[role=menuitem]:has-text("مشاهده مشتری")'); await page.waitForURL(/\/admin\/customers\/\d+$/); await page.waitForSelector("text=آدرس‌ها"); ok('r3 RV-3: «مشاهده مشتری» opens the customer', (await text()).includes('آدرس‌ها'));
+await go('/admin/reviews');
+ok('r3 RV-5: stars use the brand colour', (await page.locator('.adm-stars .on >> nth=0').evaluate(e => getComputedStyle(e).color)) === 'rgb(21, 89, 91)');
+const nRev = await page.locator('tbody tr').count(); await page.fill('input[aria-label="از تاریخ"]', '2999-01-01'); await page.waitForTimeout(400);
+ok('r3 RV-4: date filter narrows the list', nRev > 0 && (await page.locator('tbody tr').count()) === 0 && (await text()).includes('نتیجه‌ای با این فیلترها'));
+for (const st of ['empty', 'loading', 'error']) { await go(`/admin/reviews?preview=${st}`, `reviews-${st}`); }
+await go('/admin/reviews?preview=empty'); ok('r3 RV-7: empty state', (await text()).includes('هنوز نظری ثبت نشده') && !(await page.locator('button:has-text("افزودن")').count()));
+await go('/admin/reviews?preview=error'); ok('r3 RV-7: error state + retry', (await text()).includes('نظرات بارگذاری نشد') && (await page.locator('button:has-text("تلاش دوباره")').count()) === 1);
+await go('/admin/reviews?preview=loading'); ok('r3 RV-7: loading skeleton', (await page.locator('[aria-busy=true] .adm-skel-row').count()) === 5);
+ok('r3 RV-8: Reviews sidebar item kept', (await page.locator('.adm-side a', { hasText: 'نظرات' }).count()) === 1);
 
 await go('/admin/content', 'content'); ok('content: hero form + 3 sections', (await page.locator('.adm-sec').count()) === 3);
 ok('r2 CT1: preview button next to publish', (await page.locator('.adm-actions a:has-text("پیش‌نمایش")').count()) === 1);
@@ -87,8 +103,12 @@ await go('/info/shipping'); ok('content: published page shows in shop', (await t
 await go('/admin/settings/users', 'settings-users'); ok('settings: 4 admin users + matrix', (await page.locator('tbody tr').count()) >= 4 + 6);
 await page.click('button:has-text("دعوت کاربر")'); await page.click('.adm-modal button:has-text("ارسال دعوت")'); await page.waitForTimeout(300);
 ok('settings: invite validation', (await page.locator('.adm-modal .err').count()) >= 2);
-await page.click('.adm-modal [role=combobox]'); await page.click('.adm-ms-list label >> nth=1'); await page.click('.adm-ms-list label >> nth=2'); await page.click('.adm-modal h2, .adm-modal-head');
+await page.fill('.adm-modal input >> nth=0', 'کاربر آزمایشی'); await page.fill('.adm-modal input[inputmode=numeric]', '09120000099');
+await page.click('.adm-modal [role=combobox]'); await page.click('.adm-ms-list label >> nth=1'); await page.click('.adm-ms-list label >> nth=2'); await shot('settings-invite-open');
+await page.click('.adm-modal-head h2'); await page.waitForTimeout(150);
+ok('r3: invite dropdown closes on outside click (closed-state shot)', !(await page.locator('.adm-ms-list').count()) && await page.locator('.adm-modal-foot button:has-text("ارسال دعوت")').isVisible() && await page.locator('.adm-modal .adm-banner.info').isVisible());
 ok('r2 U2: multi-select tags + BD-13 info banner', (await page.locator('.adm-ms-tag').count()) === 2 && (await page.locator('.adm-modal .adm-banner.info').innerText()).includes('BD-13')); await shot('settings-invite');
+await page.click('.adm-modal-foot button:has-text("ارسال دعوت")'); await page.waitForTimeout(400); ok('r3: invite submits with multi-select roles', !(await page.locator('.adm-modal').count()) && (await text()).includes('کاربر آزمایشی'));
 await page.keyboard.press('Escape');
 await page.locator('tbody tr >> nth=0').locator('.adm-ovf-btn').click(); await page.click('[role=menuitem]:has-text("ویرایش")'); await page.uncheck('.adm-modal label:has-text("مدیر کل") input'); await page.click('.adm-modal button:has-text("ذخیره")'); await page.waitForTimeout(300);
 ok('settings: last-owner protection', (await text()).includes('حداقل یک مدیر کل')); await page.keyboard.press('Escape');

@@ -1,5 +1,5 @@
 // Admin / * components (Figma Admin Design System 252:63841). Kept small and local to the admin.
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { faDigits, faNumber, formatPhone } from '../lib/format';
 /** Phone numbers read left-to-right inside RTL text. */
 export const Ph = ({ p }: { p?: string | null }) => (p ? <bdi dir="ltr">{formatPhone(p)}</bdi> : <>—</>);
@@ -15,19 +15,21 @@ export function Button({ kind = 'text', sm, ico, children, ...p }: { kind?: 'pri
 export const Banner = ({ tone, children }: { tone: 'info' | 'warning' | 'danger'; children: ReactNode }) =>
   <div className={`adm-banner ${tone}`} role={tone === 'danger' ? 'alert' : 'note'}><img src={icon(tone === 'info' ? 'InformationCircle' : tone === 'warning' ? 'DangerTriangle' : 'DangerCircle')} alt="" />{children}</div>;
 /** Admin / Overflow Menu 201:15782. */
-export function Overflow({ items, label = 'بیشتر', button }: { items: { label: string; onClick: () => void; danger?: boolean; disabled?: boolean; hint?: string }[]; label?: string; button?: 'secondary' }) {
+export function Overflow({ items, label = 'بیشتر', button }: { items: { label: string; onClick: () => void; danger?: boolean; disabled?: boolean; hint?: string; icon?: string }[]; label?: string; button?: 'secondary' }) {
   const [open, setOpen] = useState(false);
   useEffect(() => { if (!open) return; const c = () => setOpen(false); setTimeout(() => window.addEventListener('click', c), 0); return () => window.removeEventListener('click', c); }, [open]);
   return <span className="adm-ovf" onClick={e => e.stopPropagation()}>
     {button ? <Button kind="secondary" ico="MoreCircle" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>{label}</Button>
       : <button type="button" className="adm-ovf-btn" aria-label={label} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}><img src={icon('MoreCircle')} alt="" /></button>}
-    {open && <span className="adm-ovf-menu" role="menu">{items.map(i => <button key={i.label} role="menuitem" type="button" disabled={i.disabled} title={i.hint} className={i.danger ? 'danger' : ''} onClick={() => { setOpen(false); i.onClick(); }}>{i.label}{i.hint && <small> · {i.hint}</small>}</button>)}</span>}
+    {open && <span className="adm-ovf-menu" role="menu">{items.map(i => <button key={i.label} role="menuitem" type="button" disabled={i.disabled} title={i.hint} className={i.danger ? 'danger' : ''} onClick={() => { setOpen(false); i.onClick(); }}>{i.icon && <img src={icon(i.icon)} alt="" />}{i.label}{i.hint && <small> · {i.hint}</small>}</button>)}</span>}
   </span>;
 }
 /** Admin / Multi-select 173:14007 — selected values as removable tags. */
 export function MultiSelect({ options, value, onChange, label }: { options: Record<string, string>; value: string[]; onChange: (v: string[]) => void; label: string }) {
-  const [open, setOpen] = useState(false);
-  return <div className="adm-ms">
+  const [open, setOpen] = useState(false); const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (!open) return; const c = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); }; const k = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); setOpen(false); } };
+    window.addEventListener('mousedown', c); window.addEventListener('keydown', k, true); return () => { window.removeEventListener('mousedown', c); window.removeEventListener('keydown', k, true); }; }, [open]);
+  return <div className="adm-ms" ref={ref}>
     <div className="adm-ms-box adm-input" role="combobox" aria-label={label} aria-expanded={open} tabIndex={0} onClick={e => { e.preventDefault(); setOpen(!open); }} onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), setOpen(!open))}>
       {value.length ? value.map(v => <span key={v} className="adm-ms-tag">{options[v]}<button type="button" aria-label={`حذف ${options[v]}`} onClick={e => { e.preventDefault(); e.stopPropagation(); onChange(value.filter(x => x !== v)); }}>×</button></span>) : <span className="adm-muted">انتخاب نقش…</span>}
       <img className="chev" src={icon('Down2')} alt="" /></div>

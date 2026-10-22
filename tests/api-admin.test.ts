@@ -141,6 +141,14 @@ describe('reviews (pending design)', () => {
     expect((await request(app).get('/api/products/women-1/reviews')).body.data.count).toBe(before - 1);
     expect((await request(app).get('/api/admin/reviews?rating=5').set(h(t))).body.data.every((x: { rating: number }) => x.rating === 5)).toBe(true);
   });
+  it('r3: list rows carry thumbnail + SKU; date range and author search filter', async () => {
+    const t = await login(); const all = (await request(app).get('/api/admin/reviews').set(h(t))).body.data;
+    expect(all.length).toBeGreaterThan(0); expect(all[0].sku).toMatch(/\S/); expect('imageUrl' in all[0]).toBe(true);
+    expect((await request(app).get('/api/admin/reviews?from=2999-01-01').set(h(t))).body.data).toEqual([]);
+    expect((await request(app).get('/api/admin/reviews?to=2999-01-01&from=2000-01-01').set(h(t))).body.data.length).toBe(all.length);
+    const who = all[0].author.split(' ')[0];
+    expect((await request(app).get(`/api/admin/reviews?q=${encodeURIComponent(who)}`).set(h(t))).body.data.length).toBeGreaterThan(0);
+  });
 });
 
 describe('content', () => {
