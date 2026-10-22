@@ -21,6 +21,10 @@ export function Users() {
   const [ed, setEd] = useState<any>(null); const [edErr, setEdErr] = useState('');
   if (!can(me, 'settings')) return <NoPermission crumb="تحلیل و سیستم / تنظیمات" title="کاربران و نقش‌ها" />;
   const edit = can(me, 'settings', 'edit'); const roles: Record<string, string> = extra?.roles ?? {};
+  /** Emma r3: each field's error clears as soon as that field is valid (same rules as the API). */
+  const INV_OK = { name: (v: unknown) => String(v).trim().length > 0, phone: (v: unknown) => /^09\d{9}$/.test(String(v).trim().replace(/[۰-۹]/g, d => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/[٠-٩]/g, d => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))), roles: (v: unknown) => (v as string[]).length > 0 };
+  const setInvF = (k: 'name' | 'phone' | 'roles', v: string | string[]) => { setInv(i => i && { ...i, [k]: v }); if (INV_OK[k](v)) setErrs(e => { if (!e[k]) return e; const { [k]: _, ...rest } = e; return rest; }); };
+  const closeInv = () => { setInv(null); setErrs({}); };
   const invite = async () => { setErrs({}); try { await aapi('/users', { method: 'POST', body: inv }); setInv(null); toast('دعوت ثبت شد (پیامک ارسال نمی‌شود — BD-13)'); reload(); } catch (e) { setErrs((e as AdminApiError).fields ?? {}); } };
   const update = async () => { setEdErr(''); try { await aapi(`/users/${ed.id}`, { method: 'PUT', body: { roles: ed.roles, status: ed.status } }); setEd(null); toast('کاربر به‌روز شد'); reload(); }
     catch (e) { setEdErr((e as AdminApiError).code === 'last_owner' ? 'همیشه باید حداقل یک مدیر کل (مالک) فعال وجود داشته باشد.' : 'ذخیره انجام نشد'); } };
@@ -38,10 +42,10 @@ export function Users() {
         <section className="adm-card"><h2>ماتریس دسترسی (پیش‌فرض نمونه — BD-19)</h2>
           <Table head={['نقش', ...MODS.map(m => m[1])]}>{Object.entries(extra?.permissions ?? {}).map(([r, p]: [string, any]) => <tr key={r}><td><b>{roles[r]}</b></td>{MODS.map(([m]) => <td key={m}>{LV[p[m]]}</td>)}</tr>)}</Table></section>
       </div></div>
-    {inv && <Modal title="دعوت کاربر" onClose={() => setInv(null)} foot={<><Button kind="primary" ico="TickWhite" onClick={invite}>ارسال دعوت</Button><Button kind="secondary" ico="CloseTeal" onClick={() => setInv(null)}>انصراف</Button></>}>
-      <Field label="نام" req err={errs.name}><input className="adm-input" value={inv.name} onChange={e => setInv({ ...inv, name: e.target.value })} /></Field>
-      <Field label="شماره موبایل" req err={errs.phone}><input className="adm-input" dir="ltr" inputMode="numeric" value={inv.phone} onChange={e => setInv({ ...inv, phone: e.target.value })} /></Field>
-      <Field label="نقش‌ها" req err={errs.roles}><MultiSelect label="نقش‌ها" options={roles} value={inv.roles} onChange={r => setInv({ ...inv, roles: r })} /></Field>
+    {inv && <Modal title="دعوت کاربر" onClose={closeInv} foot={<><Button kind="primary" ico="TickWhite" onClick={invite}>ارسال دعوت</Button><Button kind="secondary" ico="CloseTeal" onClick={closeInv}>انصراف</Button></>}>
+      <Field label="نام" req err={errs.name}><input className="adm-input" value={inv.name} onChange={e => setInvF('name', e.target.value)} /></Field>
+      <Field label="شماره موبایل" req err={errs.phone}><input className="adm-input" dir="ltr" inputMode="numeric" value={inv.phone} onChange={e => setInvF('phone', e.target.value)} /></Field>
+      <Field label="نقش‌ها" req err={errs.roles}><MultiSelect label="نقش‌ها" options={roles} value={inv.roles} onChange={r => setInvF('roles', r)} /></Field>
       <Banner tone="info">ورود با کد یکبار مصرف پیامکی — سرویس پیامک: در انتظار تصمیم کسب‌وکار (BD-13).</Banner>
       <span className="adm-muted">در نسخه‌ی نمایشی پیامکی ارسال نمی‌شود؛ مالک کاربر دعوت‌شده را «فعال» می‌کند.</span></Modal>}
     {ed && <Modal title={`ویرایش ${ed.name}`} onClose={() => setEd(null)} foot={<><Button kind="primary" ico="TickWhite" onClick={update}>ذخیره</Button><Button kind="secondary" ico="CloseTeal" onClick={() => setEd(null)}>انصراف</Button></>}>
