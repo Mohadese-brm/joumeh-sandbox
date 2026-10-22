@@ -6,7 +6,7 @@ import { config } from './config.js';
 import { stub, SAMPLE_SHIPPING_METHODS } from './stubs.js';
 import { MockProvider, type PaymentProvider } from './payment.js';
 import { ConsoleSmsAdapter, type SmsAdapter } from './sms.js';
-import { mountAdmin } from './admin.js';
+import { mountAdmin, adminDemoAllowed } from './admin.js';
 
 const sha = (s: string) => createHash('sha256').update(s).digest('hex');
 const one = <T = Record<string, unknown>>(db: Database, sql: string, p: unknown[] = []) => all<T>(db, sql, p)[0];
@@ -355,7 +355,7 @@ export function createApp(db: Database, deps: Deps = {}) {
     res.json({ data: r, stubs: { returns: stub('BD-04') } });
   });
 
-  mountAdmin(app, db, { adminDemo: deps.adminDemo ?? process.env.JOUMEH_ADMIN_DEMO === '1', now });
+  mountAdmin(app, db, { adminDemo: deps.adminDemo ?? adminDemoAllowed(), now });
 
   app.use('/api', (_q, res) => res.status(404).json({ error: 'not_found' }));
   app.use((err: Error & { type?: string }, _q: Request, res: Response, _n: NextFunction) => {

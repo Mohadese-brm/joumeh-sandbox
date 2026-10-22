@@ -105,6 +105,11 @@ export function seedAdminDemo(db: Database) {
 
 type AReq = Request & { admin?: { id: number; name: string; phone: string; roles: Role[] } };
 
+/** Demo admin login gate. ALWAYS off in Vercel production. On for Vercel preview deployments, or when JOUMEH_ADMIN_DEMO=1 (local). */
+export function adminDemoAllowed(env: Record<string, string | undefined> = process.env): boolean {
+  if (env.VERCEL_ENV === 'production') return false;
+  return env.VERCEL_ENV === 'preview' || env.JOUMEH_ADMIN_DEMO === '1';
+}
 export function mountAdmin(app: Express, db: Database, opts: { adminDemo: boolean; now: () => number }) {
   seedAdminBase(db);
   if (opts.adminDemo) seedAdminDemo(db);
