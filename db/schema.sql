@@ -9,7 +9,9 @@ CREATE TABLE products (
   description TEXT,
   sort_rank INTEGER NOT NULL DEFAULT 0, -- best-seller definition is an open item (Refinement 2): sample order only
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  is_sample INTEGER NOT NULL DEFAULT 1
+  is_sample INTEGER NOT NULL DEFAULT 1,
+  -- admin-demo: publish state. Only 'published' products are visible in the shop. Draft/unpublish/archive rules = placeholders.
+  publish_state TEXT NOT NULL DEFAULT 'published' CHECK (publish_state IN ('draft','published','unpublished','archived'))
 );
 CREATE TABLE variants (id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL REFERENCES products(id), size TEXT NOT NULL, color TEXT NOT NULL, color_hex TEXT, sku TEXT UNIQUE NOT NULL,
   available INTEGER NOT NULL DEFAULT 1); -- BD-16 STUB: stock messaging/quantities undecided; only an availability flag
@@ -52,3 +54,18 @@ CREATE TABLE returns (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCE
 CREATE TABLE reviews (id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL REFERENCES products(id), user_id INTEGER NOT NULL REFERENCES users(id),
   rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5), body TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'published' CHECK (status IN ('pending','published','rejected')),
   created_at TEXT NOT NULL DEFAULT (datetime('now')));
+
+-- ===== admin-demo (branch admin-demo). DEMO ONLY: in-memory, resets on restart. Roles/permissions = PLACEHOLDER (BD-19). =====
+CREATE TABLE admin_users (id INTEGER PRIMARY KEY, phone TEXT UNIQUE NOT NULL, name TEXT NOT NULL, roles TEXT NOT NULL, -- comma-separated role keys
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','invited','inactive')), last_login TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')));
+CREATE TABLE admin_sessions (token_hash TEXT PRIMARY KEY, admin_id INTEGER NOT NULL REFERENCES admin_users(id), created_at INTEGER NOT NULL, last_seen INTEGER NOT NULL);
+CREATE TABLE audit_log (id INTEGER PRIMARY KEY, admin_id INTEGER REFERENCES admin_users(id), action TEXT NOT NULL, entity TEXT NOT NULL, entity_id TEXT, detail TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')));
+CREATE TABLE order_notes (id INTEGER PRIMARY KEY, order_id INTEGER NOT NULL REFERENCES orders(id), admin_id INTEGER REFERENCES admin_users(id), body TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')));
+CREATE TABLE order_events (id INTEGER PRIMARY KEY, order_id INTEGER NOT NULL REFERENCES orders(id), status TEXT NOT NULL, actor TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')));
+-- Content: editable pages + homepage hero. Real policy TEXT is a placeholder until the CEO supplies it.
+CREATE TABLE content_pages (slug TEXT PRIMARY KEY, title TEXT NOT NULL, body TEXT NOT NULL, published INTEGER NOT NULL DEFAULT 0, bd TEXT,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')));
+CREATE TABLE content_home (id INTEGER PRIMARY KEY CHECK (id = 1), hero_title TEXT NOT NULL, hero_cta TEXT NOT NULL, hero_link TEXT NOT NULL, hero_alt TEXT NOT NULL,
+  sections_json TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT (datetime('now')));

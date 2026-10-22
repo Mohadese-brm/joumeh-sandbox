@@ -12,7 +12,9 @@ export const BD = {
   'BD-08': 'reservation TTL & oversell',
   'BD-10': 'single price source (sample conflict)',
   'BD-11': 'order number format',
+  'BD-14': 'legal & trust pages (terms, privacy, e-namad) — content text',
   'BD-13': 'SMS provider & templates — console adapter only',
+  'BD-19': 'team & roles (who holds which admin role, permission levels)',
   'BD-15': 'reviews & ratings',
   'BD-16': 'stock messaging',
   'BD-17': 'discount code rules',
@@ -20,6 +22,12 @@ export const BD = {
   'BD-21': 'e-mail OTP',
   'BD-23': 'delivered-status source',
   'BD-24': 'pickup / COD',
+  // admin-demo placeholders (not in F-Business-Decisions.md yet — numbering for the COO/CEO to assign)
+  'ADMIN-PH-KPI': 'dashboard KPI definitions (what counts as sales/today)',
+  'ADMIN-PH-MEDIA': 'product image upload & storage (needs file storage — not in demo)',
+  'ADMIN-PH-INVOICE': 'invoice / packing slip format',
+  'ADMIN-PH-PRIVACY': 'customer block & data export rules',
+  'ADMIN-PH-HERO': 'homepage hero wiring from admin content (shop hero still uses Figma assets)',
 } as const;
 export type BdCode = keyof typeof BD;
 export const stub = (code: BdCode) => ({ code, status: 'STUB', label: PENDING, note: BD[code] });

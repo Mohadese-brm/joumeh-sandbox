@@ -6,7 +6,7 @@ import { createDb } from '../server/db.js';
 import { createApp } from '../server/app.js';
 let appP: Promise<ReturnType<typeof createApp>> | null = null;
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
-  appP ??= createDb().then(db => createApp(db, { demoOtp: false })); // R2-2: demo OTP can never be on in the Vercel function
+  appP ??= createDb().then(db => createApp(db, { demoOtp: false, adminDemo: false })); // admin-demo login can never be on in the Vercel function // R2-2: demo OTP can never be on in the Vercel function
   const app = await appP;
   return app(req as never, res as never);
 }
