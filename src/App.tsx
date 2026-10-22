@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { SizeGuidePage } from './components/SizeGuide';
 import { Layout } from './components/Layout';
@@ -11,10 +12,13 @@ import { NotFound } from './pages/NotFound';
 import { Info } from './pages/Info';
 import { AccountLayout, SupportLayout } from './pages/account/AccountLayout';
 import { Overview, Orders, OrderDetail, Returns, ReturnDetail, Addresses, Favorites, PaymentInfo, Settings, SupportFaq, SupportContact } from './pages/account/Pages';
+// admin-demo: admin lives at /admin, outside the shop Layout; lazy-loaded so the shop bundle is unchanged.
+const AdminApp = lazy(() => import('./admin/AdminApp'));
 const ConfirmRoute = () => <Confirmation id={useParams().id!} />;
 export function AppRoutes() {
   return (
     <Routes>
+      <Route path="admin/*" element={<Suspense fallback={null}><AdminApp /></Suspense>} />
       <Route element={<Layout />}>
         <Route index element={<Home />} />
         <Route path="women" element={<Shop key="w" category="women" />} />
