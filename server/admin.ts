@@ -37,6 +37,8 @@ export const ORDER_TRANSITIONS: Record<string, string[]> = {
 };
 // Admin session idle timeout: engineering PLACEHOLDER (Figma 166:15288 "N minutes [BD]").
 export const ADMIN_IDLE_MINUTES = 60;
+// Cancel reasons: SAMPLE list (first item from Figma 180:30099). The real list is a business decision (BD-05).
+export const CANCEL_REASONS = ['درخواست مشتری', 'ناموجود بودن کالا', 'پرداخت انجام نشد', 'سایر'];
 
 export const ADMIN_STUBS = { roles: stub('BD-19'), cancellation: stub('BD-05'), fulfilment: stub('BD-23'), payment: stub('BD-01'), shipping: stub('BD-02'),
   vat: stub('BD-06'), pricing: stub('BD-10'), taxonomy: stub('BD-18'), reviews: stub('BD-15'), sms: stub('BD-13'), content: stub('BD-14') };
@@ -151,7 +153,9 @@ export function mountAdmin(app: Express, db: Database, opts: { adminDemo: boolea
     res.json({ data: all<{ phone: string; name: string; roles: string }>(db, `SELECT phone,name,roles FROM admin_users WHERE status='active' ORDER BY id`)
       .map(a => ({ ...a, roleLabels: a.roles.split(',').map(r => ROLES[r as Role]) })) });
   });
-  app.get('/api/admin/me', admin('dashboard'), (req: AReq, res) => res.json({ data: me(req.admin!), demo: opts.adminDemo, idleMinutes: ADMIN_IDLE_MINUTES }));
+  app.get('/api/admin/me', admin('dashboard'), (req: AReq, res) => res.json({ data: me(req.admin!), demo: opts.adminDemo, idleMinutes: ADMIN_IDLE_MINUTES,
+    // Sidebar count pill (Figma 175:14193): open orders = pending + processing (definition = placeholder, ADMIN-PH-KPI)
+    counts: { openOrders: one<{ n: number }>(db, `SELECT COUNT(*) AS n FROM orders WHERE order_status IN ('pending','processing')`)!.n } }));
   app.post('/api/admin/auth/logout', admin('dashboard'), (req: AReq, res) => {
     db.run('DELETE FROM admin_sessions WHERE token_hash=?', [sha((req.headers.authorization ?? '').slice(7))]); res.status(204).end();
   });
@@ -245,12 +249,14 @@ export function mountAdmin(app: Express, db: Database, opts: { adminDemo: boolea
     res.json({ data: one(db, pSql + ' WHERE p.id=?', [id]) });
   });
   // Categories (BD-18 taxonomy placeholder: rename/create only, no delete).
-  app.get('/api/admin/categories', admin('products'), (_q, res) => res.json({ data: all(db, 'SELECT c.id,c.slug,c.name,(SELECT COUNT(*) FROM products p WHERE p.category_id=c.id) AS products FROM categories c ORDER BY c.id'), stubs: { taxonomy: stub('BD-18') } }));
+  app.get('/api/admin/categories', admin('products'), (_q, res) => res.json({ data: all(db, `SELECT c.id,c.slug,c.name,c.parent_id AS parentId,(SELECT name FROM categories x WHERE x.id=c.parent_id) AS parentName,(SELECT COUNT(*) FROM products p WHERE p.category_id=c.id) AS products FROM categories c ORDER BY COALESCE(c.parent_id,c.id), c.parent_id IS NOT NULL, c.id`), stubs: { taxonomy: stub('BD-18') } }));
   app.post('/api/admin/categories', admin('products', 'edit'), (req: AReq, res) => {
     const name = String(req.body?.name ?? '').trim(); const slug = String(req.body?.slug ?? '').trim();
     if (!name || !/^[a-z0-9-]{2,40}$/.test(slug)) return bad(res, 'validation', { name: name ? '' : 'نام الزامی است', slug: 'شناسه لاتین معتبر نیست' });
     if (one(db, 'SELECT id FROM categories WHERE slug=?', [slug])) return bad(res, 'validation', { slug: 'این شناسه قبلاً استفاده شده' });
-    db.run('INSERT INTO categories (slug,name) VALUES (?,?)', [slug, name]); const id = lastId(db); audit(req, 'create', 'category', id, name);
+    const parentId = req.body?.parentId ? Number(req.body.parentId) : null;
+    if (parentId && !one(db, 'SELECT id FROM categories WHERE id=? AND parent_id IS NULL', [parentId])) return bad(res, 'validation', { parentId: 'والد معتبر نیست' }); // one level only (placeholder, BD-18)
+    db.run('INSERT INTO categories (slug,name,parent_id) VALUES (?,?,?)', [slug, name, parentId]); const id = lastId(db); audit(req, 'create', 'category', id, name);
     res.status(201).json({ data: one(db, 'SELECT id,slug,name FROM categories WHERE id=?', [id]) });
   });
   app.put('/api/admin/categories/:id', admin('products', 'edit'), (req: AReq, res) => {
@@ -286,7 +292,7 @@ export function mountAdmin(app: Express, db: Database, opts: { adminDemo: boolea
   };
   app.get('/api/admin/orders/:id', admin('orders'), (req, res) => {
     const o = orderDetail(Number(req.params.id)); if (!o) return res.status(404).json({ error: 'not_found' });
-    res.json({ data: o, stubs: { cancellation: stub('BD-05'), shipping: stub('BD-02'), vat: stub('BD-06'), payment: stub('BD-01'), fulfilment: stub('BD-23'), invoice: stub('ADMIN-PH-INVOICE') } });
+    res.json({ data: o, cancelReasons: CANCEL_REASONS, stubs: { cancellation: stub('BD-05'), shipping: stub('BD-02'), vat: stub('BD-06'), payment: stub('BD-01'), fulfilment: stub('BD-23'), invoice: stub('ADMIN-PH-INVOICE') } });
   });
   app.post('/api/admin/orders/:id/status', admin('orders', 'edit'), (req: AReq, res) => {
     const id = Number(req.params.id); const to = String(req.body?.status ?? ''); const reason = String(req.body?.reason ?? '').trim();
@@ -325,8 +331,17 @@ export function mountAdmin(app: Express, db: Database, opts: { adminDemo: boolea
     res.json({ data: { ...u,
       orders: all(db, 'SELECT id, order_number AS orderNumber, order_status AS orderStatus, payment_status AS paymentStatus, total, created_at AS createdAt FROM orders WHERE user_id=? ORDER BY created_at DESC', [id]),
       addresses: all(db, 'SELECT id, recipient, province, city, line, postal_code AS postalCode, is_default AS isDefault FROM addresses WHERE user_id=?', [id]),
-      reviews: all(db, 'SELECT r.id, r.rating, r.status, p.name AS product FROM reviews r JOIN products p ON p.id=r.product_id WHERE r.user_id=?', [id]) },
+      reviews: all(db, 'SELECT r.id, r.rating, r.status, p.name AS product FROM reviews r JOIN products p ON p.id=r.product_id WHERE r.user_id=?', [id]),
+      notes: all(db, 'SELECT n.id, n.body, n.created_at AS createdAt, a.name AS author FROM customer_notes n LEFT JOIN admin_users a ON a.id=n.admin_id WHERE n.user_id=? ORDER BY n.id DESC', [id]) },
       stubs: { block: stub('ADMIN-PH-PRIVACY'), export: stub('ADMIN-PH-PRIVACY') } });
+  });
+
+  app.post('/api/admin/customers/:id/notes', admin('customers', 'edit'), (req: AReq, res) => {
+    const id = Number(req.params.id); const body = String(req.body?.body ?? '').trim();
+    if (!one(db, 'SELECT id FROM users WHERE id=?', [id])) return res.status(404).json({ error: 'not_found' });
+    if (!body || body.length > 1000) return bad(res, 'validation', { body: 'یادداشت ۱ تا ۱۰۰۰ کاراکتر' });
+    db.run('INSERT INTO customer_notes (user_id,admin_id,body) VALUES (?,?,?)', [id, req.admin!.id, body]); audit(req, 'note', 'customer', id);
+    res.status(201).json({ data: all(db, 'SELECT n.id, n.body, n.created_at AS createdAt, a.name AS author FROM customer_notes n LEFT JOIN admin_users a ON a.id=n.admin_id WHERE n.user_id=? ORDER BY n.id DESC', [id]) });
   });
 
   // ---------- Reviews (NO FIGMA DESIGN — admin table pattern, pending design). Moderation policy BD-15 open; shop auto-publishes. ----------

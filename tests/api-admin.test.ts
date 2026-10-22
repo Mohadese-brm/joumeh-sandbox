@@ -178,3 +178,17 @@ describe('settings: admin users & roles', () => {
     expect(last.status).toBe(409); expect(last.body.error).toBe('last_owner');
   });
 });
+
+describe('r2 additions', () => {
+  it('sub-categories (one level), customer notes, sidebar open-order count, cancel reasons list', async () => {
+    const t = await login();
+    const sub = await request(app).post('/api/admin/categories').set(h(t)).send({ name: 'مانتو', slug: 'women-manto', parentId: 1 }); expect(sub.status).toBe(201);
+    expect((await request(app).post('/api/admin/categories').set(h(t)).send({ name: 'x', slug: 'deep', parentId: sub.body.data.id })).status).toBe(400);
+    const list = (await request(app).get('/api/admin/categories').set(h(t))).body.data;
+    expect(list.map((c: { slug: string }) => c.slug).slice(0, 2)).toEqual(['women', 'women-manto']); expect(list[1].parentName).toBe('زنانه');
+    const n = await request(app).post('/api/admin/customers/1/notes').set(h(t)).send({ body: 'یادداشت مشتری' }); expect(n.status).toBe(201); expect(n.body.data[0].body).toBe('یادداشت مشتری');
+    expect((await request(app).get('/api/admin/customers/1').set(h(t))).body.data.notes).toHaveLength(1);
+    expect((await request(app).get('/api/admin/me').set(h(t))).body.counts.openOrders).toBe(3);
+    expect((await request(app).get('/api/admin/orders/10124').set(h(t))).body.cancelReasons[0]).toBe('درخواست مشتری');
+  });
+});

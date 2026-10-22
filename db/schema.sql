@@ -1,6 +1,7 @@
 -- Joumeh storefront schema (LOCAL, SQLite via sql.js). Status: Review. Not a production migration.
 -- Every policy-bearing column is a BD stub (see knowledge/joumeh-dev.md §5). Do not ship as policy.
-CREATE TABLE categories (id INTEGER PRIMARY KEY, slug TEXT UNIQUE NOT NULL, name TEXT NOT NULL); -- BD-18 STUB: taxonomy
+CREATE TABLE categories (id INTEGER PRIMARY KEY, slug TEXT UNIQUE NOT NULL, name TEXT NOT NULL,
+  parent_id INTEGER REFERENCES categories(id)); -- BD-18 STUB: taxonomy. parent_id (admin-demo r2): one level of sub-categories, admin only
 CREATE TABLE products (
   id INTEGER PRIMARY KEY, slug TEXT UNIQUE NOT NULL, name TEXT NOT NULL,
   category_id INTEGER NOT NULL REFERENCES categories(id),
@@ -62,6 +63,8 @@ CREATE TABLE admin_sessions (token_hash TEXT PRIMARY KEY, admin_id INTEGER NOT N
 CREATE TABLE audit_log (id INTEGER PRIMARY KEY, admin_id INTEGER REFERENCES admin_users(id), action TEXT NOT NULL, entity TEXT NOT NULL, entity_id TEXT, detail TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')));
 CREATE TABLE order_notes (id INTEGER PRIMARY KEY, order_id INTEGER NOT NULL REFERENCES orders(id), admin_id INTEGER REFERENCES admin_users(id), body TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')));
+CREATE TABLE customer_notes (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id), admin_id INTEGER REFERENCES admin_users(id), body TEXT NOT NULL,
   created_at TEXT NOT NULL DEFAULT (datetime('now')));
 CREATE TABLE order_events (id INTEGER PRIMARY KEY, order_id INTEGER NOT NULL REFERENCES orders(id), status TEXT NOT NULL, actor TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')));
 -- Content: editable pages + homepage hero. Real policy TEXT is a placeholder until the CEO supplies it.
