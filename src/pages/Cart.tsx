@@ -58,7 +58,7 @@ export function Cart() {
               <div className="citem__info">
                 <Link to={`/product/${it.slug}`} className="citem__name">{it.name}</Link>
                 <p className="caption muted">رنگ: {it.color} · سایز: {it.size}</p>
-                <p className="caption">قیمت واحد: {it.originalPrice && it.originalPrice > it.price && <s className="muted">{faNumber(it.originalPrice)}</s>} <span className={it.originalPrice ? 'pc__now--sale' : ''}>{formatPrice(it.price)}</span></p>
+                <p className="caption">قیمت واحد: {it.originalPrice != null && it.price != null && it.originalPrice > it.price && <s className="muted">{faNumber(it.originalPrice)}</s>} <span className={it.originalPrice ? 'pc__now--sale' : ''}>{formatPrice(it.price)}</span></p>
                 {!it.available && <p className="err">ناموجود</p>}
               </div>
               {it.available ? <div className="qty" role="group" aria-label={`تعداد ${it.name}`}>

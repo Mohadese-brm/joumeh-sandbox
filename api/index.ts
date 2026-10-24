@@ -1,5 +1,5 @@
 // Vercel serverless entry (NOT deployed by the builder; deploy needs CEO approval).
-// All /api/* requests are rewritten here (vercel.json). The DB is in-memory SAMPLE data («داده نمونه»),
+// All /api/* requests are rewritten here (vercel.json). The DB is in-memory, seeded from db/catalog.ts (real catalogue),
 // seeded once per function instance: writes (cart, orders, addresses) do not persist across cold starts/instances.
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { createDb } from '../server/db.js';

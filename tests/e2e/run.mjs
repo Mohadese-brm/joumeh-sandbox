@@ -1,4 +1,5 @@
 // Full-page Playwright screenshots + axe-core on every page at desktop 1280 and mobile 375.
+// NOTE (catalog-real): still targets the old sample slugs (women-1 …); those now exist only in tests/fixtures/sample-seed.ts. Needs a priced real catalogue before it can run again.
 // Requires: API on 127.0.0.1:3001 started with JOUMEH_DEMO_OTP=1 (`npm run api:demo`, explicit opt-in) and vite (dev or preview) on BASE. Local only.
 import { chromium } from 'playwright';
 import AxeBuilder from '@axe-core/playwright';

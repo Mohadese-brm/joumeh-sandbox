@@ -13,7 +13,7 @@ import { SizeGuide } from '../components/SizeGuide';
 import { flags } from '../config/flags';
 import { NotFound } from './NotFound';
 import './Product.css';
-type Detail = P & { description: string; images: { url: string; alt: string }[]; variants: Variant[]; related: P[] };
+type Detail = P & { description: string; images: { url: string; thumb?: string; alt: string }[]; variants: Variant[]; related: P[] };
 
 export function Product() {
   const { slug } = useParams(); const loc = useLocation(); const nav = useNavigate();
@@ -31,8 +31,10 @@ export function Product() {
   const sizes = useMemo(() => p ? p.variants.filter(v => v.color === color) : [], [p, color]);
   if (r.error === 404) return <NotFound />;
   if (r.loading || !p) return <div className="wrap pdp" aria-busy="true">{r.error ? <div className="state" role="alert"><p>بارگذاری انجام نشد.</p><button className="btn btn--outline" onClick={r.reload}>تلاش دوباره</button></div> : <div className="skel" style={{ blockSize: 480, marginBlock: 32 }} />}</div>;
-  const sale = p.status === 'sale' && p.originalPrice != null;
+  const priced = p.price != null; // catalog-real: no price yet → «قیمت به‌زودی / تماس بگیرید», add-to-cart disabled
+  const sale = priced && p.status === 'sale' && p.originalPrice != null;
   const add = async () => {
+    if (!priced) return;
     const v = sizes.find(s => s.size === size);
     if (!v) { setErr('لطفاً سایز را انتخاب کنید.'); document.getElementById('size-group')?.querySelector<HTMLInputElement>('input:not(:disabled)')?.focus(); return; }
     setErr(''); setBusy(true);
@@ -51,24 +53,25 @@ export function Product() {
           <h1 className="h-page">{p.name}</h1>
           <p className="caption muted pdp__rating">امتیاز و نظرات: در انتظار تصمیم کسب‌وکار (BD-15)</p>
           <p className="pdp__price">{sale && <><span className="sr-only">قیمت اصلی </span><s>{faNumber(p.originalPrice!)}</s></>}
-            <span className={sale ? 'pdp__now pdp__now--sale' : 'pdp__now'}>{sale && <span className="sr-only">قیمت با تخفیف </span>}{formatPrice(p.price)}</span></p>
-          <p className="small muted">{p.description}</p>
-          <fieldset className="pdp__opt"><legend>رنگ: <span className="muted">{color}</span> <span className="tag-sample">نام رنگ نمونه</span></legend>
+            <span className={sale ? 'pdp__now pdp__now--sale' : priced ? 'pdp__now' : 'pdp__now pdp__now--onreq'}>{sale && <span className="sr-only">قیمت با تخفیف </span>}{formatPrice(p.price)}</span></p>
+          <p className="small muted">{p.description || 'توضیحات این محصول به‌زودی اضافه می‌شود.'}</p>
+          {colors.some(([c]) => c) && <fieldset className="pdp__opt"><legend>رنگ: <span className="muted">{color}</span> <span className="tag-sample">نام رنگ نمونه</span></legend>
             <div className="swatches">{colors.map(([c, hex]) => (
-              <label key={c} className="swatch" title={c}><input type="radio" name="color" checked={color === c} onChange={() => { setColor(c); setSize(null); }} aria-label={c} /><span style={{ background: hex ?? '#ccc' }} /></label>))}</div></fieldset>
-          <fieldset className="pdp__opt" id="options"><legend className="pdp__sizehead"><span>سایز</span></legend>
+              <label key={c} className="swatch" title={c}><input type="radio" name="color" checked={color === c} onChange={() => { setColor(c); setSize(null); }} aria-label={c} /><span style={{ background: hex ?? '#ccc' }} /></label>))}</div></fieldset>}
+          {p.variants.length > 0 && <fieldset className="pdp__opt" id="options"><legend className="pdp__sizehead"><span>سایز</span></legend>
             <button type="button" className="link pdp__guide" onClick={() => setGuide(true)}>راهنمای سایز</button>
             <div className="sizes" id="size-group" role="radiogroup" aria-label="سایز" aria-describedby={err ? 'pdp-err' : undefined}>{sizes.map(v => (
               <label key={v.id} className="size"><input type="radio" name="size" value={v.size} checked={size === v.size} disabled={!v.available} onChange={() => { setSize(v.size); setErr(''); }} />
-                <span>{v.size}{!v.available && <span className="sr-only"> (ناموجود)</span>}</span></label>))}</div></fieldset>
+                <span>{v.size}{!v.available && <span className="sr-only"> (ناموجود)</span>}</span></label>))}</div></fieldset>}
           {err && <p id="pdp-err" className="err" role="alert">{err}</p>}
+          {!priced && <p id="pdp-onreq" className="small pdp__onreq" role="note">قیمت این محصول به‌زودی اعلام می‌شود. فعلاً امکان خرید آنلاین آن نیست؛ برای سفارش تماس بگیرید.</p>}
           <div className="pdp__buy">
-            <div className="qty" role="group" aria-label="تعداد">
+            {priced && <div className="qty" role="group" aria-label="تعداد">
               <button type="button" onClick={() => setQty(q => Math.min(99, q + 1))} aria-label="افزایش تعداد"><Icon name="add" size={18} /></button>
               <output aria-live="polite">{faNumber(qty)}</output>
               <button type="button" onClick={() => setQty(q => Math.max(1, q - 1))} disabled={qty <= 1} aria-label="کاهش تعداد"><Icon name="minus" size={18} /></button>
-            </div>
-            <button type="button" className="btn btn--primary pdp__add" onClick={add} disabled={busy}><Icon name="bag-1" size={20} />{busy ? 'در حال افزودن…' : 'افزودن به سبد خرید'}</button>
+            </div>}
+            <button type="button" className="btn btn--primary pdp__add" onClick={add} disabled={busy || !priced} aria-describedby={priced ? undefined : 'pdp-onreq'}><Icon name="bag-1" size={20} />{busy ? 'در حال افزودن…' : 'افزودن به سبد خرید'}</button>
             <button type="button" className="pdp__fav" data-figma={favorites.has(p.id) ? '266:67406' : '266:67401'} aria-pressed={favorites.has(p.id)} aria-label={`${p.name} در علاقه‌مندی‌ها`} onClick={() => toggleFavorite(p.id)}><Icon name={favorites.has(p.id) ? 'heart-2' : 'heart-1'} /></button>
           </div>
           <ul className="pdp__facts">
@@ -80,7 +83,7 @@ export function Product() {
         <div className="pdp__gallery">
           <img className="pdp__hero" src={p.images[img]?.url} alt={p.images[img]?.alt} width={480} height={600} />
           {p.images.length > 1 && <div className="pdp__thumbs">{p.images.map((im, k) => (
-            <button type="button" key={k} aria-label={`نمایش عکس ${faNumber(k + 1)}`} aria-current={k === img} onClick={() => setImg(k)}><img src={im.url} alt="" width={96} height={120} loading="lazy" /></button>))}</div>}
+            <button type="button" key={k} aria-label={`نمایش عکس ${faNumber(k + 1)}`} aria-current={k === img} onClick={() => setImg(k)}><img src={im.thumb ?? im.url} alt="" width={96} height={120} loading="lazy" /></button>))}</div>}
         </div>
       </div>
       {/* Reviews 266:71769 (m 266:71829) — fix2: live via the local API. */}

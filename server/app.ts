@@ -15,14 +15,18 @@ const toLatin = (s: unknown) => String(s ?? '').replace(/[۰-۹]/g, d => String(
 
 // BD-18 STUB: no product-type taxonomy exists. Sample «دسته‌بندی» = first word of the sample product name (e.g. مانتو، پیراهن، کیمونو).
 const TYPE_SQL = `replace(substr(p.name, 1, instr(p.name || ' ', ' ') - 1), '‌ی', '')`;
+// catalog-real: a product without a prices row has price NULL («قیمت به‌زودی / تماس بگیرید»); it is listed (LEFT JOIN) but cannot be bought.
+// Real product photos have a 600px thumb next to the full image (public/img/products/thumb/); other images use themselves.
+const THUMB_SQL = (col: string) => `CASE WHEN ${col} LIKE '/img/products/%' THEN replace(${col}, '/img/products/', '/img/products/thumb/') ELSE ${col} END`;
 const PRODUCT_SQL = `SELECT ${TYPE_SQL} AS type, p.id, p.slug, p.name, p.status, p.badge_percent AS badgePercent, p.is_sample AS isSample, c.slug AS category,
   pr.amount AS price, pr.original_amount AS originalPrice, pr.currency,
   (SELECT url FROM images i WHERE i.product_id=p.id ORDER BY position LIMIT 1) AS imageUrl,
+  (SELECT ${THUMB_SQL('url')} FROM images i WHERE i.product_id=p.id ORDER BY position LIMIT 1) AS imageThumb,
   (SELECT alt FROM images i WHERE i.product_id=p.id ORDER BY position LIMIT 1) AS imageAlt
-  FROM products p JOIN prices pr ON pr.product_id=p.id JOIN categories c ON c.id=p.category_id`;
+  FROM products p LEFT JOIN prices pr ON pr.product_id=p.id JOIN categories c ON c.id=p.category_id`;
 const SORTS: Record<string, string> = {
   newest: 'p.created_at DESC, p.id', bestseller: 'p.sort_rank, p.id', // best-seller definition open (Refinement 2): sample rank
-  'price-asc': 'pr.amount ASC, p.id', 'price-desc': 'pr.amount DESC, p.id',
+  'price-asc': 'pr.amount IS NULL, pr.amount ASC, p.id', 'price-desc': 'pr.amount IS NULL, pr.amount DESC, p.id', // unpriced always last
 };
 const CATALOG_STUBS = { stock: stub('BD-16'), reviews: stub('BD-15'), sizeChart: stub('BD-18'), shipping: stub('BD-02'), returns: stub('BD-04') };
 
@@ -47,7 +51,7 @@ export function createApp(db: Database, deps: Deps = {}) {
   };
   const bad = (res: Response, error: string, fields?: Record<string, string>) => res.status(400).json({ error, fields });
 
-  app.get('/api/health', (_q, res) => res.json({ ok: true, sampleData: true }));
+  app.get('/api/health', (_q, res) => res.json({ ok: true, sampleData: false, catalog: 'real (placeholder names, no prices yet)' }));
 
   // ---------- Catalog ----------
   app.get('/api/products', (req, res) => {
@@ -64,10 +68,10 @@ export function createApp(db: Database, deps: Deps = {}) {
     if (minPrice && Number.isFinite(minP)) { where.push('pr.amount >= ?'); p.push(minP); }
     if (maxPrice && Number.isFinite(maxP)) { where.push('pr.amount <= ?'); p.push(maxP); }
     const w = where.length ? ' WHERE ' + where.join(' AND ') : '';
-    const total = one<{ n: number }>(db, `SELECT COUNT(*) AS n FROM products p JOIN prices pr ON pr.product_id=p.id JOIN categories c ON c.id=p.category_id${w}`, p)!.n;
+    const total = one<{ n: number }>(db, `SELECT COUNT(*) AS n FROM products p LEFT JOIN prices pr ON pr.product_id=p.id JOIN categories c ON c.id=p.category_id${w}`, p)!.n;
     const totalPages = Math.max(1, Math.ceil(total / config.pageSize));
     const data = all(db, `${PRODUCT_SQL}${w} ORDER BY ${SORTS[sort]} LIMIT ? OFFSET ?`, [...p, config.pageSize, (page - 1) * config.pageSize]);
-    res.json({ data, page, pageSize: config.pageSize, total, totalPages, sampleData: true, stubs: CATALOG_STUBS });
+    res.json({ data, page, pageSize: config.pageSize, total, totalPages, sampleData: data.some(d => !!(d as { isSample?: number }).isSample), stubs: CATALOG_STUBS });
   });
   app.get('/api/filters', (req, res) => {
     const cat = String(req.query.category ?? '');
@@ -83,9 +87,9 @@ export function createApp(db: Database, deps: Deps = {}) {
     const d = one<{ description: string }>(db, 'SELECT description FROM products WHERE id=?', [prod.id])!;
     const related = all(db, PRODUCT_SQL + ' WHERE c.slug=? AND p.id<>? ORDER BY p.sort_rank LIMIT 4', [prod.category, prod.id]);
     res.json({ data: { ...prod, description: d.description,
-      images: all(db, 'SELECT url, alt FROM images WHERE product_id=? ORDER BY position', [prod.id]),
+      images: all(db, `SELECT url, ${THUMB_SQL('url')} AS thumb, alt FROM images WHERE product_id=? ORDER BY position`, [prod.id]),
       variants: all(db, 'SELECT id, size, color, color_hex AS colorHex, sku, available FROM variants WHERE product_id=? ORDER BY id', [prod.id]),
-      related }, sampleData: true, stubs: CATALOG_STUBS });
+      related }, sampleData: !!prod.isSample, stubs: CATALOG_STUBS });
   });
   app.get('/api/search', (req, res) => {
     const q = String(req.query.q ?? '').trim();
@@ -96,14 +100,16 @@ export function createApp(db: Database, deps: Deps = {}) {
 
   // ---------- Cart ----------
   const cartView = (cid: number) => {
-    const items = all<{ id: number; variantId: number; quantity: number; price: number; originalPrice: number | null; available: number }>(db, `
+    const items = all<{ id: number; variantId: number; quantity: number; price: number | null; originalPrice: number | null; available: number }>(db, `
       SELECT ci.id, ci.variant_id AS variantId, ci.quantity, v.size, v.color, v.available, p.id AS productId, p.slug, p.name, pr.amount AS price, pr.original_amount AS originalPrice,
-      (SELECT url FROM images i WHERE i.product_id=p.id ORDER BY position LIMIT 1) AS imageUrl
-      FROM cart_items ci JOIN variants v ON v.id=ci.variant_id JOIN products p ON p.id=v.product_id JOIN prices pr ON pr.product_id=p.id WHERE ci.cart_id=? ORDER BY ci.id`, [cid]);
+      (SELECT ${THUMB_SQL('url')} FROM images i WHERE i.product_id=p.id ORDER BY position LIMIT 1) AS imageUrl
+      FROM cart_items ci JOIN variants v ON v.id=ci.variant_id JOIN products p ON p.id=v.product_id LEFT JOIN prices pr ON pr.product_id=p.id WHERE ci.cart_id=? ORDER BY ci.id`, [cid]);
+    // An item whose price was removed after it was added is treated as unavailable (never summed, never ordered).
+    for (const i of items) if (i.price == null) i.available = 0;
     const live = items.filter(i => i.available);
-    const subtotal = live.reduce((s, i) => s + (i.originalPrice ?? i.price) * i.quantity, 0);
-    const payable = live.reduce((s, i) => s + i.price * i.quantity, 0);
-    return { cartId: cid, items: items.map(i => ({ ...i, available: !!i.available, lineTotal: i.price * i.quantity })),
+    const subtotal = live.reduce((s, i) => s + (i.originalPrice ?? i.price!) * i.quantity, 0);
+    const payable = live.reduce((s, i) => s + i.price! * i.quantity, 0);
+    return { cartId: cid, items: items.map(i => ({ ...i, available: !!i.available, lineTotal: i.price == null ? null : i.price * i.quantity })),
       totals: { count: live.reduce((s, i) => s + i.quantity, 0), subtotal, discount: subtotal - payable, payable, shipping: null, vat: null },
       stubs: { shipping: stub('BD-02'), vat: stub('BD-06'), discountCode: stub('BD-17'), reservation: stub('BD-08') } };
   };
@@ -116,8 +122,9 @@ export function createApp(db: Database, deps: Deps = {}) {
   app.post('/api/cart/items', (req, res) => {
     const { cartId, variantId, quantity = 1 } = req.body ?? {};
     if (!Number.isInteger(variantId) || !Number.isInteger(quantity) || quantity < 1 || quantity > 99) return bad(res, 'invalid_body');
-    const v = one<{ available: number }>(db, 'SELECT available FROM variants WHERE id=?', [variantId]);
+    const v = one<{ available: number; price: number | null }>(db, 'SELECT v.available, pr.amount AS price FROM variants v LEFT JOIN prices pr ON pr.product_id=v.product_id WHERE v.id=?', [variantId]);
     if (!v) return res.status(404).json({ error: 'variant_not_found' });
+    if (v.price == null) return res.status(409).json({ error: 'price_on_request' }); // catalog-real: no price yet → not purchasable
     if (!v.available) return res.status(409).json({ error: 'variant_unavailable' }); // BD-16 STUB: availability flag only
     let cid = cartId;
     if (cid === undefined || cid === null) { db.run('INSERT INTO carts DEFAULT VALUES'); cid = lastId(db); }

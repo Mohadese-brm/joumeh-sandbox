@@ -4,9 +4,12 @@ import { createDb, all } from '../server/db';
 import { createApp } from '../server/app';
 import { ConsoleSmsAdapter } from '../server/sms';
 import type { Database } from 'sql.js';
+import { sampleSeed } from './fixtures/sample-seed';
+// These API tests run on the old SAMPLE fixture (prices, variants, sample user/orders) so cart/checkout/order logic stays covered.
+// The real catalogue (no prices yet) is covered in tests/catalog-real.test.ts.
 
 let db: Database; let app: ReturnType<typeof createApp>; let sms: ConsoleSmsAdapter; let clock = 1_800_000_000_000;
-beforeEach(async () => { db = await createDb(); sms = new ConsoleSmsAdapter(); clock = 1_800_000_000_000; app = createApp(db, { sms, now: () => clock, demoOtp: true }); }); // tests opt in to the demo OTP explicitly
+beforeEach(async () => { db = await createDb(sampleSeed); sms = new ConsoleSmsAdapter(); clock = 1_800_000_000_000; app = createApp(db, { sms, now: () => clock, demoOtp: true }); }); // tests opt in to the demo OTP explicitly
 async function login(phone = '09123456789') {
   const r = await request(app).post('/api/auth/otp/request').send({ phone });
   const v = await request(app).post('/api/auth/otp/verify').send({ phone, code: r.body.data.devCode });
@@ -108,14 +111,14 @@ describe('demo OTP is opt-in only (round 3, R2-2)', () => {
   const env = { ...process.env };
   afterEach(() => { process.env = { ...env }; });
   const req = async (a: ReturnType<typeof createApp>) => (await request(a).post('/api/auth/otp/request').send({ phone: '09124444444' })).body;
-  it('no code by default (env unset)', async () => { delete process.env.JOUMEH_DEMO_OTP; const b = await req(createApp(await createDb())); expect(b.data.phone).toBe('09124444444'); expect(b.data).not.toHaveProperty('devCode'); });
-  it('no code with NODE_ENV=production', async () => { delete process.env.JOUMEH_DEMO_OTP; process.env.NODE_ENV = 'production'; expect((await req(createApp(await createDb()))).data).not.toHaveProperty('devCode'); });
-  it('no code with NODE_ENV=development unless opted in', async () => { delete process.env.JOUMEH_DEMO_OTP; process.env.NODE_ENV = 'development'; expect((await req(createApp(await createDb()))).data).not.toHaveProperty('devCode'); });
+  it('no code by default (env unset)', async () => { delete process.env.JOUMEH_DEMO_OTP; const b = await req(createApp(await createDb(sampleSeed))); expect(b.data.phone).toBe('09124444444'); expect(b.data).not.toHaveProperty('devCode'); });
+  it('no code with NODE_ENV=production', async () => { delete process.env.JOUMEH_DEMO_OTP; process.env.NODE_ENV = 'production'; expect((await req(createApp(await createDb(sampleSeed)))).data).not.toHaveProperty('devCode'); });
+  it('no code with NODE_ENV=development unless opted in', async () => { delete process.env.JOUMEH_DEMO_OTP; process.env.NODE_ENV = 'development'; expect((await req(createApp(await createDb(sampleSeed)))).data).not.toHaveProperty('devCode'); });
   it('JOUMEH_DEMO_OTP=1 opts in; any other value does not', async () => {
-    process.env.JOUMEH_DEMO_OTP = 'true'; expect((await req(createApp(await createDb()))).data).not.toHaveProperty('devCode');
-    process.env.JOUMEH_DEMO_OTP = '1'; expect((await req(createApp(await createDb()))).data.devCode).toMatch(/^\d{6}$/);
+    process.env.JOUMEH_DEMO_OTP = 'true'; expect((await req(createApp(await createDb(sampleSeed)))).data).not.toHaveProperty('devCode');
+    process.env.JOUMEH_DEMO_OTP = '1'; expect((await req(createApp(await createDb(sampleSeed)))).data.devCode).toMatch(/^\d{6}$/);
   });
-  it('e-mail OTP follows the same rule', async () => { delete process.env.JOUMEH_DEMO_OTP; const r = await request(createApp(await createDb())).post('/api/auth/email/request').send({ email: 'sara@example.com' }); expect(r.status).toBe(201); expect(r.body.data).not.toHaveProperty('devCode'); });
+  it('e-mail OTP follows the same rule', async () => { delete process.env.JOUMEH_DEMO_OTP; const r = await request(createApp(await createDb(sampleSeed))).post('/api/auth/email/request').send({ email: 'sara@example.com' }); expect(r.status).toBe(201); expect(r.body.data).not.toHaveProperty('devCode'); });
 });
 
 describe('signup (round 2, 107:773)', () => {

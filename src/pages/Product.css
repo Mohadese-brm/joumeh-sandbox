@@ -44,3 +44,8 @@
 .pdp__facts li { display: flex; gap: 8px; align-items: center; }
 .pdp__sec { margin-block-start: var(--section-gap); display: grid; gap: 20px; }
 .pdp__sec .sec-head { margin: 0; }
+
+/* catalog-real: price on request */
+.pdp__now--onreq { font-size: 18px; font-weight: 500; color: var(--n-600, #57534e); }
+.pdp__onreq { margin: 0; color: var(--n-600, #57534e); }
+.pdp__add:disabled { opacity: .5; cursor: not-allowed; }

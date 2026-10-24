@@ -1,0 +1,7 @@
+{
+  "framework": "docker",
+  "dockerfile": "Dockerfile",
+  "port": 8080,
+  "start_command": "npx tsx gerdoo/server.ts",
+  "health_path": "/api/health"
+}
