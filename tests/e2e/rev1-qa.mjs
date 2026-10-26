@@ -15,7 +15,7 @@ for (const [vp, size] of [['desktop', { width: 1440, height: 900 }], ['mobile', 
   const open = async path => { const p = await ctx.newPage(); p.on('console', m => m.type() === 'error' && R.console.push(`${vp} ${path}: ${m.text()}`)); p.on('pageerror', e => R.console.push(`${vp} ${path}: ${e.message}`));
     await p.goto(base + path, { waitUntil: 'networkidle' }); return p; };
   const cardMetrics = p => p.evaluate(() => [...document.querySelectorAll('.pc')].slice(0, 12).map(c => {
-    const r = c.getBoundingClientRect(), cs = getComputedStyle(c), bw = parseFloat(cs.borderTopWidth);
+    const box = c.querySelector('.pc__link') ?? c; /* rev2: the visible box is .pc__link */ const r = box.getBoundingClientRect(), cs = getComputedStyle(box), bw = parseFloat(cs.borderTopWidth);
     const m = c.querySelector('.pc__media').getBoundingClientRect(), body = c.querySelector('.pc__body').getBoundingClientRect(), ms = getComputedStyle(c.querySelector('.pc__media'));
     const rd = x => Math.round(x * 10) / 10;
     return { card: [rd(r.width), rd(r.height)], photo: [rd(m.width), rd(m.height)], border: bw, cardRadius: cs.borderTopLeftRadius,

@@ -8,21 +8,27 @@
 /* design-batch-2026-10-26 item 9 — boxed card (adidas.nl/sneakers reference): one box holds picture + name + price.
    The card fills its grid cell (fluid); the approved arch (top radius = w/2, bottom = w × 0.057) is kept on the picture.
    --mw = picture width, derived from the card's own inline size (container query units). */
-/* rev1 (Mohadeseh 2026-10-26): box = picture + 8px on every side (--card-pad), info inside the same box. Box radius stays 12 (--card-r);
-   the picture's bottom corners are concentric with it: inner r = card-r − border − pad = 3px. The approved arch top (w/2) is kept. */
-:root { --card-pad: 8px; --card-r: 12px; --card-border: 1px; }
+/* rev1 (Mohadeseh 2026-10-26): box = picture + 8px on every side (--card-pad), info inside the same box. */
+/* rev2 (Mohadeseh 2026-10-26, "round above like picture"): the BOX top is an arch concentric with the picture's arch, 8px outside it.
+   The visible box (white fill + 1px border) is drawn by .pc__link, inside the .pc container, so its radii can use cqi:
+   outer top radius = 50cqi (half the box width) → padding-edge radius = 50cqi − border = picture arch (mw/2) + pad. Bottom corners stay --card-r.
+   .pc itself is a transparent wrapper (no border/background) so the page shows around the arch. */
+:root { --card-pad: 8px; --card-r: 12px; --card-border: 1px; --card-border-color: var(--n-200, #e7e5e2); }
 .pc { position: relative; inline-size: 100%; font-family: 'Vazirmatn', sans-serif; color: var(--color-v2-text-primary);
-  container-type: inline-size; background: #fff; border: var(--card-border) solid var(--n-200, #e7e5e2); border-radius: var(--card-r); transition: border-color .2s ease, box-shadow .2s ease; }
-.pc:hover, .pc:focus-within { border-color: var(--n-500, #78716c); box-shadow: 0 4px 16px rgb(28 25 23 / .06); }
+  container-type: inline-size; display: flex; flex-direction: column; --inset: calc(var(--pad) + var(--card-border)); }
 .pc--desktop { --pad: var(--card-pad); --name: 17px; --old: 14px; --now: 17px; --gap: 12px; --cart-b: 8px; }
 .pc--mobile  { --pad: var(--card-pad); --name: 14px; --old: 12px; --now: 14px; --gap: 8px; --cart-b: 6px; }
-.pc { --mw: calc(100cqi - 2 * var(--pad)); --mh: calc(var(--mw) * 4 / 3); }
-.pc__link { display: flex; flex-direction: column; gap: var(--gap); padding: var(--pad); color: inherit; text-decoration: none; border-radius: calc(var(--card-r) - var(--card-border)); }
+.pc { --mw: calc(100cqi - 2 * var(--pad) - 2 * var(--card-border)); --mh: calc(var(--mw) * 4 / 3); --arch: 50cqi; }
+.pc__link { flex: 1; display: flex; flex-direction: column; gap: var(--gap); padding: var(--pad); color: inherit; text-decoration: none;
+  background: #fff; border: var(--card-border) solid var(--card-border-color); background-clip: padding-box;
+  border-start-start-radius: var(--arch); border-start-end-radius: var(--arch); border-end-start-radius: var(--card-r); border-end-end-radius: var(--card-r);
+  transition: border-color .2s ease, box-shadow .2s ease; }
+.pc:hover .pc__link, .pc:focus-within .pc__link { border-color: var(--n-500, #78716c); box-shadow: 0 4px 16px rgb(28 25 23 / .06); }
 .pc__link:focus-visible { outline: 3px solid var(--price-sale); outline-offset: 2px; }
 .pc__media { position: relative; inline-size: 100%; aspect-ratio: 3 / 4; overflow: hidden; background: var(--n-100, #f4f3f1);
   border-start-start-radius: calc(var(--mw) / 2); border-start-end-radius: calc(var(--mw) / 2);
-  --pc-in-r: calc(var(--card-r) - var(--card-border) - var(--pad));
-  border-end-start-radius: var(--pc-in-r); border-end-end-radius: var(--pc-in-r); }
+  /* rev2: approved soft bottom corners restored (mw × 0.057 ≈ 20px at 1440) */
+  border-end-start-radius: calc(var(--mw) * 0.057); border-end-end-radius: calc(var(--mw) * 0.057); }
 .pc__img { display: block; position: absolute; inset: 0; inline-size: 100%; block-size: 100%; object-fit: cover; transition: opacity .35s ease; }
 .pc__img--2 { opacity: 0; }
 .pc--swap .pc__link:hover .pc__img--2, .pc--swap .pc__link:focus-visible .pc__img--2 { opacity: 1; }
@@ -39,7 +45,7 @@
 .pc__old { color: var(--price-original); font-size: var(--old); font-weight: 400; }
 .pc__now { font-size: var(--now); font-weight: 600; color: var(--color-v2-text-primary); }
 .pc__now--sale { color: var(--price-sale); }
-.pc__badge { position: absolute; inset-inline-start: calc(var(--pad) + 10px); inset-block-start: calc(var(--pad) + var(--mh) - 42px); /* 42px above the picture's bottom (54:123/54:170) */
+.pc__badge { position: absolute; inset-inline-start: calc(var(--inset) + 10px); inset-block-start: calc(var(--inset) + var(--mh) - 42px); /* 42px above the picture's bottom (54:123/54:170) */
   background: var(--color-v2-badge-sale-bg); color: var(--color-v2-text-on-accent); font-size: 12px; font-weight: 500; line-height: 1.4;
   padding-block: 2px; padding-inline: 10px; border-radius: 999px; pointer-events: none; }
 .pc__icon { position: absolute; inline-size: 44px; block-size: 44px; border: 0; border-radius: 999px; background: var(--color-v2-bg-surface);
@@ -47,7 +53,7 @@
 .pc__icon span { display: grid; inline-size: 24px; block-size: 24px; place-items: center; }
 .pc__icon:focus-visible { outline: 3px solid var(--price-sale); outline-offset: 2px; }
 
-.pc__cart { inset-inline-end: calc(var(--pad) + 8px); inset-block-start: calc(var(--pad) + var(--mh) - 44px - var(--cart-b)); }
+.pc__cart { inset-inline-end: calc(var(--inset) + 8px); inset-block-start: calc(var(--inset) + var(--mh) - 44px - var(--cart-b)); }
 
 .pc__badge.pc__badge--new { background: var(--color-v2-badge-new-bg, #1c7477); color: #fff; } /* token badge/new-bg teal/600 */
 

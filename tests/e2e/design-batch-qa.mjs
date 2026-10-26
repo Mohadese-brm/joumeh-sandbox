@@ -59,7 +59,7 @@ for (const [vp, size] of [['desktop', { width: 1440, height: 900 }], ['mobile', 
   M.shop = await p.evaluate(() => {
     const q = s => document.querySelector(s); const cw = document.documentElement.clientWidth; const grid = q('.pgrid'); const gr = grid.getBoundingClientRect();
     const lis = [...grid.children].map(l => l.getBoundingClientRect()); const row1 = lis.filter(r => Math.abs(r.top - lis[0].top) < 1); const row2 = lis.filter(r => r.top > lis[0].bottom - 1);
-    const card = q('.pc'); const cs = getComputedStyle(card); const media = q('.pc__media').getBoundingClientRect(); const cr = card.getBoundingClientRect();
+    const card = q('.pc'); const cs = getComputedStyle(q('.pc__link') ?? card); /* rev2: border/background drawn by .pc__link */ const media = q('.pc__media').getBoundingClientRect(); const cr = card.getBoundingClientRect();
     const sepSvg = q('.crumbs__sep svg, .crumbs svg');
     return { gridPadStart: Math.round(cw - gr.right), gridPadEnd: Math.round(gr.left), columns: row1.length, colGap: row1.length > 1 ? Math.round(row1[0].left - row1[1].right) : null, rowGap: row2.length ? Math.round(row2[0].top - lis[0].bottom) : null,
       card: { w: Math.round(cr.width), h: Math.round(cr.height), bg: cs.backgroundColor, border: cs.border, radius: cs.borderRadius, mediaW: Math.round(media.width), mediaH: Math.round(media.height), hasPrice: !!card.querySelector('.pc__now') },

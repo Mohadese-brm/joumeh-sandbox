@@ -103,10 +103,13 @@ textarea.input { padding-block: 10px; min-block-size: 88px; }
 /* Home best-sellers / PDP related: 4 cards (Home 55:282 gap 24). */
 @media (min-width: 1280px) { .pgrid.pgrid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); --pgrid-col: 24px; } }
 /* Loading skeleton = same boxed card shape */
-.pgrid__sk { inline-size: 100%; background: #fff; border: 1px solid var(--n-200); border-radius: 12px; padding: 12px; display: grid; gap: 12px; container-type: inline-size; }
+/* rev2: same arched box as .pc__link (top radius = 50cqi of the cell, concentric with the picture arch, 8px pad) */
+.pgrid > li { container-type: inline-size; }
+.pgrid__sk { inline-size: 100%; background: #fff; border: var(--card-border, 1px) solid var(--n-200); padding: var(--card-pad, 8px); display: grid; gap: 12px;
+  border-radius: 50cqi 50cqi var(--card-r, 12px) var(--card-r, 12px); }
 .pgrid__sk-img { aspect-ratio: 3 / 4; border-radius: 50% 50% 5.7% 5.7% / 37.5% 37.5% 4.3% 4.3%; }
 .pgrid__sk-line { block-size: 16px; border-radius: 4px; inline-size: 70%; } .pgrid__sk-line--s { inline-size: 40%; }
-@media (max-width: 767px) { .pgrid__sk { padding: 8px; gap: 8px; } }
+@media (max-width: 767px) { .pgrid__sk { gap: 8px; } }
 .state { display: grid; justify-items: center; gap: 12px; text-align: center; padding-block: 48px; }
 .crumbs { font-size: 14px; line-height: 24px; color: #57534e; padding-block: 16px; } /* Breadcrumb 56:560 */
 .crumbs ol { list-style: none; display: flex; flex-wrap: wrap; gap: 4px; margin: 0; padding: 0; align-items: flex-start; }
