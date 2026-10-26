@@ -16,7 +16,7 @@ const sale = { id: 1, slug: 'women-1', name: 'مانتو کتان کویری', s
 const rtl = (ui: React.ReactElement, path = '/') => render(<div lang="fa" dir="rtl"><MemoryRouter initialEntries={[path]}>{ui}</MemoryRouter></div>);
 
 describe('flags (decision log)', () => {
-  it('defaults match CEO/Emma decisions', () => { expect(flags).toEqual({ showDiscountBadge: true, filterMode: 'off', heroMode: 'carousel', priceSize: '17px' }); });
+  it('defaults match CEO/Emma decisions', () => { expect(flags).toEqual({ showDiscountBadge: true, filterMode: 'off', heroMode: 'static', priceSize: '17px' }); }); // heroMode → 'static': design-batch-2026-10-26 item 1 (CEO)
 });
 
 describe('ProductCard', () => {
@@ -38,7 +38,7 @@ describe('ProductCard', () => {
     expect(screen.getByRole('link')).toHaveAttribute('href', '/product/women-1');
   });
   it('image dimensions desktop/mobile', () => {
-    const { container, rerender } = rtl(<ProductCard product={sale} />); expect(container.querySelector('img')).toHaveAttribute('width', '282');
+    const { container, rerender } = rtl(<ProductCard product={sale} />); expect(container.querySelector('img')).toHaveAttribute('width', '378'); // design-batch-2026-10-26: Shop 56:282 card 378×504, fluid
     rerender(<div><MemoryRouter><ProductCard product={sale} size="mobile" /></MemoryRouter></div>); expect(container.querySelector('img')).toHaveAttribute('height', '228');
   });
   it('has no axe violations', async () => { const { container } = rtl(<ProductCard product={sale} headingLevel={2} />); expect(await axe(container)).toHaveNoViolations(); });
@@ -84,7 +84,7 @@ describe('Shop: no filter UI, designed sort (fix1 items 3–4)', () => {
     rtl(<StoreProvider><Routes><Route path="/women" element={<><Shop category="women" /><Loc /></>} /></Routes></StoreProvider>, '/women');
     await screen.findByText('مانتو کتان کویری');
     expect(screen.queryByRole('button', { name: /فیلتر/ })).toBeNull(); expect(document.querySelector('.filters, .shop__panel')).toBeNull();
-    expect(document.querySelector('[data-figma="268:53379"]')).not.toBeNull();
+    expect(document.querySelector('[data-figma^="268:53379"]')).not.toBeNull();
   });
   it('sort change updates URL and resets page', async () => {
     handler = url => url.startsWith('/api/products?') ? { json: { data: [sale], total: 20, totalPages: 3, page: 2 } } : { json: { data: { sizes: [], colors: [] } } };
@@ -143,5 +143,18 @@ describe('AuthModal (mock OTP)', () => {
     rtl(<StoreProvider><Opener /><AuthModal /></StoreProvider>);
     await screen.findByRole('dialog'); fireEvent.keyDown(document, { key: 'Escape' });
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  });
+});
+
+// design-batch-2026-10-26 item 9 — hover swap with graceful fallback
+describe('ProductCard second image', () => {
+  const base = { id: 1, slug: 'x', name: 'X', status: 'default' as const, price: 1000, imageUrl: '/a.webp', imageThumb: '/a-t.webp', imageAlt: 'x' };
+  it('renders a second image only when it differs', () => {
+    const { container, rerender } = rtl(<ProductCard product={{ ...base, imageThumb2: '/b-t.webp' }} />);
+    expect(container.querySelectorAll('img')).toHaveLength(2); expect(container.querySelector('.pc--swap')).not.toBeNull();
+    rerender(<div><MemoryRouter><ProductCard product={{ ...base, imageThumb2: '/a-t.webp' }} /></MemoryRouter></div>);
+    expect(container.querySelectorAll('img')).toHaveLength(1); expect(container.querySelector('.pc--swap')).toBeNull();
+    rerender(<div><MemoryRouter><ProductCard product={{ ...base, imageThumb2: null }} /></MemoryRouter></div>);
+    expect(container.querySelectorAll('img')).toHaveLength(1);
   });
 });

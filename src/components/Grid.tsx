@@ -6,10 +6,10 @@ import { Icon } from './Icon';
 import type { Product } from '../lib/api';
 /** Shared product grid. Card add-to-cart (P9 ruling): no quick-add is designed, so the bag button opens the PDP and shows
  *  the designed size-required state 260:62447 (mobile 260:63048) — no extra toast copy. */
-export function ProductGrid({ products, headingLevel = 3, onFavoriteToggled, removable = false }: { products: Product[]; headingLevel?: 2 | 3; onFavoriteToggled?: (id: number) => void; removable?: boolean }) {
+export function ProductGrid({ products, headingLevel = 3, onFavoriteToggled, removable = false, four = false }: { products: Product[]; headingLevel?: 2 | 3; onFavoriteToggled?: (id: number) => void; removable?: boolean; four?: boolean }) {
   const mobile = useIsMobile(); const { toggleFavorite } = useStore(); const nav = useNavigate();
   return (
-    <ul className="pgrid">
+    <ul className={four ? 'pgrid pgrid--4' : 'pgrid'}>
       {products.map(p => (
         <li key={p.id}>
           <ProductCard product={p} size={mobile ? 'mobile' : 'desktop'} headingLevel={headingLevel} showBadge={flags.showDiscountBadge}
@@ -21,8 +21,9 @@ export function ProductGrid({ products, headingLevel = 3, onFavoriteToggled, rem
     </ul>
   );
 }
-export function GridSkeleton({ n = 6 }: { n?: number }) {
-  return <ul className="pgrid" aria-busy="true" aria-label="در حال بارگذاری">{Array.from({ length: n }, (_, i) => <li key={i}><div className="skel pgrid__sk" /></li>)}</ul>;
+export function GridSkeleton({ n = 6, four = false }: { n?: number; four?: boolean }) {
+  return <ul className={four ? 'pgrid pgrid--4' : 'pgrid'} aria-busy="true" aria-label="در حال بارگذاری" data-testid="grid-skeleton">{Array.from({ length: n }, (_, i) =>
+    <li key={i} aria-hidden="true"><div className="pgrid__sk"><div className="skel pgrid__sk-img" /><div className="skel pgrid__sk-line" /><div className="skel pgrid__sk-line pgrid__sk-line--s" /></div></li>)}</ul>;
 }
 export function ErrorState({ onRetry, text = 'بارگذاری انجام نشد.' }: { onRetry: () => void; text?: string }) {
   return <div className="state" role="alert"><p>{text}</p><button className="btn btn--outline" onClick={onRetry}>تلاش دوباره</button></div>;

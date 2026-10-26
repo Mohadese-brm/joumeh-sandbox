@@ -1,11 +1,12 @@
 .pdp__main { display: grid; gap: 24px; }
 .pdp__gallery { order: -1; }
-@media (min-width: 1024px) { .pdp__main { grid-template-columns: 1fr 480px; gap: 76px; align-items: start; } .pdp__gallery { order: 0; } }
+/* design-batch-2026-10-26 item 10: image 492×615, main gap 64 (57:282) */
+@media (min-width: 1024px) { .pdp__main { grid-template-columns: 1fr 492px; gap: 64px; align-items: start; } .pdp__gallery { order: 0; } .pdp__hero { inline-size: 492px; block-size: 615px; } }
 .pdp__hero { display: block; inline-size: 100%; block-size: auto; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 244px 244px 28px 28px; }
 .pdp__thumbs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-block-start: 12px; }
 .pdp__thumbs button { padding: 0; border: 2px solid transparent; border-radius: 48px 48px 8px 8px; overflow: hidden; cursor: pointer; background: none; }
 .pdp__thumbs button[aria-current="true"] { border-color: var(--teal-600); }
-.pdp__thumbs img { display: block; inline-size: 100%; block-size: auto; aspect-ratio: 4/5; object-fit: cover; }
+.pdp__thumbs img { display: block; inline-size: 100%; block-size: auto; aspect-ratio: 3/4; object-fit: cover; } /* 114×152 (57:282) */
 .pdp__info { display: grid; gap: 14px; align-content: start; justify-items: start; }
 .pdp__info > * { margin: 0; }
 .pdp__badge { background: var(--orange-500); color: var(--n-900); font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 999px; }
@@ -49,3 +50,12 @@
 .pdp__now--onreq { font-size: 18px; font-weight: 500; color: var(--n-600, #57534e); }
 .pdp__onreq { margin: 0; color: var(--n-600, #57534e); }
 .pdp__add:disabled { opacity: .5; cursor: not-allowed; }
+
+/* design-batch-2026-10-26 item 10 — rating row + description (57:282) */
+.pdp__rating { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; line-height: 24px; color: #57534e; text-decoration: none; min-block-size: 24px; }
+a.pdp__rating:hover span:last-child { text-decoration: underline; }
+.pdp__stars { display: inline-flex; gap: 2px; color: #15595b; }
+.pdp__stars > span { display: inline-grid; color: var(--n-300, #d6d3d1); } .pdp__stars > span.is-on { color: #15595b; }
+.pdp__stars > span.is-on path { fill: currentColor; }
+.pdp__desc { font-size: 16px; line-height: 28px; color: #57534e; max-inline-size: 60ch; }
+.pdp__main--sk { margin-block: 16px 32px; } .pdp__main--sk .pdp__info { gap: 16px; inline-size: 100%; } .pdp__main--sk .pdp__hero { aspect-ratio: 4 / 5; }

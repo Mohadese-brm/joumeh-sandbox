@@ -55,3 +55,21 @@ Other fix2 decisions (CEO, relayed by Emma 17:50 Tehran): no heart on any card i
 
 ## fix2b — CEO DECISION (2026-10-21 ~18:02 Tehran, relayed by Emma): reviews publish immediately, no moderation
 Replaces the moderation DEFAULT above: this is now Mohadeseh's decision, not a default. Success state copy: title «نظر شما ثبت شد», body «ممنون از اینکه تجربه‌تان را با ما به اشتراک گذاشتید.». All "checked before publishing" wording removed; form helper is now «قوانین طول متن هنوز تعیین نشده است (تصمیم باز).» (length rule stays a DEFAULT). Figma 266:71187 / 266:71323 still carry the old copy (read-only).
+
+## design-batch-2026-10-26 — CEO design batch (branch `design-batch-2026-10-26`, preview only)
+| # | Decision | Where |
+|---|---|---|
+| 1 | Hero = one fixed image (`incoming-2026-10-26/hero.png`, original untouched), served as webp 768/1024/1542 srcset, cover-fit, «مشاهده» → /women. `flags.heroMode = 'static'` (carousel code kept, unused). FIGMA GAP: no full-bleed hero frame; CTA placed bottom-start | `HeroStatic.tsx`, `Home.css` |
+| 2 | Feature sections: image 480×600; label→title 16, title→sentence 16, sentence one line (≥1024), sentence→button 32, 48 between sections. "Centred" read as the text block vertically centred beside the image (AMBIGUOUS) | `Home.tsx`, `Home.css` |
+| 3 | Home product rows: 4 cards each, sample prices/data | `BestSellers` in `Home.tsx` |
+| 4 | Last Home section (story teaser) → footer = 80px | `.hsec--last` |
+| 5 | Selected state (header tab, breadcrumb current page, auth tabs, mobile menu): `--sel-color` teal-600, `--sel-line` 2px, `--sel-gap` 8px (was 9) | `global.css` tokens, `Layout.css` |
+| 6 | Breadcrumb separator = Figma icon `left-2` (16px) via shared `Breadcrumbs` component | `Breadcrumbs.tsx` |
+| 7 | Sort: unboxed label «مرتب‌سازی» (ZWNJ kept) over «جدیدترین» + Figma `chev-d`; open = brand green (read as teal-600 #1C7477) + blurred listbox (`--blur-surface`, `--blur-amount`), options start-aligned (right in RTL), tick at inline-end (left). Full listbox keyboard model (↑↓ Home End Enter Space Esc Tab), focus returns to the button. Mobile keeps the approved bottom sheet (56:951) | `Shop.tsx`, `Shop.css` |
+| 8 | Listing grid: 120 page padding (≥1440), 32 column gap, 48 row gap; fluid 2→3 columns (`--pgrid-col/row` tokens: 12/24, 24/40, 32/48) | `global.css` |
+| 9 | Card = white box (1px n-200, r12) with picture + name + price (adidas style); hover/keyboard focus fades to the 2nd photo; single-photo products keep one image (no swap). Card arch kept inside the box | `ProductCard.*` |
+| 10 | PDP image 492×615; sample rating 4.2 / 128 and 3 sample reviews, all labelled «(نمونه)»; sample description | `Product.*`, `db/sample-placeholder-data.ts` |
+| 11 | "Portfolio" sample data is AMBIGUOUS → interpreted as product-catalogue sample data, one switch `JOUMEH_SAMPLE_PLACEHOLDERS` (default on in the app, off in tests). Prices/sizes/colours/descriptions are placeholders, never policy | `db/sample-placeholder-data.ts` |
+| 12 | Loading states: grid/PDP/cart skeletons, search spinner | `Grid.tsx`, `Product.tsx`, `Cart.tsx`, `Layout.tsx` |
+| 13 | Support: Figma `Call` icon FAB on every page (above the mobile bottom nav) → LOCAL demo chat (nothing is sent); canned answers labelled «پاسخ نمایشی (دمو)»; shipping/returns answers say "not decided yet". FIGMA GAP: no chat frame | `SupportChat.tsx`, `content/support-demo.ts` |
+| 14 | «قصه ما» page `/info/story` uses the CEO text verbatim (`src/content/story.ts`, test fixture byte-compare); header/footer links point there | `Story.tsx` |

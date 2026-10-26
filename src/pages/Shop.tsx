@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { ProductGrid, GridSkeleton, ErrorState } from '../components/Grid';
+import { Breadcrumbs } from '../components/Breadcrumbs';
 import { Pagination } from '../components/Pagination';
 import { Modal } from '../components/Modal';
 import { useApi } from '../lib/useApi';
@@ -15,7 +16,11 @@ const TITLES: Record<string, { title: string; crumb: string }> = { women: { titl
 /* fix1 item 4 (CEO review 2026-10-21): the design has no filter component, so the filter UI is removed (desktop panel + mobile sheet).
    Supersedes R-2 (select-then-Apply). The API still accepts filter params; the UI no longer sends them. */
 
-/** fix1 item 3: Sort / Dropdown 268:53379 (Closed 268:53255, Open 268:53263, menu 268:53271, options Sort / Option 268:53254). Custom listbox — no native select. */
+/** design-batch-2026-10-26 item 7 — unboxed sort. Title «مرتب‌سازی», under it the current value + Figma Icon/ChevD (Down 2 72:8053), no box.
+ *  Open: value + chevron turn the action colour (teal-600 #1C7477 — "brand green", see report) and a menu opens on a background-blur
+ *  surface (same 82 % + blur 20 recipe as the Header 54:294). Options are start-aligned (right in RTL) with the Figma tick icon on the
+ *  left of the selected one (option row metrics from Sort / Option 268:53254). ARIA listbox pattern kept from fix1: button + aria-activedescendant,
+ *  ArrowUp/Down, Home/End, Enter/Space select, Escape/Tab close, focus returns to the button, outside click closes. */
 function SortDropdown({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [open, setOpen] = useState(false); const [act, setAct] = useState(0);
   const box = useRef<HTMLDivElement>(null); const btn = useRef<HTMLButtonElement>(null);
@@ -31,20 +36,20 @@ function SortDropdown({ value, onChange }: { value: string; onChange: (v: string
     else if (e.key === 'ArrowUp') { e.preventDefault(); setAct(a => Math.max(0, a - 1)); }
     else if (e.key === 'Home') { e.preventDefault(); setAct(0); } else if (e.key === 'End') { e.preventDefault(); setAct(SORTS.length - 1); }
     else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(act); }
-    else if (e.key === 'Escape' || e.key === 'Tab') { setOpen(false); }
+    else if (e.key === 'Escape') { e.preventDefault(); setOpen(false); }
+    else if (e.key === 'Tab') { setOpen(false); }
   };
   return (
-    <div className="ssel" ref={box} data-figma="268:53379">
+    <div className={`ssel${open ? ' is-open' : ''}`} ref={box} data-figma="268:53379 (restyled, unboxed)">
       <span id="sort-lbl" className="ssel__label">مرتب‌سازی</span>
-      <button ref={btn} type="button" id="sort" className={`ssel__field${open ? ' is-open' : ''}`} aria-haspopup="listbox" aria-expanded={open} aria-labelledby="sort-lbl sort"
+      <button ref={btn} type="button" id="sort" className="ssel__field" aria-haspopup="listbox" aria-expanded={open} aria-labelledby="sort-lbl sort"
         aria-controls="sort-menu" aria-activedescendant={open ? `sort-opt-${act}` : undefined} onClick={() => setOpen(o => !o)} onKeyDown={key}>
-        <span className="ssel__value">{SORTS[cur][1]}</span><span className="ssel__chev" aria-hidden="true">{/* fix2b: ChevD 52:328 path (Down 2 72:8053), drawn 16×8 inside the 20px slot; stroke stays 1.5px (non-scaling). */}
-              <svg width="16" height="8" viewBox="0.35 0.35 9.13 4.13" fill="none"><path d="M9.08333 0.75L7.62724 2.21914C6.46604 3.39075 5.88544 3.97656 5.17778 4.06676C5.00439 4.08886 4.82894 4.08886 4.65556 4.06676C3.9479 3.97656 3.3673 3.39075 2.20609 2.21914L0.75 0.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" /></svg></span>
+        <span className="ssel__value">{SORTS[cur][1]}</span><span className="ssel__chev" aria-hidden="true"><Icon name="chev-d" size={20} /></span>
       </button>
       {open && <ul id="sort-menu" className="ssel__menu" role="listbox" aria-labelledby="sort-lbl" data-figma="268:53271">{SORTS.map(([v, l], i) => (
         <li key={v} id={`sort-opt-${i}`} role="option" aria-selected={v === value} className={`ssel__opt${i === act ? ' is-active' : ''}`}
           onMouseEnter={() => setAct(i)} onMouseDown={e => e.preventDefault()} onClick={() => pick(i)}>
-          <span>{l}</span>{v === value && <span className="ssel__tick" aria-hidden="true">✓</span>}</li>))}</ul>}
+          <span className="ssel__optText">{l}</span><span className="ssel__tick" aria-hidden="true">{v === value && <Icon name="tick" size={20} />}</span></li>))}</ul>}
     </div>
   );
 }
@@ -62,7 +67,7 @@ export function Shop({ category }: { category: 'women' | 'men' }) {
   const t = TITLES[category];
   return (
     <div className="wrap shop">
-      <nav className="crumbs" aria-label="مسیر صفحه"><ol><li><Link to="/">خانه</Link></li><li><span aria-current="page">{t.crumb}</span></li></ol></nav>
+      <Breadcrumbs items={[{ label: 'خانه', to: '/' }, { label: t.crumb }]} />
       {/* fix1 item 3: sort per Figma — desktop Select v2/مرتب‌سازی 56:286 (240 wide, start of the Title row 56:293, bottom-aligned with the title block);
           mobile Toolbar 56:627 › Button/Sort 56:621 (full-width outline, 32 under the title, 48 above the grid) opening Bottom Sheet/Sort 56:951. */}
       <div className="shop__head" data-figma={mobile ? '56:611' : '56:293'}>

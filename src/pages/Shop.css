@@ -1,22 +1,28 @@
 /* fix1 item 3 — sort per Figma 56:293 / 56:286 (desktop) and 56:611 / 56:627 / 56:621 (mobile). Filter styles removed with the filter UI (item 4). */
-.shop__head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-block: 32px; }
+.shop__head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-block: 32px; position: relative; z-index: 5; }
 .shop__t { display: flex; flex-direction: column; gap: 8px; }
 .shop__title { margin: 0; font-size: 30px; font-weight: 700; line-height: 1.4; color: #1c1917; }
 .shop__count { margin: 0; font-size: 14px; line-height: 1.6; color: #57534e; }
-.ssel { inline-size: 240px; flex: none; display: flex; flex-direction: column; gap: 8px; }
-.ssel__label { font-size: 14px; font-weight: 500; line-height: 1.5; color: #1c1917; }
-.ssel { position: relative; }
-.ssel__field { display: flex; align-items: center; gap: 8px; inline-size: 100%; min-block-size: 48px; box-sizing: border-box; padding: 12px 16px; font: inherit; color: #1c1917; background: #fff; border: 1px solid #78716c; border-radius: 12px; cursor: pointer; text-align: start; }
-.ssel__field:focus-visible, .ssel__field.is-open { outline: none; border: 2px solid #15595b; padding: 11px 15px; }
-.ssel__value { flex: 1; font-size: 16px; line-height: 28px; }
-.ssel__chev svg { display: block; inline-size: 16px; block-size: 8px; flex: none; }
-.ssel__chev { display: grid; flex: none; place-items: center; inline-size: 20px; block-size: 20px; transition: rotate .15s; } /* fix2: Icon/ChevD 52:328 (Down 2 72:8053) exported read-only */
-.ssel__field.is-open .ssel__chev { rotate: 180deg; }
-.ssel__menu { position: absolute; z-index: 10; inset-inline-start: 0; inset-block-start: calc(100% + 4px); inline-size: 242px; box-sizing: border-box; margin: 0; list-style: none; display: flex; flex-direction: column; gap: 2px; padding: 6px; background: #fff; border: 1px solid #78716c; border-radius: 12px; box-shadow: 0 8px 24px rgb(0 0 0 / .12); }
-.ssel__opt { display: flex; justify-content: space-between; align-items: center; min-block-size: 42px; box-sizing: border-box; padding: 10px 14px; border-radius: 8px; font-size: 14px; line-height: 22px; color: #1c1917; cursor: pointer; }
-.ssel__opt.is-active { background: #f4f3f1; } .ssel__opt:active { background: #78716c; color: #fff; }
-.ssel__opt[aria-selected="true"] { background: #f4f3f1; color: #1c7477; font-weight: 500; }
-.ssel__tick { color: #0c652d; font-weight: 700; }
+/* design-batch-2026-10-26 item 7 — unboxed sort */
+.ssel { position: relative; flex: none; display: flex; flex-direction: column; align-items: flex-start; gap: 0; }
+.ssel__label { font-size: 14px; font-weight: 500; line-height: 20px; color: #57534e; }
+.ssel__field { display: inline-flex; align-items: center; gap: 4px; min-block-size: 44px; padding: 8px 0; margin: 0; font: inherit; color: #1c1917;
+  background: none; border: 0; border-radius: 8px; cursor: pointer; text-align: start; }
+.ssel__field:hover, .ssel.is-open .ssel__field { color: var(--sel-color); }
+.ssel__field:focus-visible { outline: 3px solid var(--teal-200); outline-offset: 2px; }
+.ssel__value { font-size: 16px; font-weight: 500; line-height: 28px; }
+.ssel__chev { display: grid; flex: none; place-items: center; inline-size: 20px; block-size: 20px; transition: rotate .15s; }
+.ssel.is-open .ssel__chev { rotate: 180deg; }
+.ssel__menu { position: absolute; z-index: 20; inset-inline-end: 0; inset-block-start: calc(100% + 4px); min-inline-size: 220px; box-sizing: border-box; margin: 0; list-style: none;
+  display: flex; flex-direction: column; gap: 2px; padding: 6px; background: var(--blur-surface); -webkit-backdrop-filter: blur(var(--blur-amount)); backdrop-filter: blur(var(--blur-amount));
+  border: 1px solid rgb(231 229 226 / .9); border-radius: 12px; box-shadow: 0 8px 24px rgb(28 25 23 / .12); }
+.ssel__opt { display: flex; justify-content: space-between; align-items: center; gap: 16px; min-block-size: 44px; box-sizing: border-box; padding: 10px 14px; border-radius: 8px;
+  font-size: 14px; line-height: 22px; color: #1c1917; cursor: pointer; text-align: start; }
+.ssel__optText { flex: 1; text-align: start; }
+.ssel__opt.is-active { background: rgb(244 243 241 / .9); }
+.ssel__opt[aria-selected="true"] { color: var(--sel-color); font-weight: 500; }
+.ssel__tick { display: grid; place-items: center; inline-size: 20px; block-size: 20px; flex: none; color: var(--sel-color); }
+@media (prefers-reduced-motion: reduce) { .ssel__chev { transition: none; } }
 .shop__toolbar { margin-block: 0 48px; }
 .sbtn { inline-size: 100%; min-block-size: 46px; padding: 10px 20px; border: 1px solid #1c7477; border-radius: 12px; background: #fff; color: #15595b; font: inherit; font-size: 16px; font-weight: 500; line-height: 24px; cursor: pointer; }
 .sbtn:focus-visible { outline: 3px solid var(--teal-600); outline-offset: 2px; }

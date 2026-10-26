@@ -4,6 +4,7 @@ import { createHash, randomBytes, randomInt } from 'node:crypto';
 import { all } from './db.js';
 import { config } from './config.js';
 import { stub, SAMPLE_SHIPPING_METHODS } from './stubs.js';
+import { samplePlaceholdersOn, SAMPLE_REVIEWS, SAMPLE_RATING } from '../db/sample-placeholder-data.js';
 import { MockProvider, type PaymentProvider } from './payment.js';
 import { ConsoleSmsAdapter, type SmsAdapter } from './sms.js';
 
@@ -22,7 +23,8 @@ const PRODUCT_SQL = `SELECT ${TYPE_SQL} AS type, p.id, p.slug, p.name, p.status,
   pr.amount AS price, pr.original_amount AS originalPrice, pr.currency,
   (SELECT url FROM images i WHERE i.product_id=p.id ORDER BY position LIMIT 1) AS imageUrl,
   (SELECT ${THUMB_SQL('url')} FROM images i WHERE i.product_id=p.id ORDER BY position LIMIT 1) AS imageThumb,
-  (SELECT alt FROM images i WHERE i.product_id=p.id ORDER BY position LIMIT 1) AS imageAlt
+  (SELECT alt FROM images i WHERE i.product_id=p.id ORDER BY position LIMIT 1) AS imageAlt,
+  (SELECT ${THUMB_SQL('url')} FROM images i WHERE i.product_id=p.id AND i.url <> (SELECT url FROM images j WHERE j.product_id=p.id ORDER BY position LIMIT 1) ORDER BY position LIMIT 1) AS imageThumb2
   FROM products p LEFT JOIN prices pr ON pr.product_id=p.id JOIN categories c ON c.id=p.category_id`;
 const SORTS: Record<string, string> = {
   newest: 'p.created_at DESC, p.id', bestseller: 'p.sort_rank, p.id', // best-seller definition open (Refinement 2): sample rank
@@ -51,7 +53,7 @@ export function createApp(db: Database, deps: Deps = {}) {
   };
   const bad = (res: Response, error: string, fields?: Record<string, string>) => res.status(400).json({ error, fields });
 
-  app.get('/api/health', (_q, res) => res.json({ ok: true, sampleData: false, catalog: 'real (placeholder names, no prices yet)' }));
+  app.get('/api/health', (_q, res) => res.json({ ok: true, sampleData: samplePlaceholdersOn(), catalog: samplePlaceholdersOn() ? 'real photos + placeholder sample data (db/sample-placeholder-data.ts)' : 'real (placeholder names, no prices yet)' }));
 
   // ---------- Catalog ----------
   app.get('/api/products', (req, res) => {
@@ -89,7 +91,10 @@ export function createApp(db: Database, deps: Deps = {}) {
     res.json({ data: { ...prod, description: d.description,
       images: all(db, `SELECT url, ${THUMB_SQL('url')} AS thumb, alt FROM images WHERE product_id=? ORDER BY position`, [prod.id]),
       variants: all(db, 'SELECT id, size, color, color_hex AS colorHex, sku, available FROM variants WHERE product_id=? ORDER BY id', [prod.id]),
-      related }, sampleData: !!prod.isSample, stubs: CATALOG_STUBS });
+      related,
+      // design-batch-2026-10-26 item 10: aggregate rating row on the PDP (sample placeholder when the switch is on; real reviews otherwise).
+      rating: (() => { const r = reviewSummary(prod.id); return { average: r.average, count: r.count, sample: !!(r as { sample?: boolean }).sample }; })() },
+      sampleData: !!prod.isSample, stubs: CATALOG_STUBS });
   });
   app.get('/api/search', (req, res) => {
     const q = String(req.query.q ?? '').trim();
@@ -260,14 +265,18 @@ export function createApp(db: Database, deps: Deps = {}) {
   const favs = (uid: number) => all(db, PRODUCT_SQL + ' JOIN favorites f ON f.product_id=p.id WHERE f.user_id=? ORDER BY f.created_at DESC, p.id', [uid]);
   // fix2 reviews — DEFAULTS (not policy; BD-15 open): signed-in only · rating integer 1–5 · text 1–1000 chars after trim ·
   // published immediately — CEO DECISION 2026-10-21: no moderation (REVIEW_DEFAULTS.moderation = 'none') · multiple reviews per user allowed · average = mean rounded to 1 decimal.
+  const sampleProduct = (pid: number) => !!one<{ s: number }>(db, 'SELECT is_sample AS s FROM products WHERE id=?', [pid])?.s;
   const REVIEW_DEFAULTS = { minLen: 1, maxLen: 1000, moderation: 'none' as 'none' | 'pre' };
   const reviewSummary = (pid: number) => {
     const reviews = all<{ id: number; rating: number; body: string; createdAt: string; firstName: string | null; lastName: string | null }>(db,
       `SELECT r.id, r.rating, r.body, r.created_at AS createdAt, u.first_name AS firstName, u.last_name AS lastName FROM reviews r JOIN users u ON u.id=r.user_id
        WHERE r.product_id=? AND r.status='published' ORDER BY r.created_at DESC, r.id DESC`, [pid]);
     const count = reviews.length; const average = count ? Math.round((reviews.reduce((a, r) => a + r.rating, 0) / count) * 10) / 10 : 0;
-    return { reviews: reviews.map(r => ({ id: r.id, rating: r.rating, body: r.body, createdAt: r.createdAt,
-      name: r.firstName ? `${r.firstName}${r.lastName ? ` ${r.lastName.slice(0, 1)}.` : ''}` : 'کاربر جومه' })), count, average };
+    const real = reviews.map(r => ({ id: r.id as number | string, rating: r.rating, body: r.body, createdAt: r.createdAt, meta: undefined as string | undefined, sample: false,
+      name: r.firstName ? `${r.firstName}${r.lastName ? ` ${r.lastName.slice(0, 1)}.` : ''}` : 'کاربر جومه' }));
+    // design-batch-2026-10-26: placeholder reviews + aggregate (Figma 266:71769), labelled «(نمونه)»; real reviews are listed first.
+    if (samplePlaceholdersOn() && sampleProduct(pid)) return { reviews: [...real, ...SAMPLE_REVIEWS.map(r => ({ ...r, createdAt: undefined }))], count: SAMPLE_RATING.count + count, average: SAMPLE_RATING.average, sample: true };
+    return { reviews: real, count, average };
   };
   const productId = (slug: string) => one<{ id: number }>(db, 'SELECT id FROM products WHERE slug=?', [slug])?.id;
   app.get('/api/products/:slug/reviews', (req, res) => { const pid = productId(req.params.slug); if (!pid) return res.status(404).json({ error: 'not_found' }); res.json({ data: reviewSummary(pid), defaults: REVIEW_DEFAULTS }); });

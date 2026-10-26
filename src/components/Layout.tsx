@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { SupportChat } from './SupportChat';
 import { Icon } from './Icon';
 import { useStore } from '../lib/store';
 import { api, type Product } from '../lib/api';
@@ -11,13 +12,14 @@ import './Layout.css';
 const LOGO = <img src="/img/logo-joumeh@1x.webp" srcSet="/img/logo-joumeh@1x.webp 1x, /img/logo-joumeh@2x.webp 2x" width={48} height={48} alt="" />;
 
 function SearchBox({ onClose }: { onClose: () => void }) {
-  const [q, setQ] = useState(''); const [res, setRes] = useState<Product[] | null>(null); const [err, setErr] = useState(false);
+  const [q, setQ] = useState(''); const [res, setRes] = useState<Product[] | null>(null); const [err, setErr] = useState(false); const [loading, setLoading] = useState(false);
   const ref = useRef<HTMLInputElement>(null); const nav = useNavigate();
   useEffect(() => { ref.current?.focus(); }, []);
   useEffect(() => {
-    if (q.trim().length < 2) { setRes(null); return; }
-    const t = setTimeout(() => api<Product[]>(`/search?q=${encodeURIComponent(q.trim())}`).then(r => { setRes(r.data); setErr(false); }).catch(() => setErr(true)), 200);
-    return () => clearTimeout(t);
+    if (q.trim().length < 2) { setRes(null); setLoading(false); return; }
+    let live = true; setLoading(true); // design-batch item 12: loading state while the query runs
+    const t = setTimeout(() => api<Product[]>(`/search?q=${encodeURIComponent(q.trim())}`).then(r => { if (live) { setRes(r.data); setErr(false); } }).catch(() => live && setErr(true)).finally(() => live && setLoading(false)), 200);
+    return () => { live = false; clearTimeout(t); };
   }, [q]);
   return (
     <div className="search" data-figma="116:2267" role="search" onKeyDown={e => e.key === 'Escape' && onClose()}>
@@ -27,9 +29,10 @@ function SearchBox({ onClose }: { onClose: () => void }) {
         <input id="q" ref={ref} value={q} onChange={e => setQ(e.target.value)} placeholder="جست‌وجوی محصولات..." autoComplete="off" aria-controls="search-results" />
         <button type="button" className="search__close" onClick={onClose} aria-label="بستن جستجو"><Icon name="close" size={20} /></button>
       </div>
-      {(res || err) && (
-        <div className="search__panel" id="search-results" aria-live="polite">
-          {err ? <p className="small">جستجو انجام نشد. <button className="link" onClick={() => setQ(q + ' ')}>تلاش دوباره</button></p>
+      {(res || err || loading) && (
+        <div className="search__panel" id="search-results" aria-live="polite" aria-busy={loading}>
+          {loading && !res && !err ? <p className="small search__loading" data-testid="search-loading"><span className="spinner" aria-hidden="true" />در حال جستجو…</p>
+            : err ? <p className="small">جستجو انجام نشد. <button className="link" onClick={() => setQ(q + ' ')}>تلاش دوباره</button></p>
             : res!.length === 0 ? <p className="small">نتیجه‌ای برای «{q.trim()}» پیدا نشد.</p>
             : <>
               <p className="search__count">{faNumber(res!.length)} نتیجه برای «{q.trim()}»</p>
@@ -58,7 +61,7 @@ export function Header() {
             <Icon name="menu" />
           </button>
           <ul className="hdr__links">
-            <li><NavLink to="/women">زنانه</NavLink></li><li><NavLink to="/men">مردانه</NavLink></li><li><Link to="/#story">قصه‌ی ما</Link></li>
+            <li><NavLink to="/women">زنانه</NavLink></li><li><NavLink to="/men">مردانه</NavLink></li><li><NavLink to="/info/story">قصه‌ی ما</NavLink></li>
           </ul>
         </nav>
         <Link to="/" className="hdr__logo" aria-label="جومه — صفحه‌ی اصلی">{LOGO}</Link>
@@ -71,7 +74,7 @@ export function Header() {
         </div>
       </div>
       {menu && <div id="mmenu" className="mmenu"><ul className="wrap">
-        <li><NavLink to="/women">زنانه</NavLink></li><li><NavLink to="/men">مردانه</NavLink></li><li><Link to="/#story">قصه‌ی ما</Link></li></ul></div>}
+        <li><NavLink to="/women"><span>زنانه</span></NavLink></li><li><NavLink to="/men"><span>مردانه</span></NavLink></li><li><NavLink to="/info/story"><span>قصه‌ی ما</span></NavLink></li></ul></div>}
     </header>
   );
 }
@@ -85,7 +88,7 @@ export function Footer() {
         <nav aria-labelledby="f2"><h2 id="f2">راهنمای خرید</h2><ul>
           {/* Policy pages are BD stubs (BD-02/04/18) and not designed → placeholder route */}
           <li><Link to="/info/shipping">ارسال و تحویل</Link></li><li><Link to="/info/returns">بازگشت کالا</Link></li><li><Link to="/info/size-guide">راهنمای سایز</Link></li><li><Link to="/support">پرسش‌های متداول</Link></li></ul></nav>
-        <nav aria-labelledby="f3"><h2 id="f3">جومه</h2><ul><li><Link to="/#story">قصه‌ی ما</Link></li><li><Link to="/support/contact">تماس با ما</Link></li><li><Link to="/info/careers">همکاری</Link></li><li><Link to="/info/blog">وبلاگ</Link></li></ul></nav>
+        <nav aria-labelledby="f3"><h2 id="f3">جومه</h2><ul><li><Link to="/info/story">قصه‌ی ما</Link></li><li><Link to="/support/contact">تماس با ما</Link></li><li><Link to="/info/careers">همکاری</Link></li><li><Link to="/info/blog">وبلاگ</Link></li></ul></nav>
       </div>
       <div className="wrap"><p className="ftr__copy caption">© ۱۴۰۵ جومه — تمامی حقوق محفوظ است. <span className="ftr__sample">نسخه‌ی محلی با داده نمونه</span></p></div>
     </footer>
@@ -118,5 +121,6 @@ export function Layout() {
     <BottomNav />
     <AuthModal />
     <Toasts />
+    <SupportChat />
   </>);
 }

@@ -20,3 +20,31 @@
 .summary__total dd { font-size: 18px; font-weight: 800; }
 .summary p { margin: 0; }
 .cart__empty { padding-block: 64px; gap: 16px; } .cart__empty p { margin: 0; } .cart__emptyact { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+
+/* design-batch-2026-10-26 item 11 — cart restyled to Figma 119:594 (content pt 48 / pb 80, title row gap 24, main gap 40, summary 400). */
+.cart { padding-block: 48px 80px; }
+main:has(.cart) + .ftr { margin-block-start: 0; }
+.cart__head { align-items: center; gap: 12px; justify-content: space-between; margin-block-end: 24px; }
+.cart__title { margin: 0; font-size: 30px; font-weight: 700; line-height: 1.4; color: #1c1917; }
+.cart__count { font-size: 14px; line-height: 24px; color: #57534e; }
+@media (min-width: 1024px) { .cart__grid { grid-template-columns: 1fr 400px; gap: 40px; } }
+.cart__list { border-block-start: 1px solid #e7e5e2; }
+.citem { padding-block: 16px; border-block-end: 1px solid #e7e5e2; gap: 8px 16px; }
+@media (min-width: 768px) { .citem { grid-template-columns: 72px 1fr auto minmax(140px, auto) 44px; gap: 24px; } }
+.citem__img, .citem__img img, .citem__skimg { inline-size: 72px; block-size: 96px; }
+.citem__img img { border-radius: 36px 36px 6px 6px; }
+.citem__skimg { border-radius: 36px 36px 6px 6px; }
+.citem__info { display: flex; flex-direction: column; gap: 4px; min-inline-size: 0; } .citem__info p { margin: 0; }
+.citem__name { font-size: 16px; line-height: 28px; font-weight: 600; }
+.citem__var, .citem__unit { font-size: 14px; line-height: 24px; color: #57534e; }
+.citem__total { min-inline-size: 140px; gap: 2px; text-align: end; justify-items: end; } .citem__total strong { font-size: 16px; line-height: 28px; }
+.citem__del { inline-size: 44px; block-size: 44px; }
+.qty--pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px; border: 1px solid #78716c; border-radius: 999px; }
+.qty--pill button { inline-size: 44px; block-size: 44px; border-radius: 999px; }
+.qty--pill output { min-inline-size: 24px; text-align: center; font-size: 16px; font-weight: 600; }
+.summary { background: #fff; border: 1px solid #e7e5e2; border-radius: 16px; padding: 24px; gap: 16px; box-shadow: none; }
+.summary dl { gap: 16px; }
+.summary__total { border-block-start: 1px solid #e7e5e2; padding-block-start: 16px; }
+.qty--pill { block-size: auto; }
+.qty--pill button { border: 0; background: none; cursor: pointer; display: grid; place-items: center; padding: 0; color: inherit; }
+.qty--pill button:hover:not(:disabled) { background: #f4f3f1; } .qty--pill button:disabled { color: var(--n-400); cursor: not-allowed; }

@@ -12,7 +12,7 @@ export async function api<T = unknown>(path: string, opts: { method?: string; bo
   if (!r.ok) throw new ApiError(r.status, j.error ?? 'error', j.fields);
   return j;
 }
-export type Product = { id: number; slug: string; name: string; status: 'default' | 'sale' | 'new'; price: number | null; originalPrice: number | null; badgePercent: number | null; imageUrl: string; imageThumb?: string; imageAlt: string; category: string; type?: string };
+export type Product = { id: number; slug: string; name: string; status: 'default' | 'sale' | 'new'; price: number | null; originalPrice: number | null; badgePercent: number | null; imageUrl: string; imageThumb?: string; imageThumb2?: string | null; imageAlt: string; category: string; isSample?: number; type?: string };
 export type Variant = { id: number; size: string; color: string; colorHex: string; sku: string; available: number };
 export type CartItem = { id: number; variantId: number; quantity: number; size: string; color: string; available: boolean; productId: number; slug: string; name: string; price: number | null; originalPrice: number | null; imageUrl: string; lineTotal: number | null };
 export type Cart = { cartId: number; items: CartItem[]; totals: { count: number; subtotal: number; discount: number; payable: number; shipping: null; vat: null } };

@@ -5,27 +5,37 @@
   --page-bg: #fdf7db; /* cream/50, KB §3 */
 }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.pc { position: relative; inline-size: var(--w); font-family: 'Vazirmatn', sans-serif; color: var(--color-v2-text-primary); }
-.pc--desktop { --w: 282px; --h: 376px; --name: 17px; --old: 13px; --now: 17px; --gap: 12px; --cart-b: 8px; --badge-b: 19px; }
-.pc--mobile  { --w: 171px; --h: 228px; --name: 14px; --old: 12px; --now: 14px; --gap: 12px; --cart-b: 8px; --badge-b: 19px; }
-.pc__link { display: flex; flex-direction: column; gap: var(--gap); color: inherit; text-decoration: none; border-radius: 4px; }
-.pc__link:focus-visible { outline: 3px solid var(--price-sale); outline-offset: 4px; }
-.pc__media { position: relative; inline-size: var(--w); block-size: var(--h); overflow: hidden;
-  /* Emma 2026-10-21: arch top radius = w/2; bottom radius = w×0.057 (16px @282, ≈10px @171) */
-  border-start-start-radius: calc(var(--w) / 2) calc(var(--w) / 2); border-start-end-radius: calc(var(--w) / 2) calc(var(--w) / 2);
-  border-end-start-radius: calc(var(--w) * 0.057); border-end-end-radius: calc(var(--w) * 0.057); }
-.pc__media img { display: block; inline-size: 100%; block-size: 100%; object-fit: cover; }
-.pc__overlay { position: absolute; inset: 0; display: grid; place-items: center; background: rgb(0 0 0 / 0.25); backdrop-filter: blur(1.5px);
+/* design-batch-2026-10-26 item 9 — boxed card (adidas.nl/sneakers reference): one box holds picture + name + price.
+   The card fills its grid cell (fluid); the approved arch (top radius = w/2, bottom = w × 0.057) is kept on the picture.
+   --mw = picture width, derived from the card's own inline size (container query units). */
+.pc { position: relative; inline-size: 100%; font-family: 'Vazirmatn', sans-serif; color: var(--color-v2-text-primary);
+  container-type: inline-size; background: #fff; border: 1px solid var(--n-200, #e7e5e2); border-radius: 12px; transition: border-color .2s ease, box-shadow .2s ease; }
+.pc:hover, .pc:focus-within { border-color: var(--n-500, #78716c); box-shadow: 0 4px 16px rgb(28 25 23 / .06); }
+.pc--desktop { --pad: 12px; --name: 17px; --old: 14px; --now: 17px; --gap: 12px; --cart-b: 8px; }
+.pc--mobile  { --pad: 8px; --name: 14px; --old: 12px; --now: 14px; --gap: 8px; --cart-b: 6px; }
+.pc { --mw: calc(100cqi - 2 * var(--pad)); --mh: calc(var(--mw) * 4 / 3); }
+.pc__link { display: flex; flex-direction: column; gap: var(--gap); padding: var(--pad); color: inherit; text-decoration: none; border-radius: 12px; }
+.pc__link:focus-visible { outline: 3px solid var(--price-sale); outline-offset: 2px; }
+.pc__media { position: relative; inline-size: 100%; aspect-ratio: 3 / 4; overflow: hidden; background: var(--n-100, #f4f3f1);
+  border-start-start-radius: calc(var(--mw) / 2); border-start-end-radius: calc(var(--mw) / 2);
+  border-end-start-radius: calc(var(--mw) * 0.057); border-end-end-radius: calc(var(--mw) * 0.057); }
+.pc__img { display: block; position: absolute; inset: 0; inline-size: 100%; block-size: 100%; object-fit: cover; transition: opacity .35s ease; }
+.pc__img--2 { opacity: 0; }
+.pc--swap .pc__link:hover .pc__img--2, .pc--swap .pc__link:focus-visible .pc__img--2 { opacity: 1; }
+.pc__overlay { position: absolute; inset: 0; display: grid; place-items: end center; padding-block-end: 16px; background: rgb(0 0 0 / 0.18);
   opacity: 0; transition: opacity .2s ease; color: #fff; font-weight: 500; font-size: 16px; }
+.pc--swap .pc__overlay { background: none; } /* with a second photo the photo itself is the hover feedback; no scrim over it */
 .pc__overlay span { background: rgb(28 25 23 / 0.7); padding-block: 4px; padding-inline: 12px; border-radius: 999px; }
 .pc__link:hover .pc__overlay, .pc__link:focus-visible .pc__overlay { opacity: 1; }
-@media (prefers-reduced-motion: reduce) { .pc__overlay { transition: none; } }
+@media (hover: none) { .pc__overlay { display: none; } }
+@media (prefers-reduced-motion: reduce) { .pc__overlay, .pc__img, .pc { transition: none; } }
+.pc__body { display: flex; flex-direction: column; gap: 4px; padding-inline: 4px; padding-block-end: 4px; min-inline-size: 0; }
 .pc__name { margin: 0; font-size: var(--name); font-weight: 500; line-height: 1.6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pc__price { margin: 0; margin-block-start: -4px; display: flex; gap: 8px; align-items: center; line-height: 1.5; }
+.pc__price { margin: 0; display: flex; gap: 8px; align-items: center; line-height: 1.5; }
 .pc__old { color: var(--price-original); font-size: var(--old); font-weight: 400; }
 .pc__now { font-size: var(--now); font-weight: 600; color: var(--color-v2-text-primary); }
 .pc__now--sale { color: var(--price-sale); }
-.pc__badge { position: absolute; inset-inline-start: 10px; inset-block-start: calc(var(--h) - 42px); /* 334 @376 (54:123), 186 @228 (54:170) */
+.pc__badge { position: absolute; inset-inline-start: calc(var(--pad) + 10px); inset-block-start: calc(var(--pad) + var(--mh) - 42px); /* 42px above the picture's bottom (54:123/54:170) */
   background: var(--color-v2-badge-sale-bg); color: var(--color-v2-text-on-accent); font-size: 12px; font-weight: 500; line-height: 1.4;
   padding-block: 2px; padding-inline: 10px; border-radius: 999px; pointer-events: none; }
 .pc__icon { position: absolute; inline-size: 44px; block-size: 44px; border: 0; border-radius: 999px; background: var(--color-v2-bg-surface);
@@ -33,7 +43,7 @@
 .pc__icon span { display: grid; inline-size: 24px; block-size: 24px; place-items: center; }
 .pc__icon:focus-visible { outline: 3px solid var(--price-sale); outline-offset: 2px; }
 
-.pc__cart { inset-inline-end: 8px; inset-block-start: calc(var(--h) - 44px - var(--cart-b)); }
+.pc__cart { inset-inline-end: calc(var(--pad) + 8px); inset-block-start: calc(var(--pad) + var(--mh) - 44px - var(--cart-b)); }
 
 .pc__badge.pc__badge--new { background: var(--color-v2-badge-new-bg, #1c7477); color: #fff; } /* token badge/new-bg teal/600 */
 

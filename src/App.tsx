@@ -9,6 +9,7 @@ import { Checkout } from './pages/Checkout';
 import { Payment, Confirmation } from './pages/Payment';
 import { NotFound } from './pages/NotFound';
 import { Info } from './pages/Info';
+import { Story } from './pages/Story';
 import { AccountLayout, SupportLayout } from './pages/account/AccountLayout';
 import { Overview, Orders, OrderDetail, Returns, ReturnDetail, Addresses, Favorites, PaymentInfo, Settings, SupportFaq, SupportContact } from './pages/account/Pages';
 const ConfirmRoute = () => <Confirmation id={useParams().id!} />;
@@ -34,6 +35,7 @@ export function AppRoutes() {
         <Route path="support" element={<SupportLayout />}><Route index element={<SupportFaq />} /><Route path="contact" element={<SupportContact />} /></Route>
         <Route path="info/size-guide" element={<SizeGuidePage />} />
         <Route path="info/faq" element={<Navigate to="/support" replace />} /><Route path="info/contact" element={<Navigate to="/support/contact" replace />} />
+        <Route path="info/story" element={<Story />} />
         <Route path="info/:slug" element={<Info />} />
         <Route path="*" element={<NotFound />} />
       </Route>
