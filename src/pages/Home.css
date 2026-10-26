@@ -55,3 +55,5 @@ main:has(.hsec--last) + .ftr { margin-block-start: 0; }
 /* M4 — symmetric arch: top radius = w/2, bottom = w × 0.057 (Emma 02:16). Round 2: clip on a frame, image scaled 3% so the PNG's own masked edge is cut off */
 @media (min-width: 1024px) { .story__frame { inline-size: 480px; block-size: 600px; border-radius: 240px 240px 27px 27px; } }
 .best .sec-head { margin-block-end: 24px; }
+/* rev3: every product row → next section boundary gets --row-end-space (Figma Best sellers bottom padding), then the next section's own 48 top. */
+.hsec.best, .best.feature--cream { padding-block-end: var(--row-end-space); }

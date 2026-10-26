@@ -5,10 +5,13 @@
 .story-page__title { font-size: 28px; font-weight: 700; line-height: 1.5; color: #1c1917; }
 .story-page__text p { font-size: 16px; line-height: 28px; color: #44403c; }
 .story-page__text .story-page__lead { font-size: 18px; line-height: 32px; font-weight: 500; color: var(--teal-700); }
-.story-page__media { order: -1; max-inline-size: 480px; }
+.story-page__media { order: -1; inline-size: min(400px, 84%); justify-self: center; } /* rev3: ~16% smaller on mobile too, centred above the text */
 @media (min-width: 1024px) {
   .story-page__in { grid-template-columns: 1fr 480px; gap: 80px; }
   .story-page__title { font-size: 40px; line-height: 56px; }
-  .story-page__media { order: 0; inline-size: 480px; block-size: 600px; position: sticky; inset-block-start: calc(var(--header-h) + 24px); border-radius: 240px 240px 27px 27px; }
+  /* rev3: picture ~17% smaller (480×600 → 400×500, same 4:5 arch, radii w/2 and w×0.057) and bottom-aligned with the last line of the text. */
+  .story-page__in { --story-img-w: 400px; grid-template-columns: 1fr var(--story-img-w); align-items: end; }
+  .story-page .story-page__media { order: 0; inline-size: var(--story-img-w); block-size: calc(var(--story-img-w) * 5 / 4); align-self: end;
+    border-radius: calc(var(--story-img-w) / 2) calc(var(--story-img-w) / 2) calc(var(--story-img-w) * .057) calc(var(--story-img-w) * .057); }
 }
 main:has(.story-page) + .ftr { margin-block-start: 0; }

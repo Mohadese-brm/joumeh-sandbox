@@ -14,7 +14,10 @@
   --focus: 0 0 0 3px var(--teal-200);
   /* design-batch-2026-10-26 — shared "selected" indicator (header tabs 54:294, breadcrumb 56:560 current item):
      Figma tab active text/underline = action-primary #1C7477, underline 2px; text→underline gap 8px (was 9). */
-  --sel-color: var(--teal-600); --sel-line: 2px; --sel-gap: 8px;
+  --action-primary: var(--teal-600); /* Figma action-primary #1C7477 rgb(28,116,119) */
+  --sel-color: var(--action-primary); --sel-line: 2px; --sel-gap: 8px;
+  /* rev3: space after a product row before the next section = Figma Best sellers bottom padding (55:477/55:541: 80 @1440; 108:6010/108:6027: 48 @390) — same scale as --section-gap. */
+  --row-end-space: var(--section-gap);
   --blur-surface: rgb(255 255 255 / .82); --blur-amount: 20px; /* Header 54:294: bg/page 82% + blur 20 — reused for the sort menu */
 }
 @media (min-width: 768px) { :root { --margin: 32px; --section-gap: 64px; --grid-gap: 20px; } }
@@ -113,9 +116,13 @@ textarea.input { padding-block: 10px; min-block-size: 88px; }
 .state { display: grid; justify-items: center; gap: 12px; text-align: center; padding-block: 48px; }
 .crumbs { font-size: 14px; line-height: 24px; color: #57534e; padding-block: 16px; } /* Breadcrumb 56:560 */
 .crumbs ol { list-style: none; display: flex; flex-wrap: wrap; gap: 4px; margin: 0; padding: 0; align-items: flex-start; }
-.crumbs li { display: flex; align-items: center; gap: 4px; min-block-size: 24px; }
-.crumbs__sep { color: var(--n-500); display: inline-grid; place-items: center; block-size: 24px; } /* Icon/ChevL (Left 2 72:8058) 16px */
-.crumbs a { color: #57534e; text-decoration: none; } .crumbs a:hover { text-decoration: underline; }
+.crumbs li { display: flex; align-items: flex-start; gap: 4px; min-block-size: 24px; }
+.crumbs__sep { color: var(--n-500); display: inline-grid; place-items: center; block-size: 24px; } /* Icon/ChevL (Left 2 72:8058) 16px — centred on the 24px text line */
+/* rev3: every crumb (link + current) has the same box as a header tab: 14/24 text, --sel-gap below, --sel-line underline slot (transparent until hover/selected),
+   so خانه, the separator and the current item share one centre line and hover = selected underline (8px gap, 2px, teal). */
+.crumbs a, .crumbs [aria-current] { display: inline-block; font-size: 14px; line-height: 24px; padding-block-end: var(--sel-gap); border-block-end: var(--sel-line) solid transparent; }
+.crumbs a { color: #57534e; text-decoration: none; }
+.crumbs a:hover, .crumbs a:focus-visible { color: var(--sel-color); border-color: var(--sel-color); }
 /* Shared selected indicator: same rule as the active header tab. */
 .sel-ind, .crumbs [aria-current] { color: var(--sel-color); font-weight: 500; padding-block-end: var(--sel-gap); border-block-end: var(--sel-line) solid var(--sel-color); }
 .sec-head { display: flex; justify-content: space-between; align-items: center; margin-block-end: 24px; gap: 16px; }

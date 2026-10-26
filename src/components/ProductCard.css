@@ -13,7 +13,7 @@
    The visible box (white fill + 1px border) is drawn by .pc__link, inside the .pc container, so its radii can use cqi:
    outer top radius = 50cqi (half the box width) → padding-edge radius = 50cqi − border = picture arch (mw/2) + pad. Bottom corners stay --card-r.
    .pc itself is a transparent wrapper (no border/background) so the page shows around the arch. */
-:root { --card-pad: 8px; --card-r: 12px; --card-border: 1px; --card-border-color: var(--n-200, #e7e5e2); }
+:root { --card-pad: 8px; --card-r: 12px; --card-border: 1px; --card-border-color: var(--n-200, #e7e5e2); --card-border-hover: var(--action-primary, #1c7477); }
 .pc { position: relative; inline-size: 100%; font-family: 'Vazirmatn', sans-serif; color: var(--color-v2-text-primary);
   container-type: inline-size; display: flex; flex-direction: column; --inset: calc(var(--pad) + var(--card-border)); }
 .pc--desktop { --pad: var(--card-pad); --name: 17px; --old: 14px; --now: 17px; --gap: 12px; --cart-b: 8px; }
@@ -23,7 +23,7 @@
   background: #fff; border: var(--card-border) solid var(--card-border-color); background-clip: padding-box;
   border-start-start-radius: var(--arch); border-start-end-radius: var(--arch); border-end-start-radius: var(--card-r); border-end-end-radius: var(--card-r);
   transition: border-color .2s ease, box-shadow .2s ease; }
-.pc:hover .pc__link, .pc:focus-within .pc__link { border-color: var(--n-500, #78716c); box-shadow: 0 4px 16px rgb(28 25 23 / .06); }
+.pc:hover .pc__link, .pc:focus-within .pc__link { border-color: var(--card-border-hover); box-shadow: 0 4px 16px rgb(28 25 23 / .06); }
 .pc__link:focus-visible { outline: 3px solid var(--price-sale); outline-offset: 2px; }
 .pc__media { position: relative; inline-size: 100%; aspect-ratio: 3 / 4; overflow: hidden; background: var(--n-100, #f4f3f1);
   border-start-start-radius: calc(var(--mw) / 2); border-start-end-radius: calc(var(--mw) / 2);
