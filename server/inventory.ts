@@ -92,7 +92,7 @@ export async function changeStock(db: Db, variantId: number, input: { mode: Adju
     const before = v.on_hand; const base = before ?? 0;
     if ((mode === 'decrease' || mode === 'pos_sale') && before == null) throw new StockError(409, 'untracked', { qty: 'ابتدا موجودی این تنوع را با «شمارش» ثبت کنید' });
     const after = mode === 'increase' ? base + qty : mode === 'count' ? qty : base - qty;
-    if (after < 0) throw new StockError(409, 'insufficient', { qty: `بیشتر از موجود فیزیکی (${base}) است` }, { onHand: base });
+    if (after < 0) throw new StockError(409, 'insufficient', { qty: `بیشتر از موجود فیزیکی (${String(base).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[+d])}) است` }, { onHand: base });
     if (after > MAX_QTY) throw new StockError(400, 'validation', { qty: 'تعداد بیش از حد مجاز است' });
     const pre = await stockRow(t, variantId);
     const availAfter = after - (pre?.reserved ?? 0) - (pre?.allocated ?? 0);

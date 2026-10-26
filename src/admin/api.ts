@@ -14,3 +14,13 @@ export async function aapi<T = any>(path: string, opts: { method?: string; body?
 }
 export type Level = 'none' | 'view' | 'edit';
 export type Me = { id: number; name: string; email: string; role: 'owner' | 'admin'; roleLabel: string; roles: string[]; roleLabels: string[]; permissions: Record<string, Level> };
+/** Raw-body upload (product images): the File itself is the body, Content-Type = its mime; JSON response like aapi. */
+export async function aupload<T = any>(path: string, file: Blob): Promise<{ data: T; [k: string]: any }> {
+  const r = await fetch(`/api/admin${path}`, { method: 'POST', headers: { 'Content-Type': file.type || 'application/octet-stream' }, credentials: 'same-origin', body: file });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    if (r.status === 401) window.dispatchEvent(new Event('joumeh-admin-401'));
+    throw new AdminApiError(r.status, j.error ?? (r.status === 413 ? 'file_too_large' : 'error'), j.fields ?? (r.status === 413 ? { file: 'حجم تصویر باید حداکثر ۵ مگابایت باشد' } : undefined), j);
+  }
+  return j;
+}

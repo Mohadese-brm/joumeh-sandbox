@@ -22,3 +22,18 @@ Flags: `src/config/flags.ts` · decisions: `docs/decision-log.md` · stubs: `ser
 - `npm run admin:setup` — one-time creation of the real admins (max 2; first = Owner). Prompts for e-mail, name and password (hidden); the password is never stored anywhere but as a bcrypt hash.
 - `npm run test:pg` — whole test suite against a LOCAL Postgres (`JOUMEH_TEST_PG_URL`, default `postgres://postgres@127.0.0.1:54329/joumeh_test`).
 - `JOUMEH_ADMIN_DEMO=1` (local / preview only) seeds two demo admins into the in-memory DB; the login page lists them. Never production, never a `DATABASE_URL` database.
+
+## Product images (admin-v1)
+- Storage adapter `MediaStore` (`server/media.ts`): `MEDIA_DRIVER=memory` (default; per server instance, lost on restart — the preview uses this), `disk` (`MEDIA_DIR`), or `s3` (any S3-compatible bucket: MinIO / object storage).
+- S3 settings come only from env vars: `MEDIA_S3_ENDPOINT`, `MEDIA_S3_BUCKET`, `MEDIA_S3_REGION`, `MEDIA_S3_ACCESS_KEY_ID`, `MEDIA_S3_SECRET_ACCESS_KEY`, `MEDIA_S3_FORCE_PATH_STYLE`, `MEDIA_S3_PREFIX`, optional `MEDIA_PUBLIC_BASE_URL` (otherwise images are proxied through `/api/media/<key>`). Missing settings fail at start-up, naming the variable (never the value).
+- JPG / PNG / WebP up to 5 MB, checked by magic bytes server-side; alt text is required. Removing an image only detaches it from the product (no hard delete).
+- MinIO integration test (opt-in): start a local MinIO, then `MEDIA_IT=1 MEDIA_DRIVER=s3 MEDIA_S3_ENDPOINT=… MEDIA_S3_BUCKET=… MEDIA_S3_ACCESS_KEY_ID=… MEDIA_S3_SECRET_ACCESS_KEY=… MEDIA_S3_FORCE_PATH_STYLE=1 npx vitest run tests/media-minio.test.ts`.
+- Note: Vercel functions accept request bodies up to about 4.5 MB, so the 5 MB limit only fully applies on a self-hosted server.
+
+## Inventory (admin-v1)
+- Available to sell = on hand − reserved − allocated (paid orders not yet shipped). Every change (increase / decrease / count / in-store sale / shipment) is one append-only row in `inventory_movements`, plus an audit-log row, in the same transaction.
+- On hand can't go below 0. An in-store sale that leaves less than the paid online orders already allocated is recorded as an oversell: the affected orders are listed, and their status is not changed automatically.
+- Business decisions still open, shown in the UI as labelled placeholders: BD-08 (reservations / oversell handling), BD-09 (record POS sales at once or end of day), ADMIN-PH-LOWSTOCK (default low-stock threshold 2), ADMIN-PH-STOCK-REASONS (reason list), ADMIN-PH-STOCK-FLOW (deduct at shipment), ADMIN-PH-SKU (SKU pattern), ADMIN-PH-STORE-HOLD («رزرو فروشگاه» tab), ADMIN-PH-PUBLISH-RULES, ADMIN-PH-MEDIA.
+
+## Admin e2e
+- `JOUMEH_ADMIN_DEMO=1 PORT=3091 npx tsx server/index.ts`, `npm run build && API_PORT=3091 npx vite preview --port 4180`, then `SHOTS=/tmp/shots/ BASE=http://127.0.0.1:4180 node tests/e2e/admin.mjs` (always set `SHOTS`; restart the API between runs). It checks there's no horizontal scroll at 1440 and 390 on 15 admin pages.

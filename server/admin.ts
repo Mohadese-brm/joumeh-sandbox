@@ -462,7 +462,7 @@ export function mountAdmin(app: Express, db: Db, opts: { adminDemo: boolean; now
     const tab = (TABS as readonly string[]).includes(String(req.query.tab)) ? String(req.query.tab) : 'all';
     const q = String(req.query.q ?? '').trim(); const page = Math.max(1, Number(req.query.page ?? 1) | 0); const size = Math.min(50, Math.max(5, Number(req.query.size ?? 10) | 0));
     const w = ["p.publish_state<>'archived'"]; const p: unknown[] = [];
-    if (q) { w.push('(p.name LIKE ? OR v.sku LIKE ?)'); p.push(`%${q}%`, `%${toLatin(q)}%`); }
+    if (q) { w.push('(p.name LIKE ? OR v.sku LIKE ? OR v.sku LIKE ?)'); p.push(`%${q}%`, `%${q}%`, `%${toLatin(q)}%`); }
     const rows = await stockRows(db, w.join(' AND '), p);
     const is = (t: string) => (r: (typeof rows)[number]) => t === 'all' || (t === 'out' ? r.status === 'out' || r.status === 'oversold' : r.status === t);
     const counts = Object.fromEntries(TABS.map(t => [t, rows.filter(is(t)).length]));
@@ -474,7 +474,7 @@ export function mountAdmin(app: Express, db: Db, opts: { adminDemo: boolean; now
     const { q = '', kind = '', from = '', to = '', variant = '' } = req.query as Record<string, string>;
     const page = Math.max(1, Number(req.query.page ?? 1) | 0); const size = 20;
     const w: string[] = []; const p: unknown[] = [];
-    if (q) { w.push('(p.name LIKE ? OR v.sku LIKE ? OR m.reason LIKE ? OR m.actor LIKE ?)'); p.push(`%${q}%`, `%${toLatin(q)}%`, `%${q}%`, `%${q}%`); }
+    if (q) { w.push('(p.name LIKE ? OR v.sku LIKE ? OR v.sku LIKE ? OR m.reason LIKE ? OR m.actor LIKE ?)'); p.push(`%${q}%`, `%${q}%`, `%${toLatin(q)}%`, `%${q}%`, `%${q}%`); }
     if (['increase', 'decrease', 'count', 'pos_sale', 'order_shipped'].includes(kind)) { w.push('m.kind=?'); p.push(kind); }
     if (/^\d+$/.test(variant)) { w.push('m.variant_id=?'); p.push(Number(variant)); }
     if (/^\d{4}-\d{2}-\d{2}$/.test(from)) { w.push('m.created_at>=?'); p.push(from); }
@@ -513,7 +513,10 @@ export function mountAdmin(app: Express, db: Db, opts: { adminDemo: boolean; now
   app.get('/api/admin/categories', requireAdmin, async (_q, res) => res.json({ data: await db.all(`SELECT c.id,c.slug,c.name,c.parent_id AS parentId,(SELECT name FROM categories x WHERE x.id=c.parent_id) AS parentName,(SELECT COUNT(*) FROM products p WHERE p.category_id=c.id) AS products FROM categories c ORDER BY COALESCE(c.parent_id,c.id), c.parent_id IS NOT NULL, c.id`), stubs: { taxonomy: stub('BD-18') } }));
   app.post('/api/admin/categories', requireAdmin, async (req: AReq, res) => {
     const name = String(req.body?.name ?? '').trim(); const slug = String(req.body?.slug ?? '').trim();
-    if (!name || !/^[a-z0-9-]{2,40}$/.test(slug)) return bad(res, 'validation', { name: name ? '' : 'نام الزامی است', slug: 'شناسه لاتین معتبر نیست' });
+    const cf: Record<string, string> = {};
+    if (!name) cf.name = 'نام دسته الزامی است'; else if (name.length > 60) cf.name = 'نام دسته حداکثر ۶۰ کاراکتر';
+    if (!slug) cf.slug = 'شناسه لاتین الزامی است'; else if (!/^[a-z0-9-]{2,40}$/.test(slug)) cf.slug = 'شناسه فقط حروف لاتین کوچک، عدد و خط تیره (۲ تا ۴۰ کاراکتر)';
+    if (Object.keys(cf).length) return bad(res, 'validation', cf);
     if (await db.one('SELECT id FROM categories WHERE slug=?', [slug])) return bad(res, 'validation', { slug: 'این شناسه قبلاً استفاده شده' });
     const parentId = req.body?.parentId ? Number(req.body.parentId) : null;
     if (parentId && !await db.one('SELECT id FROM categories WHERE id=? AND parent_id IS NULL', [parentId])) return bad(res, 'validation', { parentId: 'والد معتبر نیست' }); // one level only (placeholder, BD-18)
@@ -522,7 +525,7 @@ export function mountAdmin(app: Express, db: Db, opts: { adminDemo: boolean; now
   });
   app.put('/api/admin/categories/:id', requireAdmin, async (req: AReq, res) => {
     const name = String(req.body?.name ?? '').trim(); const id = Number(req.params.id);
-    if (!name) return bad(res, 'validation', { name: 'نام الزامی است' });
+    if (!name || name.length > 60) return bad(res, 'validation', { name: name ? 'نام دسته حداکثر ۶۰ کاراکتر' : 'نام دسته الزامی است' });
     if (!await db.one('SELECT id FROM categories WHERE id=?', [id])) return res.status(404).json({ error: 'not_found' });
     await db.run('UPDATE categories SET name=? WHERE id=?', [name, id]); await audit(req, 'rename', 'category', id, name);
     res.json({ data: await db.one('SELECT id,slug,name FROM categories WHERE id=?', [id]) });

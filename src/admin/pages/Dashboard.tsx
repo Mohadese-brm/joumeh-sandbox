@@ -1,12 +1,13 @@
 // Figma 177:14723 Dashboard / Main. KPI definitions = placeholder (ADMIN-PH-KPI).
 import { Link, useNavigate } from 'react-router-dom';
 import { useLoad } from './hooks';
-import { Loading, ErrorState, PageTitle, StatusBadge, ORDER_STATUS, PAY_STATUS, Table, toman, fa, when, Stub } from '../ui';
+import { Loading, ErrorState, PageTitle, StatusBadge, ORDER_STATUS, PAY_STATUS, Table, toman, fa, when, Stub, MCard, MList, useMobile } from '../ui';
 import { faNumber } from '../../lib/format';
 import { useMe, can } from '../AdminApp';
+import { OrderCard } from './Orders';
 
 export function Dashboard() {
-  const { data: d, error, loading, reload } = useLoad<any>('/dashboard'); const me = useMe(); const nav = useNavigate();
+  const { data: d, error, loading, reload } = useLoad<any>('/dashboard'); const me = useMe(); const nav = useNavigate(); const mobile = useMobile();
   if (loading && !d) return <Loading />; if (error) return <ErrorState retry={reload} />;
   const k: [string, string, string][] = [
     ['فروش امروز', `${toman(d.salesToday)} تومان`, `${faNumber(d.paidToday)} سفارش پرداخت‌شده`],
@@ -15,7 +16,7 @@ export function Dashboard() {
     ['ارسال شده', faNumber(d.shipped), 'در مسیر تحویل'],
     ['میانگین ارزش سفارش', `${toman(d.avgOrder)} تومان`, 'سفارش‌های پرداخت‌شده'],
     ['درخواست‌های مرجوعی', faNumber(d.openReturns), 'در حال بررسی'],
-    ['تنوع ناموجود', faNumber(d.unavailableVariants), 'فقط پرچم موجودی (BD-16)'],
+    ['محصولات کم‌موجود', faNumber(d.lowStock ?? 0), `${faNumber((d.outOfStock ?? 0) + (d.oversold ?? 0))} تنوع ناموجود`], // Figma 177:16571; threshold = ADMIN-PH-LOWSTOCK
     ['نظرات', faNumber(d.reviews), 'همه‌ی نظرات ثبت‌شده'],
   ];
   return <>
@@ -25,15 +26,18 @@ export function Dashboard() {
     <div className="adm-kpis">{k.map(([l, v, s]) => <div key={l} className="adm-kpi"><div className="adm-kpi-top"><span className="lab">{l}</span><img src="/admin-icons/Chart.svg" alt="" width="20" height="20" style={{ padding: 2 }} /></div><span className="val">{v}</span><small>{s}</small></div>)}</div>
     <div className="adm-grid2">
       <section className="adm-card"><div className="adm-card-head"><h2>سفارش‌های اخیر</h2>{can(me, 'orders') && <Link className="adm-btn sm" to="/admin/orders">مشاهده همه</Link>}</div>
+        {mobile ? <MList>{d.recentOrders.map((o: any) => <OrderCard key={o.id} o={o} onClick={can(me, 'orders') ? () => nav(`/admin/orders/${o.id}`) : undefined} />)}</MList> :
         <Table head={['سفارش', 'مشتری', 'اقلام', 'مبلغ (تومان)', 'پرداخت', 'وضعیت سفارش', 'زمان']}>
           {d.recentOrders.map((o: any) => <tr key={o.id} className={can(me, 'orders') ? 'click' : ''} onClick={() => can(me, 'orders') && nav(`/admin/orders/${o.id}`)}>
             <td style={{ color: 'var(--a-brand)', fontWeight: 600 }}>{fa(o.orderNumber)}</td><td>{o.customer}</td><td>{faNumber(o.items)} قلم</td><td>{toman(o.total)}</td>
             <td><StatusBadge map={PAY_STATUS} value={o.paymentStatus} /></td><td><StatusBadge map={ORDER_STATUS} value={o.orderStatus} /></td><td className="adm-muted">{when(o.createdAt)}</td></tr>)}
-        </Table></section>
+        </Table>}</section>
       <section className="adm-card"><h2>نیازمند اقدام</h2>
+        {d.lowStockItems?.map((r: any) => <div key={r.variantId} className="adm-sec"><span><b>{r.status === 'low' ? 'موجودی کم' : r.status === 'oversold' ? 'مغایرت موجودی' : 'ناموجود'}</b><br /><small className="adm-muted">{r.product} · {fa(r.size)} · {r.color} · قابل فروش: {fa(String(r.available)).replace('-', '−')}</small></span>
+          {can(me, 'products') && <Link className="adm-btn sm" to={`/admin/inventory?tab=${r.status === 'low' ? 'low' : 'out'}`} aria-label={`تنظیم موجودی ${r.product}`}>تنظیم</Link>}</div>)}
         {d.awaitingPayment > 0 && <div className="adm-sec"><span>{faNumber(d.awaitingPayment)} سفارش در انتظار پرداخت</span>{can(me, 'orders') && <Link className="adm-btn sm" to="/admin/orders">بررسی</Link>}</div>}
         {d.processing > 0 && <div className="adm-sec"><span>{faNumber(d.processing)} سفارش آماده‌سازی نشده</span>{can(me, 'orders') && <Link className="adm-btn sm" to="/admin/orders">بررسی</Link>}</div>}
-        {d.unavailableVariants > 0 && <div className="adm-sec"><span>{faNumber(d.unavailableVariants)} تنوع ناموجود</span>{can(me, 'products') && <Link className="adm-btn sm" to="/admin/products">تنظیم موجودی</Link>}</div>}
+        {!d.lowStockItems?.length && d.unavailableVariants > 0 && <div className="adm-sec"><span>{faNumber(d.unavailableVariants)} تنوع ناموجود</span>{can(me, 'products') && <Link className="adm-btn sm" to="/admin/inventory?tab=out">تنظیم موجودی</Link>}</div>}
         {d.openReturns > 0 && <div className="adm-sec"><span>{faNumber(d.openReturns)} درخواست مرجوعی در حال بررسی</span><span className="adm-muted" style={{ flex: 0, whiteSpace: 'nowrap' }}>فاز ۲</span></div>}
       </section>
     </div>

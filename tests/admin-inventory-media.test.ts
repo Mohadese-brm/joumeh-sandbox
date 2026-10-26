@@ -126,6 +126,9 @@ describe('inventory', () => {
     const mismatched = await db.all(`SELECT v.id FROM variants v WHERE (v.available=1 AND v.on_hand=0) OR (v.available=0 AND v.on_hand>0)`); expect(mismatched).toEqual([]);
     const low = await request(app).get('/api/admin/inventory?tab=low').set(h); expect(low.body.data.every((x: { status: string }) => x.status === 'low')).toBe(true);
     expect(r.body.stubs.reservation.code).toBe('BD-08'); expect(r.body.stubs.lowStock.code).toBe('ADMIN-PH-LOWSTOCK');
+    // search by a full SKU that contains Persian characters (real catalogue SKUs carry sample colour names)
+    const sku = 'P99-کرم (نمونه)-M'; await db.run('UPDATE variants SET sku=? WHERE id=?', [sku, r.body.data[0].variantId]); const bySku = await request(app).get(`/api/admin/inventory?q=${encodeURIComponent(sku)}`).set(h);
+    expect(bySku.body.data.map((x: { sku: string }) => x.sku)).toContain(sku);
   });
   it('adjust: increase / decrease / count need a reason; ledger + audit row; shop flag follows stock', async () => {
     const h = await login(); const v = (await db.one<{ id: number; on_hand: number }>('SELECT id,on_hand FROM variants WHERE on_hand>0 ORDER BY id'))!;

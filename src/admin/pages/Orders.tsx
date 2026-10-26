@@ -4,13 +4,13 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useLoad } from './hooks';
 import { aapi, AdminApiError } from '../api';
 import { FiltersRow } from './Products';
-import { Ph, Badge, Banner, Overflow, Button, Confirm, Empty, ErrorState, Field, Loading, Modal, NoPermission, ORDER_STATUS, PAY_STATUS, PageTitle, StatusBadge, Stub, Table, Tabs, fa, toast, toman, when } from '../ui';
+import { Ph, Badge, MCard, MList, useMobile, Banner, Overflow, Button, Confirm, Empty, ErrorState, Field, Loading, Modal, NoPermission, ORDER_STATUS, PAY_STATUS, PageTitle, StatusBadge, Stub, Table, Tabs, fa, toast, toman, when } from '../ui';
 import { faNumber } from '../../lib/format';
 import { useMe, can } from '../AdminApp';
 
 const TABS: [string, string][] = [['', 'همه'], ['pending', 'در انتظار پرداخت'], ['processing', 'در حال پردازش'], ['shipped', 'ارسال شده'], ['delivered', 'تحویل داده شده'], ['cancelled', 'لغو شده']];
 export function OrdersList() {
-  const me = useMe(); const nav = useNavigate(); const [sp] = useSearchParams();
+  const me = useMe(); const nav = useNavigate(); const [sp] = useSearchParams(); const mobile = useMobile();
   const [status, setStatus] = useState(''); const [q, setQ] = useState(sp.get('q') ?? '');
   const { data, extra, error, loading, reload } = useLoad<any[]>(can(me, 'orders') ? `/orders?${new URLSearchParams({ status, q })}` : null);
   if (!can(me, 'orders')) return <NoPermission crumb="فروش و عملیات / سفارش‌ها" title="سفارش‌ها" />;
@@ -23,7 +23,8 @@ export function OrdersList() {
       <Field label="وضعیت"><select className="adm-select" value={status} onChange={e => setStatus(e.target.value)}>{TABS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></Field>
       <Field label="کانال"><select className="adm-select" disabled title="همه‌ی سفارش‌های نمونه از سایت است"><option>همه</option></select></Field>
     </FiltersRow>
-    {loading && !data ? <Loading /> : error ? <ErrorState retry={reload} /> : !data?.length ? <Empty title="سفارشی پیدا نشد">فیلترها را تغییر دهید.</Empty> :
+    {loading && !data ? <Loading /> : error ? <ErrorState retry={reload} /> : !data?.length ? <Empty title="سفارشی پیدا نشد">فیلترها را تغییر دهید.</Empty> : mobile
+      ? <MList>{data.map(o => <OrderCard key={o.id} o={o} onClick={() => nav(`/admin/orders/${o.id}`)} />)}</MList> :
       <Table head={['سفارش', 'تاریخ', 'مشتری', 'کانال (نمونه)', 'اقلام', 'مبلغ (تومان)', 'پرداخت', 'ارسال', 'وضعیت سفارش']}>
         {data.map(o => <tr key={o.id} className="click" onClick={() => nav(`/admin/orders/${o.id}`)}>
           <td style={{ color: 'var(--a-brand)', fontWeight: 600 }}>{fa(o.orderNumber)}</td><td className="adm-muted">{when(o.createdAt)}</td><td>{o.customer}<br /><small className="adm-muted"><Ph p={o.phone} /></small></td>
@@ -32,13 +33,22 @@ export function OrdersList() {
   </>;
 }
 
+/** Figma 180:30160 mobile order card: «سفارش ۱۰۱۲۴» + amount · «سارا م. · سایت» + time · badges. */
+export function OrderCard({ o, onClick }: { o: any; onClick?: () => void }) {
+  return <MCard onClick={onClick} label={`سفارش ${fa(o.orderNumber)}`}>
+    <div className="adm-mrow"><b style={{ color: 'var(--a-brand)' }}>سفارش {fa(o.orderNumber)}</b><b>{toman(o.total)} تومان</b></div>
+    <div className="adm-mrow"><span className="adm-muted">{o.customer} · سایت</span><small className="adm-muted">{when(o.createdAt)}</small></div>
+    <div className="adm-mrow"><span className="adm-badges"><StatusBadge map={PAY_STATUS} value={o.paymentStatus} /><StatusBadge map={ORDER_STATUS} value={o.orderStatus} /></span></div>
+  </MCard>;
+}
+
 /** «ارسال» (fulfilment) badge derived from order status — carrier data is BD-23. */
 const Fulfil = ({ s }: { s: string }) => s === 'delivered' ? <Badge tone="success">تحویل شده</Badge> : s === 'shipped' ? <Badge tone="info">ارسال شده</Badge> : s === 'cancelled' ? <Badge tone="neutral">—</Badge> : <Badge tone="warning">ارسال نشده</Badge>;
 const NEXT_LABEL: Record<string, string> = { processing: 'شروع آماده‌سازی', shipped: 'ثبت ارسال', delivered: 'ثبت تحویل' };
 const STEPS = ['placed', 'processing', 'shipped', 'delivered'];
 const STEP_LABEL: Record<string, string> = { placed: 'ثبت سفارش', processing: 'در حال پردازش', shipped: 'ارسال شده', delivered: 'تحویل داده شده', cancelled: 'لغو شده' };
 export function OrderDetail() {
-  const { id } = useParams(); const me = useMe();
+  const { id } = useParams(); const me = useMe(); const mobile = useMobile();
   const { data: o, extra, error, loading, reload, setData } = useLoad<any>(can(me, 'orders') ? `/orders/${id}` : null);
   const [ask, setAsk] = useState<string | null>(null); const [reason, setReason] = useState(''); const [desc, setDesc] = useState(''); const [rErr, setRErr] = useState(''); const [note, setNote] = useState('');
   if (!can(me, 'orders')) return <NoPermission crumb="فروش و عملیات / سفارش‌ها" title="سفارش‌ها" />;
@@ -55,16 +65,19 @@ export function OrderDetail() {
   const a = o.address ?? {};
   return <>
     <PageTitle crumb={`فروش و عملیات / سفارش‌ها / سفارش ${fa(o.orderNumber)}`} title={`سفارش ${fa(o.orderNumber)}`} sub={`${when(o.createdAt)} · سایت`}
-      actions={<>{edit && next && <Button kind="primary" onClick={() => setAsk(next)}>{NEXT_LABEL[next]}</Button>}
+      actions={<>{edit && next && !mobile && <Button kind="primary" onClick={() => setAsk(next)}>{NEXT_LABEL[next]}</Button>}
         {edit && <Overflow button="secondary" label="بیشتر" items={[{ label: 'لغو سفارش', danger: true, disabled: !o.allowed.includes('cancelled'), hint: o.allowed.includes('cancelled') ? undefined : 'در این وضعیت مجاز نیست', onClick: () => { setRErr(''); setReason(''); setDesc(''); setAsk('cancelled'); } }]} />}
         <Button ico="DocumentDownload1" disabled title="ADMIN-PH-INVOICE">چاپ فاکتور (نمونه اولیه)</Button></>} />
-    <div style={{ display: 'flex', gap: 8 }}><StatusBadge map={PAY_STATUS} value={o.paymentStatus} /><StatusBadge map={ORDER_STATUS} value={o.orderStatus} /></div>
+    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><StatusBadge map={PAY_STATUS} value={o.paymentStatus} /><StatusBadge map={ORDER_STATUS} value={o.orderStatus} /></div>
+    {mobile && <div className="adm-mactions">{edit && next && <Button kind="primary" onClick={() => setAsk(next)}>{NEXT_LABEL[next]}</Button>}
+      {o.phone && <a className="adm-btn secondary" href={`tel:${o.phone}`}>تماس با مشتری</a>}</div>}
     <div className="adm-grid2">
       <div style={{ display: 'grid', gap: 16 }}>
         <section className="adm-card"><h2>اقلام سفارش</h2>
+          {mobile ? <MList>{o.lines.map((l: any) => <div key={l.id} className="adm-mrow" style={{ flexWrap: 'nowrap' }}><div className="adm-prod">{l.imageUrl ? <img src={l.imageUrl} alt="" /> : <span className="adm-thumb" />}<div><b>{l.name}</b><small>{l.color} · {faNumber(l.quantity)} عدد · {fa(l.size)}</small></div></div><span className="nw">{toman(l.unitPrice * l.quantity)}</span></div>)}</MList> :
           <Table head={['محصول', 'تنوع', 'تعداد', 'قیمت واحد', 'جمع']}>{o.lines.map((l: any) => <tr key={l.id}>
             <td><div className="adm-prod">{l.imageUrl ? <img src={l.imageUrl} alt="" /> : <span className="adm-thumb" />}<div><b>{l.name}</b><small dir="ltr">{l.sku}</small></div></div></td>
-            <td>{l.color} · {l.size}</td><td>{faNumber(l.quantity)}</td><td>{toman(l.unitPrice)}</td><td>{toman(l.unitPrice * l.quantity)}</td></tr>)}</Table>
+            <td>{l.color} · {l.size}</td><td>{faNumber(l.quantity)}</td><td>{toman(l.unitPrice)}</td><td>{toman(l.unitPrice * l.quantity)}</td></tr>)}</Table>}
           <dl className="adm-dl"><dt>جمع اقلام</dt><dd>{toman(o.subtotal)}</dd><dt>تخفیف</dt><dd>{o.discount ? toman(o.discount) : '—'}</dd>
             <dt>هزینه ارسال</dt><dd>{o.shippingFee == null ? <Stub code="BD-02" /> : toman(o.shippingFee)}</dd><dt>مالیات بر ارزش افزوده</dt><dd>{o.vatAmount == null ? <Stub code="BD-06" /> : toman(o.vatAmount)}</dd>
             <dt><b>مبلغ پرداختی</b></dt><dd><b>{toman(o.total)} تومان (نمونه)</b></dd></dl></section>
