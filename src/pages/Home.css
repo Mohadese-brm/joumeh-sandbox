@@ -19,9 +19,10 @@
 /* design-batch-2026-10-26 item 1 — static full-bleed hero: the image fills the whole hero box (object-fit cover, focal point on the model). */
 .hero-s { position: relative; block-size: min(calc(100svh - var(--header-h)), 820px); min-block-size: 420px; overflow: hidden; background: var(--brown-100); }
 .hero-s__img { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; max-inline-size: none; object-fit: cover; object-position: 48% 55%; display: block; }
-.hero-s__ctaWrap { position: absolute; inset-inline: 0; inset-block-end: 48px; display: flex; }
+/* rev1: CTA on the physical LEFT in every direction/viewport (justify-content: left is physical, not logical). */
+.hero-s__ctaWrap { position: absolute; inset-inline: 0; inset-block-end: 48px; display: flex; justify-content: left; }
 .hero-s__cta { box-shadow: 0 4px 16px rgb(28 25 23 / .18); }
-@media (max-width: 767px) { .hero-s { block-size: min(calc(100svh - var(--header-h) - 56px), 600px); min-block-size: 360px; } .hero-s__ctaWrap { inset-block-end: 24px; justify-content: center; } }
+@media (max-width: 767px) { .hero-s { block-size: min(calc(100svh - var(--header-h) - 56px), 600px); min-block-size: 360px; } .hero-s__ctaWrap { inset-block-end: 24px; } }
 /* Figma hero CTA 55:322 «مشاهده»: 18 SemiBold, padding 16/40, min-h 56, radius 12 */
 .btn--hero { min-block-size: 56px; padding-block: 16px; padding-inline: 40px; font-size: 18px; font-weight: 600; line-height: 24px; border-radius: 12px; }
 /* Figma Button v2 (55:368 / 55:350): min-h 48, padding-inline 40, 18 SemiBold, radius 12 */

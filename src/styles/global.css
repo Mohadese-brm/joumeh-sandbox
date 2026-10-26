@@ -159,3 +159,10 @@ textarea.input { padding-block: 10px; min-block-size: 88px; }
 .spinner { display: inline-block; inline-size: 16px; block-size: 16px; border-radius: 50%; border: 2px solid var(--n-200); border-block-start-color: var(--teal-600); animation: spin .8s linear infinite; vertical-align: -3px; margin-inline-end: 8px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } }
+
+/* rev1 support FAB tokens (fixed bottom-right). --fab-clear = space the page's last content keeps free under the FAB. */
+:root { --fab-size: 56px; --fab-offset: 24px; --fab-bottom: 24px; --fab-clear: calc(var(--fab-bottom) + var(--fab-size) + 16px); }
+@media (max-width: 767px) { :root { --fab-size: 52px; --fab-offset: 16px; --fab-bottom: calc(56px + 16px + env(safe-area-inset-bottom)); } }
+/* rev1: icon-pack stroke weight independent of render size (frames differ: chev-d 20, tick 24) — same 1.5px as Figma at any size. */
+:root { --icon-stroke: 1.5px; }
+.icon--stroke path, .icon--stroke circle, .icon--stroke line, .icon--stroke polyline { vector-effect: non-scaling-stroke; stroke-width: var(--icon-stroke); }

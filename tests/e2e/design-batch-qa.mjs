@@ -1,4 +1,5 @@
 // design-batch-2026-10-26 QA: Playwright headless 1440×900 + 390×844. BASE=<url> OUT=<dir> TAG=<local|preview> node tests/e2e/design-batch-qa.mjs
+// Optional SHARE=<_vercel_share token> sets the share cookie first (token never written to disk).
 // Optional HEADERS='{"x-vercel-protection-bypass":"…"}' for protected previews (never written to disk).
 import { chromium } from 'playwright';
 import AxeBuilder from '@axe-core/playwright';
@@ -31,6 +32,7 @@ async function axe(p, key) { try { const a = await new AxeBuilder({ page: p }).w
 
 for (const [vp, size] of [['desktop', { width: 1440, height: 900 }], ['mobile', { width: 390, height: 844 }]]) {
   const ctx = await b.newContext({ viewport: size, deviceScaleFactor: 1, extraHTTPHeaders: headers, locale: 'fa-IR' }); ctx._vp = vp;
+  if (process.env.SHARE) { const sp = await ctx.newPage(); await sp.goto(base + '/?_vercel_share=' + process.env.SHARE, { waitUntil: 'networkidle' }); R.shareCookie = R.shareCookie ?? (await ctx.cookies()).some(c => /vercel/i.test(c.name)); await sp.close(); }
   const M = R[vp];
   // ---------- HOME ----------
   let p = await page(ctx, '/'); await scrollAll(p); await p.waitForLoadState('networkidle');
@@ -124,10 +126,11 @@ for (const [vp, size] of [['desktop', { width: 1440, height: 900 }], ['mobile', 
   const C = { afterAdd: await cartRead() };
   if (vp === 'desktop') C.metrics = await p.evaluate(() => { const r = s => document.querySelector(s)?.getBoundingClientRect(); const t = r('.citem img'); const s = r('.summary'); return { thumb: t && [Math.round(t.width), Math.round(t.height)], summaryW: s && Math.round(s.width), qtyBtn: r('.qty--pill button') && Math.round(r('.qty--pill button').height) }; });
   await shot(p, `${vp}-cart`);
-  await p.locator('.qty--pill button').first().click(); await p.waitForTimeout(600); C.afterIncrease = await cartRead();
-  await p.locator('.qty--pill button').nth(1).click(); await p.waitForTimeout(600); C.afterDecrease = await cartRead();
+  const step = async (k, fn) => { try { await fn(); await p.waitForTimeout(900); } catch (e) { C[k + 'Error'] = e.message.split('\n')[0]; } C[k] = await cartRead(); };
+  await step('afterIncrease', () => p.locator('.qty--pill button').first().click({ timeout: 8000 }));
+  await step('afterDecrease', () => p.locator('.qty--pill button').nth(1).click({ timeout: 8000 }));
   await axe(p, `${vp} /cart`);
-  await p.locator('.citem__del').first().click(); await p.waitForTimeout(700); C.afterRemove = await cartRead();
+  await step('afterRemove', () => p.locator('.citem__del').first().click({ timeout: 8000 }));
   M.cart = C; await p.close();
 
   // ---------- STORY ----------

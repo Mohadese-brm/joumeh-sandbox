@@ -73,3 +73,11 @@ Replaces the moderation DEFAULT above: this is now Mohadeseh's decision, not a d
 | 12 | Loading states: grid/PDP/cart skeletons, search spinner | `Grid.tsx`, `Product.tsx`, `Cart.tsx`, `Layout.tsx` |
 | 13 | Support: Figma `Call` icon FAB on every page (above the mobile bottom nav) → LOCAL demo chat (nothing is sent); canned answers labelled «پاسخ نمایشی (دمو)»; shipping/returns answers say "not decided yet". FIGMA GAP: no chat frame | `SupportChat.tsx`, `content/support-demo.ts` |
 | 14 | «قصه ما» page `/info/story` uses the CEO text verbatim (`src/content/story.ts`, test fixture byte-compare); header/footer links point there | `Story.tsx` |
+
+## design-batch-2026-10-26 rev1 — CEO changes (2026-10-26, owner msg pt87u)
+| # | Decision | Where |
+|---|---|---|
+| r1 | Card box hugs the picture with exactly 8px on every side (`--card-pad` 8 on desktop and mobile; desktop was 12), name + price inside the same box, 8px from the bottom. Border 1px / r12 kept; photo radius is nested (`--card-r − border − pad` = 3px at the bottom corners, **was ≈20px**); arch top (w/2) kept. One shared card everywhere (shop + home rows). Grid 120/32/48 + hover swap unchanged | `ProductCard.css` |
+| r2 | Hero «مشاهده» on the **physical left** (`justify-content: left`) even in RTL, on desktop and mobile | `Home.css` |
+| r3 | Support/phone FAB on the **physical right** (`right`, not `inset-inline-end`), `position: fixed` bottom on every page (24/24, 56px; mobile 16 / above the bottom nav, 52px). Footer reserves `--fab-clear` bottom padding so its last line is never under the FAB | `SupportChat.css`, `global.css`, `Layout.css` |
+| r4 | Sort dropdown: the trigger is as wide as the longest option (all labels stacked, hidden ones `visibility:hidden` + aria-hidden); the menu is inset by `-(1 + menu-pad + opt-pad)` so the option text right edge = trigger text right edge and the tick column = the chevron column. Trigger and options both 16 / 500 / 28 (the selected option changes colour only; the old 14px/22px option font was removed). Chevron + tick both 20px with `.icon--stroke` (non-scaling-stroke, `--icon-stroke` 1.5px), because the pack's frames differ (20 vs 24) and gave 1.5 vs 1.25px | `Shop.tsx`, `Shop.css`, `global.css` |

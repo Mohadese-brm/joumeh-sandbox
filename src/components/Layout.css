@@ -37,8 +37,7 @@
 .search__price { display: flex; gap: 8px; align-items: center; } .search__now { font-size: 14px; font-weight: 500; line-height: 1.5; color: #1c1917; } .search__now--sale { color: #1c7477; }
 .search__old { font-size: 12px; color: #57534e; }
 .pc__now--sale { color: var(--price-sale); }
-.ftr { background: var(--brown-800); color: #fff; margin-block-start: var(--section-gap); padding-block: 48px 88px; }
-@media (min-width: 768px) { .ftr { padding-block-end: 32px; } }
+.ftr { background: var(--brown-800); color: #fff; margin-block-start: var(--section-gap); padding-block: 48px var(--fab-clear); } /* rev1: footer bottom clears the fixed support FAB */
 .ftr__in { display: grid; gap: 32px; grid-template-columns: 1fr 1fr; }
 @media (min-width: 1024px) { .ftr__in { grid-template-columns: 2fr 1fr 1fr 1fr; } }
 .ftr__brand { grid-column: 1 / -1; } @media (min-width: 1024px) { .ftr__brand { grid-column: auto; } }

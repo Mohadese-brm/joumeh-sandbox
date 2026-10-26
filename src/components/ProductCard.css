@@ -8,17 +8,21 @@
 /* design-batch-2026-10-26 item 9 — boxed card (adidas.nl/sneakers reference): one box holds picture + name + price.
    The card fills its grid cell (fluid); the approved arch (top radius = w/2, bottom = w × 0.057) is kept on the picture.
    --mw = picture width, derived from the card's own inline size (container query units). */
+/* rev1 (Mohadeseh 2026-10-26): box = picture + 8px on every side (--card-pad), info inside the same box. Box radius stays 12 (--card-r);
+   the picture's bottom corners are concentric with it: inner r = card-r − border − pad = 3px. The approved arch top (w/2) is kept. */
+:root { --card-pad: 8px; --card-r: 12px; --card-border: 1px; }
 .pc { position: relative; inline-size: 100%; font-family: 'Vazirmatn', sans-serif; color: var(--color-v2-text-primary);
-  container-type: inline-size; background: #fff; border: 1px solid var(--n-200, #e7e5e2); border-radius: 12px; transition: border-color .2s ease, box-shadow .2s ease; }
+  container-type: inline-size; background: #fff; border: var(--card-border) solid var(--n-200, #e7e5e2); border-radius: var(--card-r); transition: border-color .2s ease, box-shadow .2s ease; }
 .pc:hover, .pc:focus-within { border-color: var(--n-500, #78716c); box-shadow: 0 4px 16px rgb(28 25 23 / .06); }
-.pc--desktop { --pad: 12px; --name: 17px; --old: 14px; --now: 17px; --gap: 12px; --cart-b: 8px; }
-.pc--mobile  { --pad: 8px; --name: 14px; --old: 12px; --now: 14px; --gap: 8px; --cart-b: 6px; }
+.pc--desktop { --pad: var(--card-pad); --name: 17px; --old: 14px; --now: 17px; --gap: 12px; --cart-b: 8px; }
+.pc--mobile  { --pad: var(--card-pad); --name: 14px; --old: 12px; --now: 14px; --gap: 8px; --cart-b: 6px; }
 .pc { --mw: calc(100cqi - 2 * var(--pad)); --mh: calc(var(--mw) * 4 / 3); }
-.pc__link { display: flex; flex-direction: column; gap: var(--gap); padding: var(--pad); color: inherit; text-decoration: none; border-radius: 12px; }
+.pc__link { display: flex; flex-direction: column; gap: var(--gap); padding: var(--pad); color: inherit; text-decoration: none; border-radius: calc(var(--card-r) - var(--card-border)); }
 .pc__link:focus-visible { outline: 3px solid var(--price-sale); outline-offset: 2px; }
 .pc__media { position: relative; inline-size: 100%; aspect-ratio: 3 / 4; overflow: hidden; background: var(--n-100, #f4f3f1);
   border-start-start-radius: calc(var(--mw) / 2); border-start-end-radius: calc(var(--mw) / 2);
-  border-end-start-radius: calc(var(--mw) * 0.057); border-end-end-radius: calc(var(--mw) * 0.057); }
+  --pc-in-r: calc(var(--card-r) - var(--card-border) - var(--pad));
+  border-end-start-radius: var(--pc-in-r); border-end-end-radius: var(--pc-in-r); }
 .pc__img { display: block; position: absolute; inset: 0; inline-size: 100%; block-size: 100%; object-fit: cover; transition: opacity .35s ease; }
 .pc__img--2 { opacity: 0; }
 .pc--swap .pc__link:hover .pc__img--2, .pc--swap .pc__link:focus-visible .pc__img--2 { opacity: 1; }
@@ -29,7 +33,7 @@
 .pc__link:hover .pc__overlay, .pc__link:focus-visible .pc__overlay { opacity: 1; }
 @media (hover: none) { .pc__overlay { display: none; } }
 @media (prefers-reduced-motion: reduce) { .pc__overlay, .pc__img, .pc { transition: none; } }
-.pc__body { display: flex; flex-direction: column; gap: 4px; padding-inline: 4px; padding-block-end: 4px; min-inline-size: 0; }
+.pc__body { display: flex; flex-direction: column; gap: 4px; padding-inline: 0; padding-block-end: 0; min-inline-size: 0; }
 .pc__name { margin: 0; font-size: var(--name); font-weight: 500; line-height: 1.6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pc__price { margin: 0; display: flex; gap: 8px; align-items: center; line-height: 1.5; }
 .pc__old { color: var(--price-original); font-size: var(--old); font-weight: 400; }
