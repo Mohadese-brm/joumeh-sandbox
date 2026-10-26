@@ -1,5 +1,5 @@
+import { Icon } from './Icon';
 import { Link } from 'react-router-dom';
-import bagIcon from '../assets/icons/icon-bag-1.svg?raw';
 import { formatBadge, formatPrice, faNumber } from '../lib/format';
 import './ProductCard.css';
 
@@ -22,7 +22,7 @@ export function ProductCard({ product, size = 'desktop', href, onAddToCart, head
   // the single photo stays and only the «مشاهده» pill shows.
   const second = product.imageThumb2 && product.imageThumb2 !== first ? product.imageThumb2 : null;
   return (
-    <article className={`pc pc--${size}${second ? ' pc--swap' : ''}`} data-figma={size === 'desktop' ? '56:282 card 378×504 (boxed: adidas.nl/sneakers reference)' : '54:153/54:170/54:186'}>
+    <article className={`pc pc--${size}${second ? ' pc--swap' : ''}${priced ? ' pc--buy' : ''}`} data-figma={size === 'desktop' ? '56:282 card 378×504 (boxed: adidas.nl/sneakers reference)' : '54:153/54:170/54:186'}>
       <Link className="pc__link" to={href ?? `/product/${product.slug}`}>
         <div className="pc__media">
           <img className="pc__img pc__img--1" src={first} alt={product.imageAlt} width={w} height={h} loading="lazy"
@@ -42,8 +42,11 @@ export function ProductCard({ product, size = 'desktop', href, onAddToCart, head
       {showBadge && product.status === 'sale' && product.badgePercent != null && <span className="pc__badge">{formatBadge(product.badgePercent)}</span>}
       {product.status === 'new' && <span className="pc__badge pc__badge--new">جدید</span>}
       {/* fix1 item 2 (CEO review 2026-10-21): no favourite on cards; the heart lives only on the PDP (Favorite Toggle 266:67491). */}
-      {priced && <button type="button" className="pc__icon pc__cart" aria-label={`افزودن ${product.name} به سبد خرید`} onClick={() => onAddToCart?.(product.id)}>
-        <span aria-hidden="true" dangerouslySetInnerHTML={{ __html: svg(bagIcon) }} />
+      {/* rev4 (Mohadeseh 2026-10-26): basket in a solid action-primary circle on the title row, opposite the title (physical left in RTL),
+          centred on the title line. Outside the card link (no nested interactive) → clicking never follows the card link.
+          Behaviour unchanged (P9 / flow.mjs): every product needs a size, so it opens the PDP size picker with the size-required state. */}
+      {priced && <button type="button" className="pc__cart" aria-label={`افزودن به سبد خرید — ${product.name}`} onClick={e => { e.preventDefault(); e.stopPropagation(); onAddToCart?.(product.id); }}>
+        <Icon name="bag-1" size={size === 'desktop' ? 24 : 20} />
       </button>}
     </article>
   );

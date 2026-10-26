@@ -53,7 +53,19 @@
 .pc__icon span { display: grid; inline-size: 24px; block-size: 24px; place-items: center; }
 .pc__icon:focus-visible { outline: 3px solid var(--price-sale); outline-offset: 2px; }
 
-.pc__cart { inset-inline-end: calc(var(--inset) + 8px); inset-block-start: calc(var(--inset) + var(--mh) - 44px - var(--cart-b)); }
+/* rev4: title-row basket button. Circle --cart-d (40 desktop / 32 mobile), action-primary fill, white bag-1 icon (same Figma icon as the header cart);
+   44px hit area via ::after. The name line is --cart-d tall with the text centred, and the button sits at that line's top → circle centre = title centre.
+   The name reserves --cart-d + 8 on the button side, so long titles ellipsize before the circle. */
+.pc--desktop { --cart-d: 40px; } .pc--mobile { --cart-d: 32px; } /* icon: shared <Icon bag-1> 24 / 20 frame, as in the header */
+:root { --cart-bg: var(--action-primary, #1c7477); --cart-bg-hover: var(--teal-700, #15595b); --cart-fg: #fff; }
+.pc--buy .pc__name { padding-inline-end: calc(var(--cart-d) + 8px); line-height: var(--cart-d); } /* single-line name: its line box is the button row, text centred in it */
+.pc__cart { position: absolute; inset-inline-end: var(--inset); inset-block-start: calc(var(--inset) + var(--mh) + var(--gap));
+  inline-size: var(--cart-d); block-size: var(--cart-d); border: 0; padding: 0; border-radius: 999px; display: grid; place-items: center; cursor: pointer;
+  background: var(--cart-bg); color: var(--cart-fg); z-index: 1; transition: background-color .15s ease; }
+.pc__cart::after { content: ''; position: absolute; inset: min(0px, calc((var(--cart-d) - 44px) / 2)); border-radius: 999px; }
+.pc__cart .icon { display: grid; }
+.pc__cart:hover { background: var(--cart-bg-hover); }
+.pc__cart:focus-visible { background: var(--cart-bg-hover); outline: 3px solid var(--action-primary, #1c7477); outline-offset: 2px; }
 
 .pc__badge.pc__badge--new { background: var(--color-v2-badge-new-bg, #1c7477); color: #fff; } /* token badge/new-bg teal/600 */
 

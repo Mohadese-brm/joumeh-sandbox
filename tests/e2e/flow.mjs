@@ -44,7 +44,7 @@ for (const [vp, width] of [['desktop', 1280], ['mobile', 375]]) {
       await pg.goto(BASE + '/account/favorites'); await pg.getByRole('heading', { name: 'مانتو کتان کویری' }).waitFor();
       await pg.getByRole('button', { name: /حذف از علاقه‌مندی‌ها — مانتو کتان کویری/ }).click(); await pg.getByRole('heading', { name: 'مانتو کتان کویری' }).waitFor({ state: 'detached' }); });
     await step(`${vp}: card bag button → PDP size-required state (P9)`, async () => {
-      await pg.goto(BASE + '/women'); await pg.getByRole('button', { name: 'افزودن مانتو کتان کویری به سبد خرید' }).click(); await pg.waitForURL(/product\/women-1/); await pg.getByText('لطفاً سایز را انتخاب کنید.').waitFor(); });
+      await pg.goto(BASE + '/women'); await pg.getByRole('button', { name: 'افزودن به سبد خرید — مانتو کتان کویری' }).click(); await pg.waitForURL(/product\/women-1/); await pg.getByText('لطفاً سایز را انتخاب کنید.').waitFor(); });
     await step(`${vp}: fix1 — no filter UI; sort (56:286 / 56:621 + 56:951) reorders by price`, async () => {
       await pg.goto(BASE + '/women'); await pg.locator('.pc').first().waitFor();
       if (await pg.locator('.filters, .shop__panel, .shop__fbtn').count() || await pg.getByRole('button', { name: /فیلتر/ }).count()) throw new Error('filter UI present');
