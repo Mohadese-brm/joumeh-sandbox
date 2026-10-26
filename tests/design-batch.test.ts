@@ -2,7 +2,7 @@ import { describe, it, expect, afterEach } from 'vitest';
 import request from 'supertest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { createDb, all } from '../server/db';
+import { createDb, type Db } from '../server/db';
 import { createApp } from '../server/app';
 import { seed } from '../db/seed';
 import { CATALOG } from '../db/catalog';
@@ -34,8 +34,8 @@ describe('sample placeholder data (single switch, clearly labelled)', () => {
   it('seed(db, true) flags every product is_sample=1 and makes them purchasable; reviews + rating are sample-labelled', async () => {
     process.env.JOUMEH_SAMPLE_PLACEHOLDERS = '1';
     const db = await createDb(d => seed(d, true));
-    expect(all<{ n: number }>(db, 'SELECT COUNT(*) n FROM products WHERE is_sample=1')[0].n).toBe(CATALOG.length);
-    expect(all<{ n: number }>(db, 'SELECT COUNT(*) n FROM prices')[0].n).toBeGreaterThan(0);
+    expect((await db.all<{ n: number }>('SELECT COUNT(*) n FROM products WHERE is_sample=1'))[0].n).toBe(CATALOG.length);
+    expect((await db.all<{ n: number }>('SELECT COUNT(*) n FROM prices'))[0].n).toBeGreaterThan(0);
     const app = createApp(db);
     const list = (await request(app).get('/api/products?category=women')).body.data;
     expect(list.length).toBeGreaterThan(0); expect(list.every((p: { price: number }) => p.price > 0)).toBe(true);

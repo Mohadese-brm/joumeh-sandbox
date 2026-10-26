@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { createDb, all } from '../server/db';
+import { createDb, type Db } from '../server/db';
 import { createApp } from '../server/app';
 import { CATALOG, type CatalogProduct } from '../db/catalog';
 import { seedCategories, seedCatalog } from '../db/seed';
@@ -12,11 +12,11 @@ import { formatPrice, PRICE_ON_REQUEST } from '../src/lib/format';
 describe('real catalogue seed', () => {
   it('loads every CATALOG product, none flagged sample, no price rows, no variants', async () => {
     const db = await createDb();
-    expect(all<{ n: number }>(db, 'SELECT COUNT(*) n FROM products')[0].n).toBe(CATALOG.length);
+    expect((await db.all<{ n: number }>('SELECT COUNT(*) n FROM products'))[0].n).toBe(CATALOG.length);
     expect(CATALOG.length).toBe(41);
-    expect(all(db, 'SELECT id FROM products WHERE is_sample=1')).toHaveLength(0);
-    expect(all(db, 'SELECT * FROM prices')).toHaveLength(0);
-    expect(all(db, 'SELECT * FROM variants')).toHaveLength(0);
+    expect(await db.all('SELECT id FROM products WHERE is_sample=1')).toHaveLength(0);
+    expect(await db.all('SELECT * FROM prices')).toHaveLength(0);
+    expect(await db.all('SELECT * FROM variants')).toHaveLength(0);
     expect(CATALOG.every(p => p.price === null && p.salePrice === null && p.stock === null && p.sizes.length === 0)).toBe(true);
   });
   it('every product has ≥1 image and every image + thumb file exists in public/', () => {
@@ -62,7 +62,7 @@ describe('API with null prices', () => {
     const r = await request(app).post('/api/cart/items').send({ variantId: v.id });
     expect(r.status).toBe(409); expect(r.body.error).toBe('price_on_request');
     // even if one slipped into a cart, it is unavailable and excluded from totals
-    db.run('INSERT INTO carts DEFAULT VALUES'); db.run('INSERT INTO cart_items (cart_id, variant_id, quantity) VALUES (1, ?, 2)', [v.id]);
+    await db.run('INSERT INTO carts DEFAULT VALUES'); await db.run('INSERT INTO cart_items (cart_id, variant_id, quantity) VALUES (1, ?, 2)', [v.id]);
     const c = (await request(app).get('/api/cart/1')).body.data;
     expect(c.items[0].available).toBe(false); expect(c.items[0].lineTotal).toBeNull(); expect(c.totals.payable).toBe(0);
   });

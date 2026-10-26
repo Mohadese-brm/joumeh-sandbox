@@ -1,4 +1,5 @@
--- Joumeh storefront schema (LOCAL, SQLite via sql.js). Status: Review. Not a production migration.
+-- Migration 0001 — Joumeh initial schema. Source of truth for BOTH dialects: written for SQLite (in-memory sql.js);
+-- the Postgres version is generated from it by `npm run schema` (scripts/schema.mjs → db/migrations.ts). Status: Review.
 -- Every policy-bearing column is a BD stub (see knowledge/joumeh-dev.md §5). Do not ship as policy.
 CREATE TABLE categories (id INTEGER PRIMARY KEY, slug TEXT UNIQUE NOT NULL, name TEXT NOT NULL,
   parent_id INTEGER REFERENCES categories(id)); -- BD-18 STUB: taxonomy. parent_id (admin-demo r2): one level of sub-categories, admin only
@@ -56,10 +57,15 @@ CREATE TABLE reviews (id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL REFERE
   rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5), body TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'published' CHECK (status IN ('pending','published','rejected')),
   created_at TEXT NOT NULL DEFAULT (datetime('now')));
 
--- ===== admin-demo (branch admin-demo). DEMO ONLY: in-memory, resets on restart. Roles/permissions = PLACEHOLDER (BD-19). =====
-CREATE TABLE admin_users (id INTEGER PRIMARY KEY, phone TEXT UNIQUE NOT NULL, name TEXT NOT NULL, roles TEXT NOT NULL, -- comma-separated role keys
-  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','invited','inactive')), last_login TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')));
+-- ===== admin (admin-v1). v1 model (CEO 2026-10-26): exactly TWO admins with the SAME full access; email + password sign-in. =====
+-- role is a LABEL only ('owner' = Mohadeseh, 'admin' = the business owner); it does not change permissions.
+CREATE TABLE admin_users (id INTEGER PRIMARY KEY, email TEXT UNIQUE NOT NULL, name TEXT NOT NULL, password_hash TEXT NOT NULL, -- bcrypt
+  role TEXT NOT NULL DEFAULT 'admin' CHECK (role IN ('owner','admin')),
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','inactive')), is_demo INTEGER NOT NULL DEFAULT 0, -- 1 = preview-only demo account
+  last_login TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')));
 CREATE TABLE admin_sessions (token_hash TEXT PRIMARY KEY, admin_id INTEGER NOT NULL REFERENCES admin_users(id), created_at INTEGER NOT NULL, last_seen INTEGER NOT NULL);
+-- Login rate limiting (failed attempts per e-mail and per IP). Limits are engineering placeholders (server/admin.ts).
+CREATE TABLE admin_login_attempts (id INTEGER PRIMARY KEY, email TEXT NOT NULL, ip TEXT NOT NULL, ok INTEGER NOT NULL, at INTEGER NOT NULL);
 CREATE TABLE audit_log (id INTEGER PRIMARY KEY, admin_id INTEGER REFERENCES admin_users(id), action TEXT NOT NULL, entity TEXT NOT NULL, entity_id TEXT, detail TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')));
 CREATE TABLE order_notes (id INTEGER PRIMARY KEY, order_id INTEGER NOT NULL REFERENCES orders(id), admin_id INTEGER REFERENCES admin_users(id), body TEXT NOT NULL,
@@ -68,7 +74,7 @@ CREATE TABLE customer_notes (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL RE
   created_at TEXT NOT NULL DEFAULT (datetime('now')));
 CREATE TABLE order_events (id INTEGER PRIMARY KEY, order_id INTEGER NOT NULL REFERENCES orders(id), status TEXT NOT NULL, actor TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')));
 -- Content: editable pages + homepage hero. Real policy TEXT is a placeholder until the CEO supplies it.
-CREATE TABLE content_pages (slug TEXT PRIMARY KEY, title TEXT NOT NULL, body TEXT NOT NULL, published INTEGER NOT NULL DEFAULT 0, bd TEXT,
+CREATE TABLE content_pages (slug TEXT PRIMARY KEY, title TEXT NOT NULL, body TEXT NOT NULL, published INTEGER NOT NULL DEFAULT 0, bd TEXT, position INTEGER NOT NULL DEFAULT 0,
   updated_at TEXT NOT NULL DEFAULT (datetime('now')));
 CREATE TABLE content_home (id INTEGER PRIMARY KEY CHECK (id = 1), hero_title TEXT NOT NULL, hero_cta TEXT NOT NULL, hero_link TEXT NOT NULL, hero_alt TEXT NOT NULL,
   sections_json TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT (datetime('now')));

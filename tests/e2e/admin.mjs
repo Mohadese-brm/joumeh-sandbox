@@ -1,4 +1,4 @@
-// admin-demo UI e2e + desktop screenshots. Usage: BASE=http://127.0.0.1:4180 node tests/e2e/admin.mjs
+// admin UI e2e (admin-v1: interim e-mail login, 2 full-access admins) + desktop screenshots. Usage: BASE=http://127.0.0.1:4180 node tests/e2e/admin.mjs
 // Needs the API with JOUMEH_ADMIN_DEMO=1. admin-v1: expectations follow the real catalogue (41 products, sample placeholders on) + the demo seed (3 demo-only products, 5 orders 10119–10123, 5 customers). Screenshots → ../reports/shots/admin-demo-*.png
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
@@ -15,9 +15,12 @@ const go = async (p, n) => { await page.goto(BASE + p); await page.waitForLoadSt
 
 await go('/admin', 'login');
 ok('login: banner shown', await banner());
-await page.fill('input[inputmode=numeric]', '09123456789'); await page.click('button[type=submit]'); await page.waitForSelector('[role=alert]');
-ok('login: customer number denied', (await text()).includes('این شماره دسترسی مدیریت ندارد'));
-await page.fill('input[inputmode=numeric]', '09120000001'); await page.click('button[type=submit]'); await page.waitForSelector('.adm-kpis');
+ok('login: interim e-mail + password form (no phone field)', (await page.locator('.adm-login input[type=email]').count()) === 1 && (await page.locator('.adm-login input[type=password]').count()) === 1 && !(await page.locator('.adm-login input[inputmode=numeric]').count()) && (await text()).includes('interim'));
+ok('login: preview demo hint lists the two demo admins', (await page.locator('.adm-accts button').count()) === 2);
+await page.fill('input[type=email]', 'owner.demo@joumeh.invalid'); await page.fill('input[type=password]', 'wrong-password-123'); await page.click('button[type=submit]'); await page.waitForSelector('.adm-login .err');
+ok('login: wrong password refused', (await text()).includes('ایمیل یا رمز عبور درست نیست'));
+await page.click('.adm-accts button:has-text("Owner")'); await page.waitForSelector('.adm-kpis');
+ok('login: session is an httpOnly cookie (nothing in JS / localStorage)', !(await page.evaluate(() => document.cookie)).includes('joumeh_admin') && (await page.evaluate(() => Object.keys(localStorage).filter(k => k.includes('admin')).length)) === 0 && (await page.context().cookies()).some(c => c.name === 'joumeh_admin' && c.httpOnly && c.sameSite === 'Strict'));
 await page.waitForLoadState('networkidle'); await shot('dashboard');
 ok('dashboard: KPIs + recent orders', (await page.locator('.adm-kpi').count()) === 8 && (await page.locator('.adm-table tbody tr').count()) === 5);
 ok('dashboard: banner on every screen', await banner());
@@ -101,46 +104,16 @@ await page.click('tbody tr >> nth=0'); await page.waitForLoadState('networkidle'
 await page.fill('textarea', 'متن آزمایشی ارسال'); await page.click('button:has-text("انتشار")'); await page.waitForTimeout(400); await shot('content-edit');
 await go('/info/shipping'); ok('content: published page shows in shop', (await text()).includes('متن آزمایشی ارسال'));
 
-await go('/admin/settings/users', 'settings-users'); ok('settings: 4 admin users + matrix', (await page.locator('tbody tr').count()) >= 4 + 6);
-await page.click('button:has-text("دعوت کاربر")'); await page.waitForSelector('.adm-modal');
-ok('r4: freshly opened invite modal shows no errors', (await page.locator('.adm-modal .err, .adm-modal .bad').count()) === 0);
-await page.click('.adm-modal-foot button:has-text("ارسال دعوت")'); await page.waitForTimeout(300);
-const e0 = await page.locator('.adm-modal .err').allInnerTexts();
-ok('r4: empty submit shows name, mobile and role errors', e0.length === 3 && e0.some(t => t.includes('نام')) && e0.some(t => t.includes('موبایل')));
-await page.fill('.adm-modal input >> nth=0', 'کاربر آزمایشی');
-const e1 = await page.locator('.adm-modal .err').allInnerTexts();
-ok('r4: name error clears as soon as the name is valid', e1.length === 2 && !e1.some(t => t.includes('نام')));
-await page.fill('.adm-modal input[inputmode=numeric]', '0912000009'); ok('r4: invalid mobile keeps its error', (await page.locator('.adm-modal .err', { hasText: 'موبایل' }).count()) === 1);
-await page.fill('.adm-modal input[inputmode=numeric]', '09120000099');
-const e2 = await page.locator('.adm-modal .err').allInnerTexts();
-ok('r4: mobile error clears as soon as the number is valid (only roles left)', e2.length === 1 && !e2.some(t => t.includes('موبایل')));
-await page.click('.adm-modal-foot button:has-text("انصراف")'); await page.click('button:has-text("دعوت کاربر")'); await page.waitForSelector('.adm-modal');
-ok('r4: reopened modal is clean (no errors, empty fields)', (await page.locator('.adm-modal .err, .adm-modal .bad').count()) === 0 && (await page.locator('.adm-modal input >> nth=0').inputValue()) === '');
-await page.keyboard.press('Escape'); await page.waitForTimeout(150); await page.click('button:has-text("دعوت کاربر")'); await page.waitForSelector('.adm-modal');
-ok('r4: modal reopened after Escape is clean', (await page.locator('.adm-modal .err').count()) === 0);
-await page.click('.adm-modal-foot button:has-text("ارسال دعوت")'); await page.waitForTimeout(300);
-await page.fill('.adm-modal input >> nth=0', 'کاربر آزمایشی'); await page.fill('.adm-modal input[inputmode=numeric]', '09120000099');
-await page.click('.adm-modal [role=combobox]'); await page.click('.adm-ms-list label >> nth=1');
-ok('r4: role error clears as soon as a role is picked', (await page.locator('.adm-modal .err').count()) === 0);
-await page.click('.adm-ms-list label >> nth=2'); await shot('settings-invite-open');
-await page.click('.adm-modal-head h2'); await page.waitForTimeout(150);
-ok('r3: invite dropdown closes on outside click (closed-state shot)', !(await page.locator('.adm-ms-list').count()) && await page.locator('.adm-modal-foot button:has-text("ارسال دعوت")').isVisible() && await page.locator('.adm-modal .adm-banner.info').isVisible());
-ok('r2 U2: multi-select tags + BD-13 info banner', (await page.locator('.adm-ms-tag').count()) === 2 && (await page.locator('.adm-modal .adm-banner.info').innerText()).includes('BD-13'));
-ok('r4: closed-state shot is filled, valid, no errors', (await page.locator('.adm-modal .err, .adm-modal .bad').count()) === 0); await shot('settings-invite');
-await page.click('.adm-modal-foot button:has-text("ارسال دعوت")'); await page.waitForTimeout(400); ok('r3: invite submits with multi-select roles', !(await page.locator('.adm-modal').count()) && (await text()).includes('کاربر آزمایشی'));
-await page.keyboard.press('Escape');
-await page.locator('tbody tr >> nth=0').locator('.adm-ovf-btn').click(); await page.click('[role=menuitem]:has-text("ویرایش")'); await page.uncheck('.adm-modal label:has-text("مدیر کل") input'); await page.click('.adm-modal button:has-text("ذخیره")'); await page.waitForTimeout(300);
-ok('settings: last-owner protection', (await text()).includes('حداقل یک مدیر کل')); await page.keyboard.press('Escape');
+await go('/admin/settings/users', 'settings-users'); ok('settings: read-only list of the 2 admins (full access, interim)', (await page.locator('tbody tr').count()) === 2 && (await text()).includes('owner.demo@joumeh.invalid') && (await text()).includes('interim') && !(await page.locator('button:has-text("دعوت کاربر")').count()) && !(await page.locator('.adm-ovf-btn').count()));
 await go('/admin/settings/audit', 'settings-audit'); ok('audit: entries logged', (await page.locator('tbody tr').count()) >= 6);
 ok('r2 U3: audit filters + disabled export', (await page.locator('.adm-filters').count()) === 1 && await page.locator('button:has-text("خروجی")').isDisabled());
 
-// Role check: catalog manager
+// Second admin (business owner): same full access
 await page.click('button[aria-label="خروج"]'); await page.waitForSelector('.adm-login');
-await page.click('.adm-accts button:has-text("مسئول محصولات")'); await page.waitForSelector('.adm-side');
-ok('roles: deep link to a forbidden page after login shows no-permission', (await page.locator('.adm-noperm').count()) === 1);
+await page.click('.adm-accts button:has-text("صاحب کسب‌وکار")'); await page.waitForSelector('.adm-side');
 await go('/admin'); await page.waitForSelector('.adm-kpis');
-ok('roles: catalog manager sees no Orders/Settings nav', !(await page.locator('.adm-side a', { hasText: 'سفارش‌ها' }).count()) && !(await page.locator('.adm-side a', { hasText: 'تنظیمات' }).count()));
-await go('/admin/orders', 'no-permission'); ok('r2 N1: no-permission card under the page title', (await page.locator('.adm-head h1').innerText()) === 'سفارش‌ها' && (await page.locator('.adm-noperm').innerText()).includes('دسترسی ندارید') && (await text()).includes('این بخش برای نقش شما فعال نیست.') && (await page.locator('.adm-noperm .adm-lock img').count()) === 1);
+ok('roles: business owner sees every module (Orders + Settings nav)', (await page.locator('.adm-side a', { hasText: 'سفارش‌ها' }).count()) === 1 && (await page.locator('.adm-side a', { hasText: 'تنظیمات' }).count()) === 1);
+await go('/admin/orders', 'orders-business-owner'); ok('roles: business owner opens Orders (no no-permission card)', !(await page.locator('.adm-noperm').count()) && (await page.locator('tbody tr').count()) >= 5);
 
 // Shop smoke (unchanged storefront)
 await go('/'); ok('shop: home renders, no admin banner', !(await page.locator('.adm-demo').count()) && (await page.locator('header').count()) >= 1);

@@ -2,7 +2,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import './admin.css';
-import { aapi, getAdminToken, setAdminToken, AdminApiError, type Me, type Level } from './api';
+import { aapi, AdminApiError, type Me, type Level } from './api';
 import { Button, Field, Ico, Toasts, fa } from './ui';
 import { faNumber } from '../lib/format';
 import { Dashboard } from './pages/Dashboard';
@@ -71,24 +71,32 @@ function Shell({ me, onLogout }: { me: Me; onLogout: () => void }) {
   </div>;
 }
 
+// INTERIM e-mail + password login (admin-v1): same .adm-login frame/style as before, phone field swapped for e-mail + password.
+// Emma is designing the final e-mail login screen; replace this when it lands.
+type DemoAcct = { email: string; name: string; roleLabel: string; password: string };
 function Login({ onIn }: { onIn: () => void }) {
-  const [phone, setPhone] = useState(''); const [err, setErr] = useState(''); const [busy, setBusy] = useState(false);
-  const [accts, setAccts] = useState<{ phone: string; name: string; roleLabels: string[] }[]>([]);
-  useEffect(() => { aapi('/demo-accounts').then(r => setAccts(r.data)).catch(() => setAccts([])); }, []);
-  const go = async (p = phone) => {
-    setErr(''); setBusy(true);
-    try { const r = await aapi('/auth/demo-login', { method: 'POST', body: { phone: p } }); setAdminToken(r.data.token); onIn(); }
-    catch (e) { const c = (e as AdminApiError).code; setErr(c === 'no_admin_access' ? 'این شماره دسترسی مدیریت ندارد' : c === 'invalid_phone' ? 'شماره موبایل معتبر نیست' : c === 'not_found' ? 'ورود نمایشی فقط در نسخه‌ی محلی فعال است' : 'ورود انجام نشد'); }
+  const [email, setEmail] = useState(''); const [password, setPassword] = useState('');
+  const [err, setErr] = useState(''); const [fields, setFields] = useState<Record<string, string>>({}); const [busy, setBusy] = useState(false);
+  // Preview only: the API answers /demo-accounts only when the demo flag is on (404 on production) — the hint is hidden otherwise.
+  const [accts, setAccts] = useState<DemoAcct[]>([]);
+  useEffect(() => { aapi<DemoAcct[]>('/demo-accounts').then(r => setAccts(r.data ?? [])).catch(() => setAccts([])); }, []);
+  const go = async (e = email, p = password) => {
+    setErr(''); setFields({}); setBusy(true);
+    try { await aapi('/auth/login', { method: 'POST', body: { email: e, password: p } }); onIn(); }
+    catch (x) { const c = (x as AdminApiError).code;
+      if (c === 'validation') setFields((x as AdminApiError).fields ?? {});
+      else setErr(c === 'invalid_credentials' ? 'ایمیل یا رمز عبور درست نیست' : c === 'rate_limited' ? 'تعداد تلاش‌های ناموفق زیاد است؛ ۱۵ دقیقه دیگر دوباره امتحان کنید' : c === 'bad_origin' ? 'درخواست از نشانی دیگری ارسال شده است' : 'ورود انجام نشد'); }
     finally { setBusy(false); }
   };
   return <div className="adm adm-login"><DemoBanner />
     <form className="box" onSubmit={e => { e.preventDefault(); go(); }}>
       <h1><span className="adm-logo">ج</span>ورود به پنل مدیریت جومه</h1>
-      <Field label="شماره موبایل" req err={err}><input className={`adm-input${err ? ' bad' : ''}`} inputMode="numeric" dir="ltr" placeholder="0912 000 0001" value={phone} onChange={e => setPhone(e.target.value)} /></Field>
-      <Button kind="primary" type="submit" disabled={busy}>ورود نمایشی (بدون پیامک)</Button>
-      <span className="adm-muted">نمونه اولیه — سرویس پیامک: در انتظار تصمیم کسب‌وکار (BD-13). در این نسخه کد پیامکی ارسال نمی‌شود.</span>
-      {accts.length > 0 && <div className="adm-accts"><span className="adm-muted">حساب‌های نمایشی:</span>
-        {accts.map(a => <button type="button" key={a.phone} onClick={() => { setPhone(a.phone); go(a.phone); }}><b>{a.name}</b> · <bdi dir="ltr">{fa(a.phone)}</bdi> · {a.roleLabels.join('، ')}</button>)}</div>}
+      <Field label="ایمیل" req err={fields.email}><input className={`adm-input${fields.email || err ? ' bad' : ''}`} type="email" autoComplete="username" dir="ltr" placeholder="name@example.com" value={email} onChange={e => setEmail(e.target.value)} /></Field>
+      <Field label="رمز عبور" req err={fields.password ?? err}><input className={`adm-input${fields.password || err ? ' bad' : ''}`} type="password" autoComplete="current-password" dir="ltr" value={password} onChange={e => setPassword(e.target.value)} /></Field>
+      <Button kind="primary" type="submit" disabled={busy}>ورود</Button>
+      <span className="adm-muted">صفحه‌ی ورود موقت (interim) — طراحی نهایی ورود با ایمیل در حال انجام است.</span>
+      {accts.length > 0 && <div className="adm-accts"><span className="adm-muted">حساب‌های نمایشی (فقط نسخه‌ی پیش‌نمایش):</span>
+        {accts.map(a => <button type="button" key={a.email} onClick={() => { setEmail(a.email); setPassword(a.password); go(a.email, a.password); }}><b>{a.name}</b> · {a.roleLabel}<br /><span className="adm-muted">ایمیل: </span><bdi dir="ltr" style={{ whiteSpace: 'nowrap' }}>{a.email}</bdi><br /><span className="adm-muted">رمز: </span><bdi dir="ltr" style={{ whiteSpace: 'nowrap' }}>{a.password}</bdi></button>)}</div>}
     </form></div>;
 }
 
@@ -96,7 +104,6 @@ export function AdminApp() {
   const [me, setMe] = useState<Me | null>(null); const [ready, setReady] = useState(false);
   const loc = useLocation(); const nav = useNavigate();
   const load = useCallback(() => {
-    if (!getAdminToken()) { setMe(null); setReady(true); return; }
     aapi<Me>('/me').then(r => setMe(r.data)).catch(() => setMe(null)).finally(() => setReady(true));
   }, []);
   useEffect(load, [load]);
@@ -104,7 +111,7 @@ export function AdminApp() {
   useEffect(() => { document.documentElement.lang = 'fa'; document.title = 'پنل مدیریت جومه (DEMO)'; }, []);
   if (!ready) return <div className="adm"><DemoBanner /></div>;
   if (!me) return <Login onIn={() => { load(); if (loc.pathname === '/admin/login') nav('/admin'); }} />;
-  const logout = async () => { await aapi('/auth/logout', { method: 'POST' }).catch(() => {}); setAdminToken(null); setMe(null); };
+  const logout = async () => { await aapi('/auth/logout', { method: 'POST' }).catch(() => {}); setMe(null); };
   return <MeCtx.Provider value={me}><div className="adm" dir="rtl"><DemoBanner /><Shell me={me} onLogout={logout} /><Toasts /></div></MeCtx.Provider>;
 }
 export default AdminApp;

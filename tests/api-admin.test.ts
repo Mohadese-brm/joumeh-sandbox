@@ -1,45 +1,93 @@
 // admin-demo API tests (branch admin-demo). DEMO data only.
 import { describe, it, expect, beforeEach } from 'vitest';
 import request from 'supertest';
-import { createDb } from '../server/db';
+import { createDb, type Db } from '../server/db';
 import { createApp } from '../server/app';
-import type { Database } from 'sql.js';
+import { DEMO_ADMINS, demoPassword, createAdmin, ADMIN_COOKIE } from '../server/admin';
 import { sampleSeed } from './fixtures/sample-seed';
 
-let db: Database; let app: ReturnType<typeof createApp>; let clock = 1_800_000_000_000;
+let db: Db; let app: ReturnType<typeof createApp>; let clock = 1_800_000_000_000;
 beforeEach(async () => { db = await createDb(sampleSeed); clock = 1_800_000_000_000; app = createApp(db, { now: () => clock, adminDemo: true }); });
-const OWNER = '09120000001', STAFF = '09130000002', CATALOG = '09170000004', INVITED = '09150000003';
-async function login(phone = OWNER) { const r = await request(app).post('/api/admin/auth/demo-login').send({ phone }); return r.body.data?.token as string; }
-const h = (t: string) => ({ Authorization: `Bearer ${t}` });
+const OWNER = DEMO_ADMINS[0].email, BUSINESS = DEMO_ADMINS[1].email;
+const tokenOf = (r: { headers: Record<string, unknown> }) => {
+  const c = ([] as string[]).concat((r.headers['set-cookie'] as string[] | undefined) ?? []).find(x => x.startsWith(ADMIN_COOKIE + '='));
+  return c ? decodeURIComponent(c.split(';')[0].slice(ADMIN_COOKIE.length + 1)) : '';
+};
+async function login(email = OWNER, a = app) { return tokenOf(await request(a).post('/api/admin/auth/login').send({ email, password: demoPassword(email) })); }
+const h = (t: string) => ({ Cookie: `${ADMIN_COOKIE}=${encodeURIComponent(t)}` });
 
-describe('admin auth (demo, no SMS)', () => {
-  it('demo login is 404 when adminDemo is off (Vercel default)', async () => {
+describe('admin auth (v1: e-mail + password, two admins, full access)', () => {
+  it('demo accounts are 404 when adminDemo is off (Vercel production) and no demo admin exists there', async () => {
     const off = createApp(await createDb(), { adminDemo: false });
-    expect((await request(off).post('/api/admin/auth/demo-login').send({ phone: OWNER })).status).toBe(404);
     expect((await request(off).get('/api/admin/demo-accounts')).status).toBe(404);
+    expect((await request(off).post('/api/admin/auth/login').send({ email: OWNER, password: demoPassword(OWNER) })).status).toBe(401);
+    expect((await request(off).post('/api/admin/auth/demo-login').send({ phone: '09120000001' })).status).toBe(404); // old phone demo login is gone
   });
-  it('active admin signs in; unknown / invited numbers get no_admin_access', async () => {
-    const t = await login(); expect(t).toMatch(/^\d+\.\d+\.[0-9a-f]{24}\.[0-9a-f]{64}$/);
-    const me = await request(app).get('/api/admin/me').set(h(t));
-    expect(me.body.data.roles).toEqual(['owner', 'finance']); expect(me.body.demo).toBe(true);
-    for (const phone of ['09123456789', INVITED]) { const r = await request(app).post('/api/admin/auth/demo-login').send({ phone }); expect(r.status).toBe(403); expect(r.body.error).toBe('no_admin_access'); }
-    expect((await request(app).post('/api/admin/auth/demo-login').send({ phone: '123' })).status).toBe(400);
+  it('preview lists exactly the two demo admins (Owner + business owner) with their per-deployment passwords', async () => {
+    const r = await request(app).get('/api/admin/demo-accounts'); expect(r.status).toBe(200);
+    expect(r.body.data.map((a: { email: string; role: string }) => [a.email, a.role])).toEqual([[OWNER, 'owner'], [BUSINESS, 'admin']]);
+    expect(r.body.data[0].password).toBe(demoPassword(OWNER));
   });
-  it('customer tokens never work on admin endpoints; logout and idle timeout end the session', async () => {
+  it('signs in with e-mail + password; sets an httpOnly SameSite=Strict cookie; both admins have full access', async () => {
+    const r = await request(app).post('/api/admin/auth/login').set('Host', 'preview.example').send({ email: OWNER.toUpperCase(), password: demoPassword(OWNER) }); // non-loopback host → Secure
+    expect(r.status).toBe(200); expect(JSON.stringify(r.body)).not.toContain(tokenOf(r));
+    const c = String(r.headers['set-cookie']); expect(c).toMatch(/HttpOnly/); expect(c).toMatch(/SameSite=Strict/); expect(c).toMatch(/Path=\/api\/admin/); expect(c).toMatch(/Secure/);
+    for (const email of [OWNER, BUSINESS]) {
+      const t = await login(email); const me = await request(app).get('/api/admin/me').set(h(t));
+      expect(me.status).toBe(200); expect(me.body.data.email).toBe(email); expect(me.body.demo).toBe(true);
+      expect(Object.values(me.body.data.permissions).every(v => v === 'edit')).toBe(true);
+      for (const path of ['/api/admin/products', '/api/admin/orders', '/api/admin/customers', '/api/admin/users', '/api/admin/audit']) expect((await request(app).get(path).set(h(t))).status).toBe(200);
+      expect((await request(app).post('/api/admin/products/1/state').set(h(t)).send({ state: 'published' })).status).toBe(200);
+    }
+    expect((await request(app).get('/api/admin/me').set({ Authorization: `Bearer ${await login()}` })).status).toBe(401); // cookie only, no bearer tokens
+  });
+  it('wrong password / unknown e-mail look the same; validation', async () => {
+    const a = await request(app).post('/api/admin/auth/login').send({ email: OWNER, password: 'wrong-password' });
+    const b = await request(app).post('/api/admin/auth/login').send({ email: 'nobody@example.com', password: 'wrong-password' });
+    expect([a.status, b.status]).toEqual([401, 401]); expect(a.body).toEqual(b.body); expect(tokenOf(a)).toBe('');
+    expect((await request(app).post('/api/admin/auth/login').send({ email: 'not-an-email', password: 'x' })).status).toBe(400);
+    expect((await request(app).post('/api/admin/auth/login').send({ email: OWNER })).status).toBe(400);
+  });
+  it('rate limit: 5 failures per e-mail per 15 min → 429 (even with the right password); window expires', async () => {
+    for (let i = 0; i < 5; i++) expect((await request(app).post('/api/admin/auth/login').send({ email: OWNER, password: 'nope' })).status).toBe(401);
+    const r = await request(app).post('/api/admin/auth/login').send({ email: OWNER, password: demoPassword(OWNER) });
+    expect(r.status).toBe(429); expect(r.body.error).toBe('rate_limited');
+    expect(await login(BUSINESS)).toBeTruthy(); // other account unaffected
+    clock += 16 * 60_000; expect(await login(OWNER)).toBeTruthy();
+  });
+  it('rate limit: 20 failures per IP per 15 min across e-mails → 429', async () => {
+    for (let i = 0; i < 20; i++) await request(app).post('/api/admin/auth/login').send({ email: `x${i}@example.com`, password: 'nope' });
+    expect((await request(app).post('/api/admin/auth/login').send({ email: BUSINESS, password: demoPassword(BUSINESS) })).status).toBe(429);
+  });
+  it('customer tokens never work on admin endpoints; logout, idle timeout and max age end the session', async () => {
     expect((await request(app).get('/api/admin/dashboard')).status).toBe(401);
     const t = await login();
-    expect((await request(app).post('/api/admin/auth/logout').set(h(t))).status).toBe(204);
+    const out = await request(app).post('/api/admin/auth/logout').set(h(t)); expect(out.status).toBe(204); expect(String(out.headers['set-cookie'])).toMatch(/Max-Age=0/);
     expect((await request(app).get('/api/admin/me').set(h(t))).status).toBe(401);
     const t2 = await login(); clock += 61 * 60_000;
     const r = await request(app).get('/api/admin/me').set(h(t2)); expect(r.status).toBe(401); expect(r.body.error).toBe('session_expired');
+    const t3 = await login(); for (let i = 0; i < 8; i++) { clock += 55 * 60_000; expect((await request(app).get('/api/admin/me').set(h(t3))).status).toBe(200); } clock += 55 * 60_000;
+    expect((await request(app).get('/api/admin/me').set(h(t3))).body.error).toBe('session_expired'); // 8h absolute max, even when active
   });
-  it('role permissions: catalog manager cannot see orders or settings', async () => {
-    const t = await login(CATALOG);
-    expect((await request(app).get('/api/admin/products').set(h(t))).status).toBe(200);
-    expect((await request(app).get('/api/admin/orders').set(h(t))).status).toBe(403);
-    expect((await request(app).get('/api/admin/users').set(h(t))).status).toBe(403);
-    const s = await login(STAFF); // orders+inventory+support: products view only
-    expect((await request(app).post('/api/admin/products/1/state').set(h(s)).send({ state: 'archived' })).status).toBe(403);
+  it('cross-origin state-changing requests are refused', async () => {
+    const t = await login();
+    expect((await request(app).post('/api/admin/products/1/state').set(h(t)).set('Origin', 'https://evil.example').send({ state: 'draft' })).status).toBe(403);
+    const host = '127.0.0.1:1'; // same-origin is fine
+    expect((await request(app).post('/api/admin/products/1/state').set(h(t)).set('Host', host).set('Origin', `http://${host}`).send({ state: 'published' })).status).toBe(200);
+  });
+  it('the v1 account model: at most two admins, one Owner, unique e-mail; inactive admins cannot sign in', async () => {
+    await request(app).get('/api/admin/demo-accounts'); // start-up seed done
+    await expect(createAdmin(db, { email: 'third@example.com', name: 'x', password: 'long-enough-pass', role: 'admin' })).rejects.toThrow('admin_limit');
+    const fresh = await createDb(false);
+    await createAdmin(fresh, { email: 'a@example.com', name: 'A', password: 'long-enough-pass', role: 'owner' });
+    await expect(createAdmin(fresh, { email: 'A@example.com', name: 'B', password: 'long-enough-pass', role: 'admin' })).rejects.toThrow('email_exists');
+    await expect(createAdmin(fresh, { email: 'b@example.com', name: 'B', password: 'long-enough-pass', role: 'owner' })).rejects.toThrow('owner_exists');
+    const hash = (await fresh.one<{ password_hash: string }>('SELECT password_hash FROM admin_users'))!.password_hash;
+    expect(hash).toMatch(/^\$2[aby]\$/); expect(hash).not.toContain('long-enough-pass');
+    const t = await login(BUSINESS); await db.run(`UPDATE admin_users SET status='inactive' WHERE email=?`, [BUSINESS]);
+    expect((await request(app).get('/api/admin/me').set(h(t))).status).toBe(401);
+    expect((await request(app).post('/api/admin/auth/login').send({ email: BUSINESS, password: demoPassword(BUSINESS) })).status).toBe(401);
+    await fresh.close();
   });
 });
 
@@ -174,21 +222,13 @@ describe('content', () => {
   });
 });
 
-describe('settings: admin users & roles', () => {
-  it('invites, activates, deactivates (sessions dropped) and protects the last Owner', async () => {
-    const t = await login();
-    const inv = await request(app).post('/api/admin/users').set(h(t)).send({ phone: '09190000009', name: 'تست', roles: ['support', 'bogus'] });
-    expect(inv.status).toBe(201);
-    expect((await request(app).post('/api/admin/users').set(h(t)).send({ phone: '09190000009', name: 'x', roles: ['support'] })).status).toBe(400);
-    const list = (await request(app).get('/api/admin/users').set(h(t))).body.data; const u = list.find((x: { phone: string }) => x.phone === '09190000009');
-    expect(u.roles).toEqual(['support']); expect(u.status).toBe('invited');
-    await request(app).put(`/api/admin/users/${u.id}`).set(h(t)).send({ status: 'active' });
-    const ut = await login('09190000009'); expect(ut).toBeTruthy();
-    await request(app).put(`/api/admin/users/${u.id}`).set(h(t)).send({ status: 'inactive' });
-    expect((await request(app).get('/api/admin/me').set(h(ut))).status).toBe(401);
-    const owner = list.find((x: { phone: string }) => x.phone === OWNER);
-    const last = await request(app).put(`/api/admin/users/${owner.id}`).set(h(t)).send({ roles: ['finance'] });
-    expect(last.status).toBe(409); expect(last.body.error).toBe('last_owner');
+describe('settings: admin users (read-only in v1)', () => {
+  it('lists the two admins by e-mail with role label; no invite / role-edit endpoints', async () => {
+    const t = await login(); const r = await request(app).get('/api/admin/users').set(h(t));
+    expect(r.body.data.map((u: { email: string }) => u.email)).toEqual([OWNER, BUSINESS]); expect(r.body.maxAdmins).toBe(2); expect(r.body.access).toBe('full');
+    expect(r.body.data[0].roleLabel).toBeTruthy(); expect(r.body.data[0].lastLogin).toBeTruthy(); expect(JSON.stringify(r.body)).not.toMatch(/password/i);
+    expect((await request(app).post('/api/admin/users').set(h(t)).send({ email: 'x@example.com', name: 'x' })).status).toBe(404);
+    expect((await request(app).put(`/api/admin/users/${r.body.data[1].id}`).set(h(t)).send({ status: 'inactive' })).status).toBe(404);
   });
 });
 
@@ -211,7 +251,7 @@ describe('admin-v1: real catalogue (unpriced) + NULL prices', () => {
     const real = await createDb(); // catalog-real, JOUMEH_SAMPLE_PLACEHOLDERS=0 in tests → no prices, no variants
     const shopBefore = (await request(createApp(await createDb(), { adminDemo: false })).get('/api/products?limit=100')).body;
     const a = createApp(real, { adminDemo: true });
-    const t = (await request(a).post('/api/admin/auth/demo-login').send({ phone: OWNER })).body.data.token;
+    const t = await login(OWNER, a);
     const list = await request(a).get('/api/admin/products').set(h(t));
     expect(list.status).toBe(200); expect(list.body.allCount).toBe(41 + 3); expect(list.body.counts.draft).toBe(2);
     expect(list.body.data.some((p: { price: number | null }) => p.price === null)).toBe(true);
@@ -234,7 +274,8 @@ describe('admin-v1: real catalogue (unpriced) + NULL prices', () => {
 });
 
 describe('admin-v1: demo sessions survive serverless instances (signed demo token)', () => {
-  it('a token from instance A works on a fresh instance B; tampered, logged-out, expired and non-demo cases are refused', async () => {
+  // Only the per-instance in-memory preview signs cookies; with Postgres (shared DB) sessions are plain random tokens.
+  it.skipIf(!!process.env.JOUMEH_TEST_PG_URL)('a token from instance A works on a fresh instance B; tampered, logged-out, expired and non-demo cases are refused', async () => {
     const t = await login();
     const b = createApp(await createDb(sampleSeed), { now: () => clock, adminDemo: true }); // second "instance": own in-memory DB, no session row
     expect((await request(b).get('/api/admin/me').set(h(t))).status).toBe(200);

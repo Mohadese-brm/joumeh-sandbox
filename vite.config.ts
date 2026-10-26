@@ -1,7 +1,8 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 // API_PORT lets a second local preview (e.g. admin-demo) run next to another one. Default 3001.
-const apiTarget = `http://127.0.0.1:${process.env.API_PORT ?? 3001}`;
+// changeOrigin:false keeps the browser's Host so the admin API's same-origin check (Origin vs Host) passes through the proxy, like on Vercel.
+const apiTarget = { target: `http://127.0.0.1:${process.env.API_PORT ?? 3001}`, changeOrigin: false };
 export default defineConfig({
   plugins: [react()],
   server: { host: '127.0.0.1', proxy: { '/api': apiTarget } },

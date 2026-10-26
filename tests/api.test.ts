@@ -1,14 +1,13 @@
 import { describe, it, expect, afterEach, beforeEach } from 'vitest';
 import request from 'supertest';
-import { createDb, all } from '../server/db';
+import { createDb, type Db } from '../server/db';
 import { createApp } from '../server/app';
 import { ConsoleSmsAdapter } from '../server/sms';
-import type { Database } from 'sql.js';
 import { sampleSeed } from './fixtures/sample-seed';
 // These API tests run on the old SAMPLE fixture (prices, variants, sample user/orders) so cart/checkout/order logic stays covered.
 // The real catalogue (no prices yet) is covered in tests/catalog-real.test.ts.
 
-let db: Database; let app: ReturnType<typeof createApp>; let sms: ConsoleSmsAdapter; let clock = 1_800_000_000_000;
+let db: Db; let app: ReturnType<typeof createApp>; let sms: ConsoleSmsAdapter; let clock = 1_800_000_000_000;
 beforeEach(async () => { db = await createDb(sampleSeed); sms = new ConsoleSmsAdapter(); clock = 1_800_000_000_000; app = createApp(db, { sms, now: () => clock, demoOtp: true }); }); // tests opt in to the demo OTP explicitly
 async function login(phone = '09123456789') {
   const r = await request(app).post('/api/auth/otp/request').send({ phone });
@@ -141,7 +140,7 @@ describe('auth (mock SMS OTP)', () => {
   });
   it('stores only hashes (no plain OTP or token in DB)', async () => {
     const r = await request(app).post('/api/auth/otp/request').send({ phone: '09120000000' });
-    const rows = all<{ code_hash: string }>(db, 'SELECT code_hash FROM otp_requests'); expect(rows[0].code_hash).not.toContain(r.body.data.devCode); expect(rows[0].code_hash).toHaveLength(64);
+    const rows = await db.all<{ code_hash: string }>('SELECT code_hash FROM otp_requests'); expect(rows[0].code_hash).not.toContain(r.body.data.devCode); expect(rows[0].code_hash).toHaveLength(64);
   });
   it('rejects bad phone, wrong code, expired code, too many attempts, reuse', async () => {
     expect((await request(app).post('/api/auth/otp/request').send({ phone: '123' })).status).toBe(400);

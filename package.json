@@ -10,7 +10,11 @@
     "build": "tsc && vite build",
     "test": "vitest run",
     "schema": "node scripts/schema.mjs",
-    "e2e": "node tests/e2e/run.mjs"
+    "e2e": "node tests/e2e/run.mjs",
+    "test:pg": "node scripts/test-pg.mjs",
+    "db:migrate": "tsx scripts/db-migrate.ts",
+    "db:seed": "tsx scripts/db-seed.ts",
+    "admin:setup": "tsx scripts/admin-setup.ts"
   },
   "keywords": [],
   "author": "",
@@ -18,7 +22,9 @@
   "dependencies": {
     "@axe-core/playwright": "^4.14.0",
     "@fontsource/vazirmatn": "^5.3.0",
+    "bcryptjs": "^3.0.3",
     "express": "^4.22.3",
+    "pg": "^8.23.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.30.6",
@@ -30,6 +36,7 @@
     "@testing-library/react": "^16.3.3",
     "@types/express": "^4.17.25",
     "@types/jest-axe": "^3.5.9",
+    "@types/pg": "^8.23.1",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
     "@types/sql.js": "^1.4.11",
