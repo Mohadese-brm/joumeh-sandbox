@@ -3,7 +3,7 @@
 // Every business rule here is a labelled PLACEHOLDER (BD-xx) until the CEO decides it.
 import type { Express, Request, Response, NextFunction } from 'express';
 import type { Database } from 'sql.js';
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { all } from './db.js';
 import { stub } from './stubs.js';
 
@@ -37,6 +37,22 @@ export const ORDER_TRANSITIONS: Record<string, string[]> = {
 };
 // Admin session idle timeout: engineering PLACEHOLDER (Figma 166:15288 "N minutes [BD]").
 export const ADMIN_IDLE_MINUTES = 60;
+// DEMO-ONLY serverless fix (admin-v1): on Vercel each function instance has its own in-memory DB, so a session created on
+// one instance is unknown to the next one (random 401s / logouts). Demo tokens are therefore signed: `<adminId>.<issuedMs>.<rand>.<hmac>`;
+// an instance that has never seen the token re-creates the session row when the signature is valid. The key is NOT a secret
+// (demo accounts are public on the login page anyway); the live admin needs a real shared session store (step 2+, DB decision).
+// Max age of a signed demo token on a fresh instance: engineering PLACEHOLDER, not a business rule.
+export const ADMIN_DEMO_TOKEN_MAX_HOURS = 8;
+const DEMO_KEY = process.env.JOUMEH_ADMIN_DEMO_SECRET || process.env.VERCEL_DEPLOYMENT_ID || process.env.VERCEL_GIT_COMMIT_SHA || randomBytes(16).toString('hex');
+const demoMac = (body: string) => createHmac('sha256', DEMO_KEY).update(body).digest('hex');
+export const signDemoToken = (adminId: number, issued: number) => { const body = `${adminId}.${issued}.${randomBytes(12).toString('hex')}`; return `${body}.${demoMac(body)}`; };
+export function verifyDemoToken(t: string, now: number): { adminId: number; issued: number } | null {
+  const m = /^(\d+)\.(\d+)\.([0-9a-f]{24})\.([0-9a-f]{64})$/.exec(t); if (!m) return null;
+  const want = Buffer.from(demoMac(`${m[1]}.${m[2]}.${m[3]}`), 'hex'), got = Buffer.from(m[4], 'hex');
+  if (!timingSafeEqual(want, got)) return null;
+  const issued = Number(m[2]); if (issued > now + 60_000 || now - issued > ADMIN_DEMO_TOKEN_MAX_HOURS * 3_600_000) return null;
+  return { adminId: Number(m[1]), issued };
+}
 // Cancel reasons: SAMPLE list (first item from Figma 180:30099). The real list is a business decision (BD-05).
 export const CANCEL_REASONS = ['درخواست مشتری', 'ناموجود بودن کالا', 'پرداخت انجام نشد', 'سایر'];
 
@@ -136,11 +152,16 @@ export function mountAdmin(app: Express, db: Database, opts: { adminDemo: boolea
     res.json({ data: p });
   });
 
+  const revoked = new Set<string>(); // logged-out / idle-expired demo tokens are never re-created on this instance
   const admin = (mod: Module, need: Level = 'view') => (req: AReq, res: Response, next: NextFunction) => {
     const t = (req.headers.authorization ?? '').replace(/^Bearer /, '');
-    const s = t && one<{ admin_id: number; last_seen: number }>(db, 'SELECT admin_id,last_seen FROM admin_sessions WHERE token_hash=?', [sha(t)]);
+    let s = t ? one<{ admin_id: number; last_seen: number }>(db, 'SELECT admin_id,last_seen FROM admin_sessions WHERE token_hash=?', [sha(t)]) : undefined;
+    if (!s && t && opts.adminDemo && !revoked.has(sha(t))) { // demo only: token signed by another serverless instance → re-create the session here
+      const v = verifyDemoToken(t, opts.now());
+      if (v) { db.run('INSERT OR IGNORE INTO admin_sessions (token_hash,admin_id,created_at,last_seen) VALUES (?,?,?,?)', [sha(t), v.adminId, v.issued, opts.now()]); s = { admin_id: v.adminId, last_seen: opts.now() }; }
+    }
     if (!s) return res.status(401).json({ error: 'unauthorized' });
-    if (opts.now() - s.last_seen > ADMIN_IDLE_MINUTES * 60_000) { db.run('DELETE FROM admin_sessions WHERE token_hash=?', [sha(t)]); return res.status(401).json({ error: 'session_expired' }); }
+    if (opts.now() - s.last_seen > ADMIN_IDLE_MINUTES * 60_000) { revoked.add(sha(t)); db.run('DELETE FROM admin_sessions WHERE token_hash=?', [sha(t)]); return res.status(401).json({ error: 'session_expired' }); }
     const a = one<{ id: number; name: string; phone: string; roles: string; status: string }>(db, 'SELECT * FROM admin_users WHERE id=?', [s.admin_id]);
     if (!a || a.status !== 'active') return res.status(401).json({ error: 'unauthorized' });
     db.run('UPDATE admin_sessions SET last_seen=? WHERE token_hash=?', [opts.now(), sha(t)]);
@@ -159,7 +180,7 @@ export function mountAdmin(app: Express, db: Database, opts: { adminDemo: boolea
     const a = one<{ id: number; status: string }>(db, 'SELECT id,status FROM admin_users WHERE phone=?', [phone]);
     // Figma 184:44433 / 166:15288: same message whether or not a customer account exists.
     if (!a || a.status !== 'active') return res.status(403).json({ error: 'no_admin_access' });
-    const token = randomBytes(24).toString('hex');
+    const token = signDemoToken(a.id, opts.now());
     db.run('INSERT INTO admin_sessions (token_hash,admin_id,created_at,last_seen) VALUES (?,?,?,?)', [sha(token), a.id, opts.now(), opts.now()]);
     db.run(`UPDATE admin_users SET last_login=datetime('now') WHERE id=?`, [a.id]);
     req.admin = { id: a.id } as AReq['admin']; audit(req, 'login', 'admin_user', a.id, 'demo login (no SMS)');
@@ -174,7 +195,7 @@ export function mountAdmin(app: Express, db: Database, opts: { adminDemo: boolea
     // Sidebar count pill (Figma 175:14193): open orders = pending + processing (definition = placeholder, ADMIN-PH-KPI)
     counts: { openOrders: one<{ n: number }>(db, `SELECT COUNT(*) AS n FROM orders WHERE order_status IN ('pending','processing')`)!.n } }));
   app.post('/api/admin/auth/logout', admin('dashboard'), (req: AReq, res) => {
-    db.run('DELETE FROM admin_sessions WHERE token_hash=?', [sha((req.headers.authorization ?? '').slice(7))]); res.status(204).end();
+    const h = sha((req.headers.authorization ?? '').slice(7)); revoked.add(h); db.run('DELETE FROM admin_sessions WHERE token_hash=?', [h]); res.status(204).end();
   });
 
   // ---------- Dashboard ----------

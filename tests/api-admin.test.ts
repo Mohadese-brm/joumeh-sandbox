@@ -19,7 +19,7 @@ describe('admin auth (demo, no SMS)', () => {
     expect((await request(off).get('/api/admin/demo-accounts')).status).toBe(404);
   });
   it('active admin signs in; unknown / invited numbers get no_admin_access', async () => {
-    const t = await login(); expect(t).toMatch(/^[0-9a-f]{48}$/);
+    const t = await login(); expect(t).toMatch(/^\d+\.\d+\.[0-9a-f]{24}\.[0-9a-f]{64}$/);
     const me = await request(app).get('/api/admin/me').set(h(t));
     expect(me.body.data.roles).toEqual(['owner', 'finance']); expect(me.body.demo).toBe(true);
     for (const phone of ['09123456789', INVITED]) { const r = await request(app).post('/api/admin/auth/demo-login').send({ phone }); expect(r.status).toBe(403); expect(r.body.error).toBe('no_admin_access'); }
@@ -230,5 +230,23 @@ describe('admin-v1: real catalogue (unpriced) + NULL prices', () => {
     expect((await request(app).put(`/api/admin/products/${id}`).set(h(t)).send({ ...d, price: 750000 })).body.data.price).toBe(750000);
     expect((await request(app).put(`/api/admin/products/${id}`).set(h(t)).send({ ...d, price: null })).body.data.price).toBeNull();
     expect((await request(app).put(`/api/admin/products/${id}`).set(h(t)).send({ ...d, price: -5 })).body.fields.price).toBeTruthy();
+  });
+});
+
+describe('admin-v1: demo sessions survive serverless instances (signed demo token)', () => {
+  it('a token from instance A works on a fresh instance B; tampered, logged-out, expired and non-demo cases are refused', async () => {
+    const t = await login();
+    const b = createApp(await createDb(sampleSeed), { now: () => clock, adminDemo: true }); // second "instance": own in-memory DB, no session row
+    expect((await request(b).get('/api/admin/me').set(h(t))).status).toBe(200);
+    expect((await request(b).get('/api/admin/dashboard').set(h(t))).status).toBe(200);
+    const bad = t.slice(0, -1) + (t.endsWith('0') ? '1' : '0');
+    expect((await request(createApp(await createDb(sampleSeed), { now: () => clock, adminDemo: true })).get('/api/admin/me').set(h(bad))).status).toBe(401);
+    expect((await request(createApp(await createDb(sampleSeed), { now: () => clock, adminDemo: true })).get('/api/admin/me').set(h('1.1800000000000.' + 'a'.repeat(24) + '.' + 'b'.repeat(64)))).status).toBe(401);
+    expect((await request(b).post('/api/admin/auth/logout').set(h(t))).status).toBe(204);
+    expect((await request(b).get('/api/admin/me').set(h(t))).status).toBe(401); // logout is final on that instance
+    const off = createApp(await createDb(sampleSeed), { now: () => clock, adminDemo: false }); // production: never re-creates sessions
+    expect((await request(off).get('/api/admin/me').set(h(t))).status).toBe(401);
+    let later = clock + 9 * 3_600_000; const c = createApp(await createDb(sampleSeed), { now: () => later, adminDemo: true });
+    expect((await request(c).get('/api/admin/me').set(h(t))).status).toBe(401); later = clock; // older than ADMIN_DEMO_TOKEN_MAX_HOURS
   });
 });
