@@ -127,6 +127,7 @@ describe('products', () => {
   it('edits price and variant availability; the shop reflects it', async () => {
     const t = await login(); const d = (await request(app).get('/api/admin/products/2').set(h(t))).body.data;
     const v = d.variants[0];
+    await db.run('UPDATE variants SET on_hand=NULL WHERE id=?', [v.id]); // the manual flag applies to variants whose stock is not recorded (tracked ones follow inventory)
     const r = await request(app).put('/api/admin/products/2').set(h(t)).send({ ...d, price: 1111000, originalPrice: null, variants: [{ id: v.id, available: false }] });
     expect(r.status).toBe(200);
     const shop = (await request(app).get(`/api/products/${d.slug}`)).body.data;

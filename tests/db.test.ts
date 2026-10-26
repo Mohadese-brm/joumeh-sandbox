@@ -13,7 +13,7 @@ describe(`database (${dialect}, sample test fixture)`, () => {
   });
   it('creates all tables', async () => {
     const db = await createDb(false);
-    expect(await db.tables()).toEqual(['addresses', 'admin_login_attempts', 'admin_sessions', 'admin_users', 'audit_log', 'content_home', 'content_pages', 'customer_notes', 'order_events', 'order_notes', 'carts', 'cart_items', 'categories', 'favorites', 'images', 'order_items', 'orders', 'otp_requests', 'payments', 'prices', 'products', 'returns', 'reviews', 'schema_migrations', 'sessions', 'users', 'variants'].sort());
+    expect(await db.tables()).toEqual(['addresses', 'admin_login_attempts', 'admin_sessions', 'admin_users', 'audit_log', 'content_home', 'content_pages', 'customer_notes', 'order_events', 'order_notes', 'carts', 'cart_items', 'categories', 'favorites', 'images', 'inventory_movements', 'order_items', 'orders', 'otp_requests', 'payments', 'prices', 'products', 'returns', 'reviews', 'schema_migrations', 'sessions', 'users', 'variants'].sort());
     await db.close();
   });
   it('seeds labelled sample data only; one price row per product (BD-10)', async () => {

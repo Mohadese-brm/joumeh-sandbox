@@ -5,8 +5,12 @@ import type { Express, Request, Response, NextFunction } from 'express';
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import type { Db } from './db.js';
+import express from 'express';
 import { stub } from './stubs.js';
+import { checkImage, MEDIA_MAX_BYTES, MEDIA_TYPES, type MediaStore } from './media.js';
+import { changeStock, deductForShipment, INVENTORY_STUBS, LOW_STOCK_DEFAULT, MOVE_SQL, productStock, seedDemoStock, stockRow, stockRows, STOCK_REASONS, StockError, type AdjustMode } from './inventory.js';
 
+const nextDay = (d: string) => new Date(Date.parse(d + 'T00:00:00Z') + 86_400_000).toISOString().slice(0, 10);
 const sha = (s: string) => createHash('sha256').update(s).digest('hex');
 const toLatin = (s: unknown) => String(s ?? '').replace(/[۰-۹]/g, d => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/\s+/g, '');
 
@@ -169,9 +173,9 @@ const clientIp = (req: Request) => String(req.headers['x-forwarded-for'] ?? '').
 let dummyHash: Promise<string> | null = null; // equal work for unknown e-mails (no account enumeration by timing)
 
 /** Registers the admin API. Returns a promise for the start-up seed (awaited by createApp before any request). */
-export function mountAdmin(app: Express, db: Db, opts: { adminDemo: boolean; now: () => number }): Promise<void> {
+export function mountAdmin(app: Express, db: Db, opts: { adminDemo: boolean; now: () => number; media: MediaStore }): Promise<void> {
   // Demo admins + sample orders go ONLY into a throwaway database (never into DATABASE_URL, even on a preview).
-  const ready = (async () => { await seedAdminBase(db); if (opts.adminDemo && db.ephemeral) await seedAdminDemo(db); })();
+  const ready = (async () => { await seedAdminBase(db); if (opts.adminDemo && db.ephemeral) { await seedAdminDemo(db); await seedDemoStock(db); } })();
   const signed = opts.adminDemo && db.dialect === 'sqlite'; // per-instance in-memory preview only
   const bad = (res: Response, error: string, fields?: Record<string, string>) => res.status(400).json({ error, fields });
   const audit = (req: AReq, action: string, entity: string, id: unknown, detail?: string) =>
@@ -186,6 +190,14 @@ export function mountAdmin(app: Express, db: Db, opts: { adminDemo: boolean; now
     res.json({ data: p });
   });
 
+  // Public: product images stored by the MediaStore (memory/disk/S3 drivers). Keys are random, immutable → long cache.
+  app.get('/api/media/*', async (req, res) => {
+    const key = String((req.params as Record<string, string>)[0] ?? '');
+    let o; try { o = await opts.media.get(key); } catch { o = null; }
+    if (!o) return res.status(404).json({ error: 'not_found' });
+    res.setHeader('Content-Type', o.mime); res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.end(o.data);
+  });
   // CSRF: the cookie is SameSite=Strict; additionally a state-changing admin request from another origin is refused.
   app.use('/api/admin', (req, res, next) => {
     const origin = req.headers.origin;
@@ -197,7 +209,8 @@ export function mountAdmin(app: Express, db: Db, opts: { adminDemo: boolean; now
   });
 
   const revoked = new Set<string>(); // logged-out / expired signed tokens are never re-created on this instance
-  const requireAdmin = async (req: AReq, res: Response, next: NextFunction) => {
+  /** Resolves the admin from the session cookie; returns an error code (and never writes a response) when there is no valid session. */
+  const authenticate = async (req: AReq, res: Response): Promise<string | null> => {
     const t = readCookie(req, ADMIN_COOKIE); const h = t ? sha(t) : '';
     let s = t ? await db.one<{ admin_id: number; created_at: number; last_seen: number }>('SELECT admin_id,created_at,last_seen FROM admin_sessions WHERE token_hash=?', [h]) : undefined;
     if (!s && t && signed && !revoked.has(h)) { // preview only: cookie signed by another serverless instance → re-create the session here
@@ -207,15 +220,19 @@ export function mountAdmin(app: Express, db: Db, opts: { adminDemo: boolean; now
         s = { admin_id: v.adminId, created_at: v.issued, last_seen: opts.now() };
       }
     }
-    if (!s) return res.status(401).json({ error: 'unauthorized' });
+    if (!s) return 'unauthorized';
     if (opts.now() - s.last_seen > ADMIN_IDLE_MINUTES * 60_000 || opts.now() - s.created_at > ADMIN_SESSION_MAX_HOURS * 3_600_000) {
       revoked.add(h); await db.run('DELETE FROM admin_sessions WHERE token_hash=?', [h]); setCookie(req, res, '', 0);
-      return res.status(401).json({ error: 'session_expired' });
+      return 'session_expired';
     }
     const a = await db.one<Admin & { status: string }>('SELECT id,name,email,role,status FROM admin_users WHERE id=?', [s.admin_id]);
-    if (!a || a.status !== 'active') return res.status(401).json({ error: 'unauthorized' });
+    if (!a || a.status !== 'active') return 'unauthorized';
     await db.run('UPDATE admin_sessions SET last_seen=? WHERE token_hash=?', [opts.now(), h]);
     req.admin = { id: a.id, name: a.name, email: a.email, role: a.role }; req.adminToken = t;
+    return null;
+  };
+  const requireAdmin = async (req: AReq, res: Response, next: NextFunction) => {
+    const e = await authenticate(req, res); if (e) return res.status(401).json({ error: e });
     next();
   };
   const me = (a: Admin) => ({ ...a, roleLabel: ADMIN_ROLES[a.role], roles: [a.role], roleLabels: [ADMIN_ROLES[a.role]], permissions: FULL_ACCESS });
@@ -249,6 +266,12 @@ export function mountAdmin(app: Express, db: Db, opts: { adminDemo: boolean; now
   app.get('/api/admin/me', requireAdmin, async (req: AReq, res) => res.json({ data: me(req.admin!), demo: opts.adminDemo, idleMinutes: ADMIN_IDLE_MINUTES,
     // Sidebar count pill (Figma 175:14193): open orders = pending + processing (definition = placeholder, ADMIN-PH-KPI)
     counts: { openOrders: (await db.one<{ n: number }>(`SELECT COUNT(*) AS n FROM orders WHERE order_status IN ('pending','processing')`))!.n } }));
+  // Pre-login session check (AdminApp start-up): always 200 so the browser console shows no 401 before sign-in. data=null → show the login page.
+  app.get('/api/admin/auth/session', async (req: AReq, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const e = await authenticate(req, res);
+    res.json({ data: e ? null : me(req.admin!), expired: e === 'session_expired', demo: opts.adminDemo, idleMinutes: ADMIN_IDLE_MINUTES });
+  });
   app.post('/api/admin/auth/logout', requireAdmin, async (req: AReq, res) => {
     const h = sha(req.adminToken!); revoked.add(h); await db.run('DELETE FROM admin_sessions WHERE token_hash=?', [h]); setCookie(req, res, '', 0); res.status(204).end();
   });
@@ -267,13 +290,16 @@ export function mountAdmin(app: Express, db: Db, opts: { adminDemo: boolean; now
       shipped: await n(`SELECT COUNT(*) AS n FROM orders WHERE order_status='shipped'`),
       openReturns: await n(`SELECT COUNT(*) AS n FROM returns WHERE status='reviewing'`),
       unavailableVariants: await n(`SELECT COUNT(*) AS n FROM variants WHERE available=0`),
+      ...await (async () => { const rows = (await stockRows(db, "p.publish_state<>'archived'")); return {
+        lowStock: rows.filter(r => r.status === 'low').length, outOfStock: rows.filter(r => r.status === 'out').length, oversold: rows.filter(r => r.status === 'oversold').length,
+        lowStockItems: rows.filter(r => r.status === 'low' || r.status === 'out' || r.status === 'oversold').sort((a, b) => (a.available ?? 0) - (b.available ?? 0)).slice(0, 4) }; })(),
       reviews: await n(`SELECT COUNT(*) AS n FROM reviews`),
       avgOrder: Math.trunc(Number(await n(`SELECT COALESCE(AVG(total),0) AS n FROM orders WHERE payment_status='paid'`))),
       recentOrders: await db.all(`SELECT o.id, o.order_number AS orderNumber, o.order_status AS orderStatus, o.payment_status AS paymentStatus, o.total, o.created_at AS createdAt,
         COALESCE(u.first_name || ' ' || substr(u.last_name,1,1) || '.', 'مهمان') AS customer, (SELECT SUM(quantity) FROM order_items WHERE order_id=o.id) AS items
         FROM orders o LEFT JOIN users u ON u.id=o.user_id ORDER BY o.created_at DESC LIMIT 5`),
       topProducts: await db.all(`SELECT p.name, SUM(oi.quantity) AS sold FROM order_items oi JOIN products p ON p.id=oi.product_id GROUP BY p.id ORDER BY sold DESC, p.id LIMIT 3`),
-    }, sampleData: true, stubs: { kpis: stub('ADMIN-PH-KPI'), ...ADMIN_STUBS } });
+    }, sampleData: true, stubs: { kpis: stub('ADMIN-PH-KPI'), lowStock: stub('ADMIN-PH-LOWSTOCK'), ...ADMIN_STUBS } });
   });
 
   // ---------- Products ----------
@@ -287,26 +313,37 @@ export function mountAdmin(app: Express, db: Db, opts: { adminDemo: boolean; now
     const w: string[] = []; const p: unknown[] = [];
     if (q) { w.push('(p.name LIKE ? OR p.slug LIKE ?)'); p.push(`%${q}%`, `%${q}%`); }
     if (state) { w.push('p.publish_state=?'); p.push(state); }
-    if (category) { w.push('c.id=?'); p.push(Number(category)); }
+    if (category) { w.push('(c.id=? OR c.parent_id=?)'); p.push(Number(category), Number(category)); }
+    // «تاریخ ایجاد» range from the Jalali Date Picker (sent as Gregorian YYYY-MM-DD, Tehran days → UTC bounds are close enough for a filter)
+    const { from = '', to = '' } = req.query as Record<string, string>;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(from)) { w.push('p.created_at>=?'); p.push(from); }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(to)) { w.push('p.created_at<?'); p.push(nextDay(to)); }
     const ws = w.length ? ' WHERE ' + w.join(' AND ') : '';
     const total = (await db.one<{ n: number }>(`SELECT COUNT(*) AS n FROM products p LEFT JOIN prices pr ON pr.product_id=p.id JOIN categories c ON c.id=p.category_id${ws}`, p))!.n;
     const counts = Object.fromEntries((await db.all<{ s: string; n: number }>('SELECT publish_state AS s, COUNT(*) AS n FROM products GROUP BY s')).map(r => [r.s, r.n]));
-    res.json({ data: await db.all(`${pSql}${ws} ORDER BY p.id LIMIT ? OFFSET ?`, [...p, size, (page - 1) * size]), page, pageSize: size, total, counts,
+    const rows = await db.all<{ id: number }>(`${pSql}${ws} ORDER BY p.id LIMIT ? OFFSET ?`, [...p, size, (page - 1) * size]);
+    const st = await productStock(db, rows.map(r => r.id));
+    res.json({ data: rows.map(r => ({ ...r, stock: st[r.id] ?? null })), page, pageSize: size, total, counts,
       allCount: (await db.one<{ n: number }>('SELECT COUNT(*) AS n FROM products'))!.n, sampleData: true });
   });
   app.get('/api/admin/products/:id', requireAdmin, async (req, res) => {
     const p = await db.one(pSql + ' WHERE p.id=?', [Number(req.params.id)]);
     if (!p) return res.status(404).json({ error: 'not_found' });
-    res.json({ data: { ...p, variants: await db.all('SELECT id,size,color,color_hex AS colorHex,sku,available FROM variants WHERE product_id=? ORDER BY id', [p.id]),
-      images: await db.all('SELECT url,alt FROM images WHERE product_id=? ORDER BY position', [p.id]) }, stubs: { pricing: stub('BD-10'), stock: stub('BD-16'), media: stub('ADMIN-PH-MEDIA') } });
+    const stock = Object.fromEntries((await stockRows(db, 'v.product_id=?', [p.id])).map(r => [r.variantId, r]));
+    res.json({ data: { ...p, variants: (await db.all<{ id: number }>('SELECT id,size,color,color_hex AS colorHex,sku,available FROM variants WHERE product_id=? ORDER BY id', [p.id]))
+        .map(v => ({ ...v, onHand: stock[v.id]?.onHand ?? null, allocated: stock[v.id]?.allocated ?? 0, stockAvailable: stock[v.id]?.available ?? null, stockStatus: stock[v.id]?.status ?? 'untracked', threshold: stock[v.id]?.threshold ?? LOW_STOCK_DEFAULT })),
+      images: await db.all('SELECT id,url,alt,mime,bytes,position FROM images WHERE product_id=? ORDER BY position, id', [p.id]) },
+      media: { maxBytes: MEDIA_MAX_BYTES, types: Object.keys(MEDIA_TYPES), driver: opts.media.driver },
+      stubs: { pricing: stub('BD-10'), stock: stub('BD-16'), media: stub('ADMIN-PH-MEDIA'), sku: stub('ADMIN-PH-SKU'), publishRules: stub('ADMIN-PH-PUBLISH-RULES'), ...INVENTORY_STUBS } });
   });
   const validateProduct = async (b: Record<string, unknown>) => {
     const f: Record<string, string> = {};
     const name = String(b.name ?? '').trim(); const slug = String(b.slug ?? '').trim();
-    if (!name || name.length > 120) f.name = 'نام محصول الزامی است';
-    if (!/^[a-z0-9-]{2,80}$/.test(slug)) f.slug = 'شناسه فقط حروف لاتین کوچک، عدد و خط تیره';
+    if (!name) f.name = 'نام محصول الزامی است'; else if (name.length > 120) f.name = 'نام محصول حداکثر ۱۲۰ کاراکتر';
+    if (!slug) f.slug = 'شناسه (نشانی صفحه) الزامی است'; else if (!/^[a-z0-9-]{2,80}$/.test(slug)) f.slug = 'شناسه فقط حروف لاتین کوچک، عدد و خط تیره (۲ تا ۸۰ کاراکتر)';
+    if (String(b.description ?? '').length > 5000) f.description = 'توضیحات حداکثر ۵۰۰۰ کاراکتر';
     // admin-v1 (catalog-real): price may be left empty = no price yet (NULL; the shop shows «قیمت به‌زودی / تماس بگیرید» and the product can't be bought).
-    const price = b.price == null || b.price === '' ? null : Number(b.price); if (price !== null && (!Number.isInteger(price) || price <= 0)) f.price = 'قیمت معتبر نیست';
+    const price = b.price == null || b.price === '' ? null : Number(b.price); if (price !== null && (!Number.isInteger(price) || price <= 0)) f.price = 'قیمت باید عدد صحیح بیشتر از صفر (تومان) باشد';
     const orig = b.originalPrice == null || b.originalPrice === '' ? null : Number(b.originalPrice);
     if (orig !== null && price === null) f.originalPrice = 'بدون قیمت، قیمت قبل از تخفیف معنی ندارد';
     else if (orig !== null && (!Number.isInteger(orig) || orig <= (price as number))) f.originalPrice = 'قیمت قبل از تخفیف باید بیشتر از قیمت باشد';
@@ -337,7 +374,8 @@ export function mountAdmin(app: Express, db: Db, opts: { adminDemo: boolean; now
     await db.run('UPDATE products SET name=?,slug=?,category_id=?,status=?,description=? WHERE id=?', [name, slug, Number(b.categoryId), b.status, String(b.description ?? ''), id]);
     await savePrice(id, price, orig);
     if (Array.isArray(b.variants)) for (const v of b.variants as { id: number; available: boolean }[])
-      await db.run('UPDATE variants SET available=? WHERE id=? AND product_id=?', [v.available ? 1 : 0, Number(v.id), id]);
+      // tracked variants follow their stock (inventory); the manual flag is only for variants whose stock is not recorded yet
+      await db.run('UPDATE variants SET available=? WHERE id=? AND product_id=? AND on_hand IS NULL', [v.available ? 1 : 0, Number(v.id), id]);
     await audit(req, 'update', 'product', id, name);
     res.json({ data: await db.one(pSql + ' WHERE p.id=?', [id]) });
   });
@@ -347,6 +385,129 @@ export function mountAdmin(app: Express, db: Db, opts: { adminDemo: boolean; now
     if (!await db.one('SELECT id FROM products WHERE id=?', [id])) return res.status(404).json({ error: 'not_found' });
     await db.run('UPDATE products SET publish_state=? WHERE id=?', [s, id]); await audit(req, 'state:' + s, 'product', id);
     res.json({ data: await db.one(pSql + ' WHERE p.id=?', [id]) });
+  });
+
+  // ---------- Product images (Figma 178:18759 «تصاویر»): upload through the MediaStore adapter, alt text REQUIRED. No hard delete of products. ----------
+  // Raw body (not multipart): the browser sends the File itself; ?alt= carries the alt text. Type is checked by magic bytes, not by the header.
+  const rawImage = express.raw({ type: () => true, limit: MEDIA_MAX_BYTES + 1024 });
+  const imgBody = (req: Request, res: Response, next: NextFunction) => rawImage(req, res, (err?: { type?: string }) => {
+    if (err?.type === 'entity.too.large') return res.status(413).json({ error: 'file_too_large', fields: { file: 'حجم تصویر باید حداکثر ۵ مگابایت باشد' } });
+    if (err) return next(err); next();
+  });
+  const imgList = (id: number) => db.all('SELECT id,url,alt,mime,bytes,position FROM images WHERE product_id=? ORDER BY position, id', [id]);
+  const cleanAlt = (v: unknown) => String(v ?? '').trim();
+  const altErr = (alt: string) => !alt ? 'متن جایگزین (alt) الزامی است' : alt.length > 200 ? 'متن جایگزین حداکثر ۲۰۰ کاراکتر' : null;
+  app.post('/api/admin/products/:id/images', requireAdmin, imgBody, async (req: AReq, res) => {
+    const id = Number(req.params.id); if (!await db.one('SELECT id FROM products WHERE id=?', [id])) return res.status(404).json({ error: 'not_found' });
+    const alt = cleanAlt(req.query.alt); const ae = altErr(alt);
+    const c = checkImage(Buffer.isBuffer(req.body) ? req.body : undefined);
+    const fields: Record<string, string> = {}; if (ae) fields.alt = ae; if ('error' in c) fields.file = c.message;
+    if (Object.keys(fields).length) return res.status('error' in c && c.error === 'file_too_large' ? 413 : 400).json({ error: 'validation', fields });
+    const mime = (c as { mime: keyof typeof MEDIA_TYPES }).mime;
+    const key = `products/${id}/${randomBytes(9).toString('hex')}.${MEDIA_TYPES[mime]}`;
+    await opts.media.put(key, req.body as Buffer, mime);
+    const pos = (await db.one<{ n: number }>('SELECT COALESCE(MAX(position),-1)+1 AS n FROM images WHERE product_id=?', [id]))!.n;
+    const imgId = await db.insert('INSERT INTO images (product_id,url,alt,position,storage_key,mime,bytes) VALUES (?,?,?,?,?,?,?)', [id, opts.media.url(key), alt, pos, key, mime, (req.body as Buffer).length]);
+    await audit(req, 'image:upload', 'product', id, `image ${imgId} (${mime}, ${(req.body as Buffer).length} B)`);
+    res.status(201).json({ data: await imgList(id) });
+  });
+  app.put('/api/admin/products/:id/images/:imageId', requireAdmin, async (req: AReq, res) => {
+    const id = Number(req.params.id); const imageId = Number(req.params.imageId);
+    if (!await db.one('SELECT id FROM images WHERE id=? AND product_id=?', [imageId, id])) return res.status(404).json({ error: 'not_found' });
+    if (req.body?.alt !== undefined) { const alt = cleanAlt(req.body.alt); const ae = altErr(alt); if (ae) return bad(res, 'validation', { alt: ae });
+      await db.run('UPDATE images SET alt=? WHERE id=?', [alt, imageId]); await audit(req, 'image:alt', 'product', id, `image ${imageId}`); }
+    if (req.body?.cover === true) { // «تصویر اصلی»: move to the front, keep the others' order
+      const ids = (await db.all<{ id: number }>('SELECT id FROM images WHERE product_id=? ORDER BY position, id', [id])).map(r => r.id).filter(x => x !== imageId);
+      await db.tx(async t => { let i = 0; for (const x of [imageId, ...ids]) await t.run('UPDATE images SET position=? WHERE id=?', [i++, x]); });
+      await audit(req, 'image:cover', 'product', id, `image ${imageId}`);
+    }
+    res.json({ data: await imgList(id) });
+  });
+  // «حذف از محصول» detaches the image row only. The stored file is NOT deleted (no deletions without CEO approval; cleanup = later ops task).
+  app.delete('/api/admin/products/:id/images/:imageId', requireAdmin, async (req: AReq, res) => {
+    const id = Number(req.params.id); const imageId = Number(req.params.imageId);
+    const r = await db.run('DELETE FROM images WHERE id=? AND product_id=?', [imageId, id]); if (!r.changes) return res.status(404).json({ error: 'not_found' });
+    await audit(req, 'image:detach', 'product', id, `image ${imageId}`); res.json({ data: await imgList(id) });
+  });
+  // New variants (Figma «سایزها» + «رنگ‌ها»): creates the missing size×colour combinations; SKU format is a placeholder (ADMIN-PH-SKU).
+  const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'فری‌سایز'];
+  app.post('/api/admin/products/:id/variants', requireAdmin, async (req: AReq, res) => {
+    const id = Number(req.params.id); if (!await db.one('SELECT id FROM products WHERE id=?', [id])) return res.status(404).json({ error: 'not_found' });
+    const sizes = Array.isArray(req.body?.sizes) ? [...new Set((req.body.sizes as unknown[]).map(String))] : [];
+    const color = String(req.body?.color ?? '').trim(); const hex = String(req.body?.colorHex ?? '').trim();
+    const f: Record<string, string> = {};
+    if (!sizes.length || sizes.some(x => !SIZES.includes(x))) f.sizes = 'حداقل یک سایز معتبر انتخاب کنید';
+    if (!color || color.length > 40) f.color = 'نام رنگ الزامی است (حداکثر ۴۰ کاراکتر)';
+    if (!/^#[0-9a-fA-F]{6}$/.test(hex)) f.colorHex = 'کد رنگ باید به شکل ‎#RRGGBB باشد';
+    if (Object.keys(f).length) return bad(res, 'validation', f);
+    const made: number[] = [];
+    await db.tx(async t => {
+      for (const sz of sizes) {
+        if (await t.one('SELECT id FROM variants WHERE product_id=? AND size=? AND color=?', [id, sz, color])) continue;
+        const n = (await t.one<{ n: number }>('SELECT COUNT(*) AS n FROM variants WHERE product_id=?', [id]))!.n + 1;
+        made.push(await t.insert('INSERT INTO variants (product_id,size,color,color_hex,sku,available) VALUES (?,?,?,?,?,0)', [id, sz, color, hex.toUpperCase(), `P${id}-${sz === 'فری‌سایز' ? 'FREE' : sz}-${n}`]));
+      }
+    });
+    if (made.length) await audit(req, 'variants:add', 'product', id, `${made.length} × ${color}`);
+    res.status(201).json({ data: { created: made.length } });
+  });
+
+  // ---------- Inventory (Figma 179:21565 list · 179:22434 ledger · 179:23739 adjust · 179:23929 in-store sale · 179:23985 oversell) ----------
+  const actor = (req: AReq) => ({ adminId: req.admin!.id, name: req.admin!.name });
+  const stockErr = (res: Response, e: unknown) => { if (e instanceof StockError) return res.status(e.status).json({ error: e.code, fields: e.fields, ...e.extra }); throw e; };
+  const auditIn = (t: Db, req: AReq, action: string, id: unknown, detail: string) =>
+    t.run('INSERT INTO audit_log (admin_id,action,entity,entity_id,detail) VALUES (?,?,?,?,?)', [req.admin!.id, action, 'variant', String(id), detail]);
+  const TABS = ['all', 'low', 'out', 'oversold', 'untracked'] as const;
+  app.get('/api/admin/inventory', requireAdmin, async (req, res) => {
+    const tab = (TABS as readonly string[]).includes(String(req.query.tab)) ? String(req.query.tab) : 'all';
+    const q = String(req.query.q ?? '').trim(); const page = Math.max(1, Number(req.query.page ?? 1) | 0); const size = Math.min(50, Math.max(5, Number(req.query.size ?? 10) | 0));
+    const w = ["p.publish_state<>'archived'"]; const p: unknown[] = [];
+    if (q) { w.push('(p.name LIKE ? OR v.sku LIKE ?)'); p.push(`%${q}%`, `%${toLatin(q)}%`); }
+    const rows = await stockRows(db, w.join(' AND '), p);
+    const is = (t: string) => (r: (typeof rows)[number]) => t === 'all' || (t === 'out' ? r.status === 'out' || r.status === 'oversold' : r.status === t);
+    const counts = Object.fromEntries(TABS.map(t => [t, rows.filter(is(t)).length]));
+    const list = rows.filter(is(tab)); if (tab === 'low' || tab === 'out') list.sort((a, b) => (a.available ?? 0) - (b.available ?? 0));
+    res.json({ data: list.slice((page - 1) * size, page * size), page, pageSize: size, total: list.length, counts, lowStockDefault: LOW_STOCK_DEFAULT, reasons: STOCK_REASONS,
+      oversold: rows.filter(r => r.status === 'oversold'), sampleData: db.ephemeral, stubs: INVENTORY_STUBS });
+  });
+  app.get('/api/admin/inventory/movements', requireAdmin, async (req, res) => {
+    const { q = '', kind = '', from = '', to = '', variant = '' } = req.query as Record<string, string>;
+    const page = Math.max(1, Number(req.query.page ?? 1) | 0); const size = 20;
+    const w: string[] = []; const p: unknown[] = [];
+    if (q) { w.push('(p.name LIKE ? OR v.sku LIKE ? OR m.reason LIKE ? OR m.actor LIKE ?)'); p.push(`%${q}%`, `%${toLatin(q)}%`, `%${q}%`, `%${q}%`); }
+    if (['increase', 'decrease', 'count', 'pos_sale', 'order_shipped'].includes(kind)) { w.push('m.kind=?'); p.push(kind); }
+    if (/^\d+$/.test(variant)) { w.push('m.variant_id=?'); p.push(Number(variant)); }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(from)) { w.push('m.created_at>=?'); p.push(from); }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(to)) { w.push('m.created_at<?'); p.push(nextDay(to)); }
+    const ws = w.length ? ' WHERE ' + w.join(' AND ') : '';
+    const total = (await db.one<{ n: number }>(`SELECT COUNT(*) AS n FROM inventory_movements m JOIN variants v ON v.id=m.variant_id JOIN products p ON p.id=v.product_id${ws}`, p))!.n;
+    res.json({ data: await db.all(`${MOVE_SQL}${ws} ORDER BY m.created_at DESC, m.id DESC LIMIT ? OFFSET ?`, [...p, size, (page - 1) * size]), page, pageSize: size, total, stubs: INVENTORY_STUBS });
+  });
+  app.get('/api/admin/inventory/:variantId', requireAdmin, async (req, res) => {
+    const r = await stockRow(db, Number(req.params.variantId)); if (!r) return res.status(404).json({ error: 'not_found' });
+    res.json({ data: r, reasons: STOCK_REASONS, stubs: INVENTORY_STUBS });
+  });
+  app.post('/api/admin/inventory/:variantId/adjust', requireAdmin, async (req: AReq, res) => {
+    const vid = Number(req.params.variantId); const mode = String(req.body?.mode) as AdjustMode;
+    try {
+      const r = await changeStock(db, vid, { mode, qty: req.body?.qty, reason: req.body?.reason, note: req.body?.note }, actor(req),
+        (t, m) => auditIn(t, req, 'stock:' + mode, vid, `${m.before ?? '—'} → ${m.after} · ${String(req.body?.reason ?? '')}`));
+      res.json({ data: r });
+    } catch (e) { stockErr(res, e); }
+  });
+  // «ثبت سریع فروش حضوری» — by SKU (search) or variant id.
+  app.post('/api/admin/inventory/pos-sale', requireAdmin, async (req: AReq, res) => {
+    const sku = String(req.body?.sku ?? '').trim();
+    const v = req.body?.variantId ? { id: Number(req.body.variantId) } : sku ? await db.one<{ id: number }>('SELECT id FROM variants WHERE sku=?', [sku]) : undefined;
+    if (!v) return res.status(404).json({ error: 'not_found', fields: { sku: 'کالایی با این SKU پیدا نشد' } });
+    try {
+      const r = await changeStock(db, v.id, { mode: 'pos_sale', qty: req.body?.qty, note: req.body?.note }, actor(req),
+        (t, m) => auditIn(t, req, 'stock:pos_sale', v.id, `${m.before} → ${m.after}${m.oversold ? ' · OVERSOLD (BD-08)' : ''}`));
+      // Oversell (Figma 179:23985): the sale is recorded; the paid online orders that now can't all be fulfilled are LISTED for review — nothing is changed on them (BD-08).
+      const affected = r.oversold ? await db.all(`SELECT DISTINCT o.id, o.order_number AS orderNumber FROM orders o JOIN order_items oi ON oi.order_id=o.id
+        WHERE oi.variant_id=? AND o.payment_status='paid' AND o.order_status IN ('pending','processing') ORDER BY o.id`, [v.id]) : [];
+      res.json({ data: { ...r, affectedOrders: affected }, stubs: { oversell: stub('BD-08'), posTiming: stub('BD-09') } });
+    } catch (e) { stockErr(res, e); }
   });
   // Categories (BD-18 taxonomy placeholder: rename/create only, no delete).
   app.get('/api/admin/categories', requireAdmin, async (_q, res) => res.json({ data: await db.all(`SELECT c.id,c.slug,c.name,c.parent_id AS parentId,(SELECT name FROM categories x WHERE x.id=c.parent_id) AS parentName,(SELECT COUNT(*) FROM products p WHERE p.category_id=c.id) AS products FROM categories c ORDER BY COALESCE(c.parent_id,c.id), c.parent_id IS NOT NULL, c.id`), stubs: { taxonomy: stub('BD-18') } }));
@@ -403,6 +564,11 @@ export function mountAdmin(app: Express, db: Db, opts: { adminDemo: boolean; now
     const ful = to === 'shipped' ? 'shipped' : to === 'delivered' ? 'delivered' : null;
     await db.run('UPDATE orders SET order_status=?, fulfilment_status=COALESCE(?, fulfilment_status) WHERE id=?', [to, ful, id]);
     await db.run('INSERT INTO order_events (order_id,status,actor) VALUES (?,?,?)', [id, to, req.admin!.name]);
+    if (to === 'shipped') { // ADMIN-PH-STOCK-FLOW placeholder: shipped = leaves the warehouse → deduct tracked stock (ledger «ارسال سفارش»)
+      const num = (await db.one<{ n: string }>('SELECT order_number AS n FROM orders WHERE id=?', [id]))!.n;
+      const k = await deductForShipment(db, id, num, { adminId: req.admin!.id, name: req.admin!.name });
+      if (k) await audit(req, 'stock:order_shipped', 'order', id, `${k} line(s)`);
+    }
     if (reason) await db.run('INSERT INTO order_notes (order_id,admin_id,body) VALUES (?,?,?)', [id, req.admin!.id, `لغو سفارش: ${reason}`]);
     await audit(req, 'status:' + to, 'order', id, reason || undefined);
     // Refund on cancel is NOT automatic: BD-01/BD-05 placeholder.

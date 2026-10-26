@@ -7,6 +7,7 @@ import { samplePlaceholdersOn, SAMPLE_REVIEWS, SAMPLE_RATING } from '../db/sampl
 import { MockProvider, type PaymentProvider } from './payment.js';
 import { ConsoleSmsAdapter, type SmsAdapter } from './sms.js';
 import { mountAdmin, adminDemoAllowed } from './admin.js';
+import { mediaFromEnv, type MediaStore } from './media.js';
 
 const sha = (s: string) => createHash('sha256').update(s).digest('hex');
 const PHONE_RE = /^09\d{9}$/;
@@ -36,7 +37,9 @@ export type Deps = { sms?: SmsAdapter; payment?: PaymentProvider; now?: () => nu
   /** Return/log the mock OTP code. Default: JOUMEH_DEMO_OTP=1 only (off everywhere else). The Vercel handler forces false. */
   demoOtp?: boolean;
   /** admin-demo: enables the SMS-free DEMO admin login. Local only; the Vercel handler never sets it. */
-  adminDemo?: boolean };
+  adminDemo?: boolean;
+  /** Product-image storage adapter (server/media.ts). Default: from MEDIA_* env vars (memory when unset). */
+  media?: MediaStore };
 type AuthedReq = Request & { userId?: number };
 
 /** Express 4 does not catch rejected promises: every handler/middleware registered on the app is wrapped so a rejection goes to next(err). */
@@ -382,7 +385,7 @@ export function createApp(db: Db, deps: Deps = {}) {
     res.json({ data: r, stubs: { returns: stub('BD-04') } });
   });
 
-  ready = mountAdmin(app, db, { adminDemo: deps.adminDemo ?? adminDemoAllowed(), now });
+  ready = mountAdmin(app, db, { adminDemo: deps.adminDemo ?? adminDemoAllowed(), now, media: deps.media ?? mediaFromEnv() });
   ready.catch(() => {}); // surfaced per request by the gate above (→ 500)
 
   app.use('/api', (_q, res) => res.status(404).json({ error: 'not_found' }));
