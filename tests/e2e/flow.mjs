@@ -1,5 +1,6 @@
 // Requires the local API with the explicit demo-OTP opt-in: `npm run api:demo` (JOUMEH_DEMO_OTP=1).
 // End-to-end purchase flow in a real browser (local only): PDP → cart → checkout → OTP login → mock payment → confirmation.
+// admin-v1: slugs/names updated to the real catalogue (p01 «مجموعه یزد – ۰۱», p02); needs sample placeholders on (app default) for prices + sizes.
 import { chromium } from 'playwright';
 const BASE = process.env.BASE ?? 'http://127.0.0.1:4173';
 const h = await (await fetch('http://127.0.0.1:3001/api/auth/otp/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: '09129999999' }) })).json();
@@ -9,8 +10,8 @@ const step = async (name, fn) => { try { await fn(); results.push([name, 'PASS']
 for (const [vp, width] of [['desktop', 1280], ['mobile', 375]]) {
   const pg = await b.newPage({ viewport: { width, height: 800 } }); const phone = vp === 'desktop' ? '09121111111' : '09122222222';
   try {
-    await step(`${vp}: size required before add`, async () => { await pg.goto(BASE + '/product/women-2'); await pg.getByRole('button', { name: 'افزودن به سبد خرید' }).click(); await pg.getByText('لطفاً سایز را انتخاب کنید.').waitFor(); });
-    await step(`${vp}: add to cart shows toast`, async () => { await pg.locator('input[name=size][value=L]').check(); await pg.getByRole('button', { name: 'افزودن به سبد خرید' }).click(); await pg.getByText('به سبد اضافه شد').waitFor(); });
+    await step(`${vp}: size required before add`, async () => { await pg.goto(BASE + '/product/p02'); await pg.getByRole('button', { name: 'افزودن به سبد خرید', exact: true }).click(); await pg.getByText('لطفاً سایز را انتخاب کنید.').waitFor(); });
+    await step(`${vp}: add to cart shows toast`, async () => { await pg.locator('input[name=size][value=L]').check(); await pg.getByRole('button', { name: 'افزودن به سبد خرید', exact: true }).click(); await pg.getByText('به سبد اضافه شد').waitFor(); });
     await step(`${vp}: cart qty + remove/undo`, async () => {
       await pg.goto(BASE + '/cart'); await pg.getByRole('button', { name: /افزایش تعداد/ }).click(); await pg.locator('.citem output', { hasText: '۲' }).waitFor();
       await pg.getByRole('button', { name: /^حذف .* از سبد$/ }).click(); await pg.getByText('سبد خرید شما خالی است').waitFor();
@@ -39,12 +40,12 @@ for (const [vp, width] of [['desktop', 1280], ['mobile', 375]]) {
     await step(`${vp}: fix1 — no heart on cards; heart on PDP toggles, then listed, then red remove link (127:468)`, async () => {
       await pg.goto(BASE + '/women'); await pg.locator('.pc').first().waitFor();
       if (await pg.locator('.pc__fav, .pc button[aria-label*="علاقه‌مندی"]').count()) throw new Error('heart still on product cards');
-      await pg.goto(BASE + '/product/women-1'); const heart = pg.locator('.pdp__fav'); if ((await heart.count()) !== 1) throw new Error('heart missing on PDP');
+      await pg.goto(BASE + '/product/p01'); const heart = pg.locator('.pdp__fav'); if ((await heart.count()) !== 1) throw new Error('heart missing on PDP');
       await heart.click(); await pg.getByText('به علاقه‌مندی‌ها اضافه شد').waitFor();
-      await pg.goto(BASE + '/account/favorites'); await pg.getByRole('heading', { name: 'مانتو کتان کویری' }).waitFor();
-      await pg.getByRole('button', { name: /حذف از علاقه‌مندی‌ها — مانتو کتان کویری/ }).click(); await pg.getByRole('heading', { name: 'مانتو کتان کویری' }).waitFor({ state: 'detached' }); });
+      await pg.goto(BASE + '/account/favorites'); await pg.getByRole('heading', { name: 'مجموعه یزد – ۰۱' }).waitFor();
+      await pg.getByRole('button', { name: /حذف از علاقه‌مندی‌ها — مجموعه یزد – ۰۱/ }).click(); await pg.getByRole('heading', { name: 'مجموعه یزد – ۰۱' }).waitFor({ state: 'detached' }); });
     await step(`${vp}: card bag button → PDP size-required state (P9)`, async () => {
-      await pg.goto(BASE + '/women'); await pg.getByRole('button', { name: 'افزودن به سبد خرید — مانتو کتان کویری' }).click(); await pg.waitForURL(/product\/women-1/); await pg.getByText('لطفاً سایز را انتخاب کنید.').waitFor(); });
+      await pg.goto(BASE + '/women'); await pg.getByRole('button', { name: 'افزودن به سبد خرید — مجموعه یزد – ۰۱' }).click(); await pg.waitForURL(/product\/p01/); await pg.getByText('لطفاً سایز را انتخاب کنید.').waitFor(); });
     await step(`${vp}: fix1 — no filter UI; sort (56:286 / 56:621 + 56:951) reorders by price`, async () => {
       await pg.goto(BASE + '/women'); await pg.locator('.pc').first().waitFor();
       if (await pg.locator('.filters, .shop__panel, .shop__fbtn').count() || await pg.getByRole('button', { name: /فیلتر/ }).count()) throw new Error('filter UI present');

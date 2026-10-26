@@ -7,6 +7,7 @@ import { stub, SAMPLE_SHIPPING_METHODS } from './stubs.js';
 import { samplePlaceholdersOn, SAMPLE_REVIEWS, SAMPLE_RATING } from '../db/sample-placeholder-data.js';
 import { MockProvider, type PaymentProvider } from './payment.js';
 import { ConsoleSmsAdapter, type SmsAdapter } from './sms.js';
+import { mountAdmin, adminDemoAllowed } from './admin.js';
 
 const sha = (s: string) => createHash('sha256').update(s).digest('hex');
 const one = <T = Record<string, unknown>>(db: Database, sql: string, p: unknown[] = []) => all<T>(db, sql, p)[0];
@@ -16,6 +17,8 @@ const toLatin = (s: unknown) => String(s ?? '').replace(/[۰-۹]/g, d => String(
 
 // BD-18 STUB: no product-type taxonomy exists. Sample «دسته‌بندی» = first word of the sample product name (e.g. مانتو، پیراهن، کیمونو).
 const TYPE_SQL = `replace(substr(p.name, 1, instr(p.name || ' ', ' ') - 1), '‌ی', '')`;
+// admin-v1: the shop only shows products whose publish_state is 'published' (admin-demo), on top of catalog-real's LEFT JOIN prices.
+const LIVE = `(SELECT * FROM products WHERE publish_state='published')`;
 // catalog-real: a product without a prices row has price NULL («قیمت به‌زودی / تماس بگیرید»); it is listed (LEFT JOIN) but cannot be bought.
 // Real product photos have a 600px thumb next to the full image (public/img/products/thumb/); other images use themselves.
 const THUMB_SQL = (col: string) => `CASE WHEN ${col} LIKE '/img/products/%' THEN replace(${col}, '/img/products/', '/img/products/thumb/') ELSE ${col} END`;
@@ -25,7 +28,7 @@ const PRODUCT_SQL = `SELECT ${TYPE_SQL} AS type, p.id, p.slug, p.name, p.status,
   (SELECT ${THUMB_SQL('url')} FROM images i WHERE i.product_id=p.id ORDER BY position LIMIT 1) AS imageThumb,
   (SELECT alt FROM images i WHERE i.product_id=p.id ORDER BY position LIMIT 1) AS imageAlt,
   (SELECT ${THUMB_SQL('url')} FROM images i WHERE i.product_id=p.id AND i.url <> (SELECT url FROM images j WHERE j.product_id=p.id ORDER BY position LIMIT 1) ORDER BY position LIMIT 1) AS imageThumb2
-  FROM products p LEFT JOIN prices pr ON pr.product_id=p.id JOIN categories c ON c.id=p.category_id`;
+  FROM ${LIVE} p LEFT JOIN prices pr ON pr.product_id=p.id JOIN categories c ON c.id=p.category_id`;
 const SORTS: Record<string, string> = {
   newest: 'p.created_at DESC, p.id', bestseller: 'p.sort_rank, p.id', // best-seller definition open (Refinement 2): sample rank
   'price-asc': 'pr.amount IS NULL, pr.amount ASC, p.id', 'price-desc': 'pr.amount IS NULL, pr.amount DESC, p.id', // unpriced always last
@@ -34,7 +37,9 @@ const CATALOG_STUBS = { stock: stub('BD-16'), reviews: stub('BD-15'), sizeChart:
 
 export type Deps = { sms?: SmsAdapter; payment?: PaymentProvider; now?: () => number;
   /** Return/log the mock OTP code. Default: JOUMEH_DEMO_OTP=1 only (off everywhere else). The Vercel handler forces false. */
-  demoOtp?: boolean };
+  demoOtp?: boolean;
+  /** admin-demo: enables the SMS-free DEMO admin login. Local only; the Vercel handler never sets it. */
+  adminDemo?: boolean };
 type AuthedReq = Request & { userId?: number };
 
 export function createApp(db: Database, deps: Deps = {}) {
@@ -70,17 +75,17 @@ export function createApp(db: Database, deps: Deps = {}) {
     if (minPrice && Number.isFinite(minP)) { where.push('pr.amount >= ?'); p.push(minP); }
     if (maxPrice && Number.isFinite(maxP)) { where.push('pr.amount <= ?'); p.push(maxP); }
     const w = where.length ? ' WHERE ' + where.join(' AND ') : '';
-    const total = one<{ n: number }>(db, `SELECT COUNT(*) AS n FROM products p LEFT JOIN prices pr ON pr.product_id=p.id JOIN categories c ON c.id=p.category_id${w}`, p)!.n;
+    const total = one<{ n: number }>(db, `SELECT COUNT(*) AS n FROM ${LIVE} p LEFT JOIN prices pr ON pr.product_id=p.id JOIN categories c ON c.id=p.category_id${w}`, p)!.n;
     const totalPages = Math.max(1, Math.ceil(total / config.pageSize));
     const data = all(db, `${PRODUCT_SQL}${w} ORDER BY ${SORTS[sort]} LIMIT ? OFFSET ?`, [...p, config.pageSize, (page - 1) * config.pageSize]);
     res.json({ data, page, pageSize: config.pageSize, total, totalPages, sampleData: data.some(d => !!(d as { isSample?: number }).isSample), stubs: CATALOG_STUBS });
   });
   app.get('/api/filters', (req, res) => {
     const cat = String(req.query.category ?? '');
-    const sizes = all<{ size: string }>(db, `SELECT DISTINCT v.size FROM variants v JOIN products p ON p.id=v.product_id JOIN categories c ON c.id=p.category_id WHERE (?='' OR c.slug=?)`, [cat, cat]).map(r => r.size);
-    const colors = all(db, `SELECT DISTINCT v.color AS name, v.color_hex AS hex FROM variants v JOIN products p ON p.id=v.product_id JOIN categories c ON c.id=p.category_id WHERE (?='' OR c.slug=?) ORDER BY v.color`, [cat, cat]);
-    const types = all<{ t: string; n: number }>(db, `SELECT ${TYPE_SQL} AS t, COUNT(*) AS n FROM products p JOIN categories c ON c.id=p.category_id WHERE (?='' OR c.slug=?) GROUP BY t ORDER BY n DESC, t`, [cat, cat]).map(r => r.t);
-    const pr = one<{ lo: number; hi: number }>(db, `SELECT MIN(pr.amount) AS lo, MAX(pr.amount) AS hi FROM prices pr JOIN products p ON p.id=pr.product_id JOIN categories c ON c.id=p.category_id WHERE (?='' OR c.slug=?)`, [cat, cat])!;
+    const sizes = all<{ size: string }>(db, `SELECT DISTINCT v.size FROM variants v JOIN ${LIVE} p ON p.id=v.product_id JOIN categories c ON c.id=p.category_id WHERE (?='' OR c.slug=?)`, [cat, cat]).map(r => r.size);
+    const colors = all(db, `SELECT DISTINCT v.color AS name, v.color_hex AS hex FROM variants v JOIN ${LIVE} p ON p.id=v.product_id JOIN categories c ON c.id=p.category_id WHERE (?='' OR c.slug=?) ORDER BY v.color`, [cat, cat]);
+    const types = all<{ t: string; n: number }>(db, `SELECT ${TYPE_SQL} AS t, COUNT(*) AS n FROM ${LIVE} p JOIN categories c ON c.id=p.category_id WHERE (?='' OR c.slug=?) GROUP BY t ORDER BY n DESC, t`, [cat, cat]).map(r => r.t);
+    const pr = one<{ lo: number; hi: number }>(db, `SELECT MIN(pr.amount) AS lo, MAX(pr.amount) AS hi FROM prices pr JOIN ${LIVE} p ON p.id=pr.product_id JOIN categories c ON c.id=p.category_id WHERE (?='' OR c.slug=?)`, [cat, cat])!;
     res.json({ data: { types, sizes, colors, price: { min: pr.lo, max: pr.hi } }, stubs: { taxonomy: stub('BD-18') } });
   });
   app.get('/api/products/:slug', (req, res) => {
@@ -365,6 +370,8 @@ export function createApp(db: Database, deps: Deps = {}) {
     if (!r) return res.status(404).json({ error: 'not_found' });
     res.json({ data: r, stubs: { returns: stub('BD-04') } });
   });
+
+  mountAdmin(app, db, { adminDemo: deps.adminDemo ?? adminDemoAllowed(), now });
 
   app.use('/api', (_q, res) => res.status(404).json({ error: 'not_found' }));
   app.use((err: Error & { type?: string }, _q: Request, res: Response, _n: NextFunction) => {
