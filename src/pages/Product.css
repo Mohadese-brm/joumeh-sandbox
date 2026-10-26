@@ -30,6 +30,11 @@
 .size input:disabled + span { color: var(--n-500); background: var(--n-100); border-color: var(--n-200); text-decoration: line-through; cursor: not-allowed; }
 .size input:focus-visible + span { outline: 3px solid var(--teal-600); outline-offset: 2px; }
 .pdp__buy { display: flex; gap: 12px; align-items: center; inline-size: 100%; }
+/* rev5 (Mohadeseh: mobile PDP button text too big): ≤767px the PDP opts into the shared mobile button token (14/500/24, min-h 48, padding 16, one line).
+   Buy row (Figma 260:63088: fav 44 · gap 12 · AddToCart 260:63089 · gap 12 · qty) leaves the button ~146px at 360; label 110 + icon 20 + gap 8 + 32 = 170,
+   so when the row is narrower than 352px the bag icon is dropped (label stays whole, never wraps or clips). */
+@media (max-width: 767px) { .pdp__buy { container: pdpbuy / inline-size; } } /* tokens via .btn-scope-m on .pdp */
+@container pdpbuy (max-width: 351px) { .pdp__add .icon { display: none; } }
 .pdp__add { flex: 1; }
 /* fix1 item 2: Product / Favorite Toggle Style=Outline 266:67451 (PDP 266:67491, mobile 266:70611) */
 .pdp__fav { flex: none; inline-size: 44px; block-size: 44px; display: grid; place-items: center; padding: 0; border-radius: 999px; border: 1px solid #78716c; background: transparent; color: #1c1917; cursor: pointer; }

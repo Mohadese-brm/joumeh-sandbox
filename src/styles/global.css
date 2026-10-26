@@ -43,8 +43,13 @@ h1, h2, h3, h4 { margin: 0; line-height: 1.5; font-weight: 700; }
 .muted { color: var(--text-2); }
 .small { font-size: 14px; line-height: 24px; } .caption { font-size: 12px; line-height: 20px; }
 /* Buttons: one primary per view */
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-block-size: var(--control); padding-inline: 24px; border-radius: var(--r-8);
-  border: 1px solid transparent; font-weight: 600; font-size: 15px; cursor: pointer; text-decoration: none; transition: background .15s; }
+/* rev5: buttons read optional --btn-* tokens. Unset → the previous values (15/600, inherited line-height and wrapping, --control, 24px), so nothing changes
+   unless a scope opts in. --btn-m-* is the shared mobile button token (Figma Forms/Button Large 52:169 = v2/Label 500 · lh 24 · min-h 48, at 14px for mobile);
+   a surface opts in with class .btn-scope-m (≤767px only; today: PDP wrap + its review sheet form). */
+:root { --btn-m-fs: 14px; --btn-m-fw: 500; --btn-m-lh: 24px; --btn-m-h: 48px; --btn-m-px: 16px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-block-size: var(--btn-h, var(--control)); padding-inline: var(--btn-px, 24px); border-radius: var(--r-8);
+  border: 1px solid transparent; font-weight: var(--btn-fw, 600); font-size: var(--btn-fs, 15px); line-height: var(--btn-lh); white-space: var(--btn-ws); cursor: pointer; text-decoration: none; transition: background .15s; }
+@media (max-width: 767px) { .btn-scope-m { --btn-fs: var(--btn-m-fs); --btn-fw: var(--btn-m-fw); --btn-lh: var(--btn-m-lh); --btn-h: var(--btn-m-h); --btn-px: var(--btn-m-px); --btn-ws: nowrap; } }
 .btn--primary { background: var(--teal-600); color: #fff; } .btn--primary:hover { background: var(--teal-700); }
 .btn--secondary { background: var(--peach-100); color: var(--brown-700); } .btn--secondary:hover { background: var(--peach-200); }
 .btn--outline { background: #fff; color: var(--teal-700); border-color: var(--teal-600); }

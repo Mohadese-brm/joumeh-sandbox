@@ -37,7 +37,7 @@ export function Product() {
   const colors = useMemo(() => p ? [...new Map(p.variants.map(v => [v.color, v.colorHex])).entries()] : [], [p]);
   const sizes = useMemo(() => p ? p.variants.filter(v => v.color === color) : [], [p, color]);
   if (r.error === 404) return <NotFound />;
-  if (r.loading || !p) return <div className="wrap pdp" aria-busy="true">{r.error ? <div className="state" role="alert"><p>بارگذاری انجام نشد.</p><button className="btn btn--outline" onClick={r.reload}>تلاش دوباره</button></div> : <PdpSkeleton />}</div>;
+  if (r.loading || !p) return <div className="wrap pdp btn-scope-m" aria-busy="true">{r.error ? <div className="state" role="alert"><p>بارگذاری انجام نشد.</p><button className="btn btn--outline" onClick={r.reload}>تلاش دوباره</button></div> : <PdpSkeleton />}</div>;
   const priced = p.price != null; // catalog-real: no price yet → «قیمت به‌زودی / تماس بگیرید», add-to-cart disabled
   const sale = priced && p.status === 'sale' && p.originalPrice != null;
   const add = async () => {
@@ -51,7 +51,7 @@ export function Product() {
   };
   const catName = p.category === 'women' ? 'زنانه' : 'مردانه';
   return (
-    <div className="wrap pdp">
+    <div className="wrap pdp btn-scope-m">
       <Breadcrumbs items={[{ label: 'خانه', to: '/' }, { label: catName, to: `/${p.category}` }, { label: p.name }]} />
       <div className="pdp__main">
         <div className="pdp__info">

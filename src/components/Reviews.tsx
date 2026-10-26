@@ -44,14 +44,14 @@ export function ReviewForm({ onClose, submit = stubSubmit, demoFail = false }: {
   return (
     <Modal title="ثبت نظر" onClose={onClose} labelId="revf-title" sheet>
       {phase === 'done' ? (
-        <div className="revf" data-figma="266:71187">
+        <div className="revf btn-scope-m" data-figma="266:71187">
           <div className="revf__ok" role="status"><span className="revf__okic" aria-hidden="true">✓</span>
             <p className="revf__okt">نظر شما ثبت شد</p>
             <p className="revf__oks">ممنون از اینکه تجربه‌تان را با ما به اشتراک گذاشتید.</p></div>
           <button type="button" className="btn btn--primary revf__full" onClick={onClose} data-autofocus>بستن</button>
         </div>
       ) : (
-        <form className="revf" noValidate onSubmit={e => { e.preventDefault(); send(); }} data-figma={phase === 'invalid' ? '266:71134' : phase === 'sending' ? '266:71159' : phase === 'fail' ? '266:71195' : '266:71081'}>
+        <form className="revf btn-scope-m" noValidate onSubmit={e => { e.preventDefault(); send(); }} data-figma={phase === 'invalid' ? '266:71134' : phase === 'sending' ? '266:71159' : phase === 'fail' ? '266:71195' : '266:71081'}>
           <div className="revf__grp"><span className="revf__lbl" id="revf-rate">امتیاز شما</span>
             <StarRating value={rating} onChange={n => { setRating(n); if (phase === 'invalid') setPhase('edit'); }} invalid={phase === 'invalid' && !rating} /></div>
           <div className="revf__grp"><label className="revf__lbl" htmlFor="revf-text">متن نظر</label>
