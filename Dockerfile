@@ -1,4 +1,4 @@
-# Gerdoo.cloud image for the Joumeh storefront (Vite SPA + Express API, in-memory DB seeded from db/catalog.ts).
+# Gerdoo.cloud image for the Joumeh storefront + admin (Vite SPA + Express API). Postgres via DATABASE_URL (bound add-on), else in-memory SQLite.
 FROM node:20-alpine
 WORKDIR /app
 COPY package.json package-lock.json ./
