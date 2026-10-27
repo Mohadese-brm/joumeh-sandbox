@@ -1,4 +1,4 @@
-// Joumeh ADMIN — DEMO. Figma: ADMIN — INTERACTIVE PROTOTYPE 304:82401 (desktop 252:63866).
+// Joumeh ADMIN. Figma: ADMIN — INTERACTIVE PROTOTYPE 304:82401 (desktop 252:63866). DEMO banner only when the API reports demo mode.
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import './admin.css';
@@ -18,8 +18,11 @@ const MeCtx = createContext<Me | null>(null);
 export const useMe = () => useContext(MeCtx)!;
 export const can = (me: Me, mod: string, need: Level = 'view') => ({ none: 0, view: 1, edit: 2 })[me.permissions[mod] ?? 'none'] >= ({ none: 0, view: 1, edit: 2 })[need];
 
-/** Required on every admin screen in this build. */
-export const DemoBanner = () => <div className="adm-demo" role="note">DEMO — data resets · نسخه نمایشی؛ داده‌ها نمونه‌اند و با هر راه‌اندازی مجدد پاک می‌شوند</div>;
+/** Demo mode flag (release-gerdoo-2026-10-27). Known from the API only: /demo-accounts answers 200 only when demo is on (404 otherwise),
+ *  and /me carries `demo` once signed in. Unknown/failed → false, so the live shop never shows the banner by mistake. */
+const DemoCtx = createContext<{ demo: boolean; setDemo: (d: boolean) => void }>({ demo: false, setDemo: () => {} });
+/** Shown on admin screens ONLY when demo mode is on (Vercel preview / local JOUMEH_ADMIN_DEMO=1); hidden on the live shop. */
+export const DemoBanner = () => useContext(DemoCtx).demo ? <div className="adm-demo" role="note">DEMO — data resets · نسخه نمایشی؛ داده‌ها نمونه‌اند و با هر راه‌اندازی مجدد پاک می‌شوند</div> : null;
 
 type Nav = [to: string, label: string, ico: string, mod?: string] | [group: string];
 const NAV: Nav[] = [
@@ -49,7 +52,8 @@ function SideNav({ me, counts, onLogout, onNav }: { me: Me; counts: { openOrders
 function Shell({ me, onLogout }: { me: Me; onLogout: () => void }) {
   const nav = useNavigate(); const loc = useLocation(); const mobile = useMobile();
   const [counts, setCounts] = useState<{ openOrders: number }>({ openOrders: 0 });
-  useEffect(() => { aapi('/me').then(r => setCounts(r.counts ?? { openOrders: 0 })).catch(() => {}); }, [loc.pathname]);
+  const { setDemo } = useContext(DemoCtx);
+  useEffect(() => { aapi('/me').then(r => { setCounts(r.counts ?? { openOrders: 0 }); setDemo(r.demo === true); }).catch(() => {}); }, [loc.pathname, setDemo]);
   const [q, setQ] = useState(''); const [drawer, setDrawer] = useState(false); const [msearch, setMsearch] = useState(false);
   const burger = useRef<HTMLButtonElement>(null); const drawerRef = useRef<HTMLDivElement>(null);
   useEffect(() => { setDrawer(false); setMsearch(false); window.scrollTo(0, 0); }, [loc.pathname]);
@@ -117,7 +121,8 @@ function Login({ onIn }: { onIn: () => void }) {
   const [err, setErr] = useState(''); const [fields, setFields] = useState<Record<string, string>>({}); const [busy, setBusy] = useState(false);
   // Preview only: the API answers /demo-accounts only when the demo flag is on (404 on production) — the hint is hidden otherwise.
   const [accts, setAccts] = useState<DemoAcct[]>([]);
-  useEffect(() => { aapi<DemoAcct[]>('/demo-accounts').then(r => setAccts(r.data ?? [])).catch(() => setAccts([])); }, []);
+  const { setDemo } = useContext(DemoCtx);
+  useEffect(() => { aapi<DemoAcct[]>('/demo-accounts').then(r => { setAccts(r.data ?? []); setDemo(true); }).catch(() => { setAccts([]); setDemo(false); }); }, [setDemo]);
   const go = async (e = email, p = password) => {
     setErr(''); setFields({}); setBusy(true);
     try { await aapi('/auth/login', { method: 'POST', body: { email: e, password: p } }); onIn(); }
@@ -139,7 +144,7 @@ function Login({ onIn }: { onIn: () => void }) {
 }
 
 export function AdminApp() {
-  const [me, setMe] = useState<Me | null>(null); const [ready, setReady] = useState(false);
+  const [me, setMe] = useState<Me | null>(null); const [ready, setReady] = useState(false); const [demo, setDemo] = useState(false);
   const loc = useLocation(); const nav = useNavigate();
   const load = useCallback(() => {
     aapi<Me | null>('/auth/session').then(r => setMe(r.data ?? null))  // 200 + data:null before sign-in (no 401 in the console)
@@ -147,10 +152,11 @@ export function AdminApp() {
   }, []);
   useEffect(load, [load]);
   useEffect(() => { const f = () => setMe(null); window.addEventListener('joumeh-admin-401', f); return () => window.removeEventListener('joumeh-admin-401', f); }, []);
-  useEffect(() => { document.documentElement.lang = 'fa'; document.title = 'پنل مدیریت جومه (DEMO)'; }, []);
-  if (!ready) return <div className="adm"><DemoBanner /></div>;
-  if (!me) return <Login onIn={() => { load(); if (loc.pathname === '/admin/login') nav('/admin'); }} />;
+  useEffect(() => { document.documentElement.lang = 'fa'; document.title = demo ? 'پنل مدیریت جومه (DEMO)' : 'پنل مدیریت جومه'; }, [demo]);
   const logout = async () => { await aapi('/auth/logout', { method: 'POST' }).catch(() => {}); setMe(null); };
-  return <MeCtx.Provider value={me}><div className="adm" dir="rtl"><DemoBanner /><Shell me={me} onLogout={logout} /><Toasts /></div></MeCtx.Provider>;
+  return <DemoCtx.Provider value={{ demo, setDemo }}>{
+    !ready ? <div className="adm"><DemoBanner /></div>
+    : !me ? <Login onIn={() => { load(); if (loc.pathname === '/admin/login') nav('/admin'); }} />
+    : <MeCtx.Provider value={me}><div className="adm" dir="rtl"><DemoBanner /><Shell me={me} onLogout={logout} /><Toasts /></div></MeCtx.Provider>}</DemoCtx.Provider>;
 }
 export default AdminApp;
