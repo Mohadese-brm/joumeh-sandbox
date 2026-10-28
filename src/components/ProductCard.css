@@ -71,3 +71,6 @@
 
 /* catalog-real: price on request («قیمت به‌زودی / تماس بگیرید») — smaller, muted, no add-to-cart button on the card. */
 .pc__now--onreq { font-size: calc(var(--now) - 3px); font-weight: 500; color: var(--price-original); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* gerdoo-update-2026-10-28: sample-overlay price label */
+.pc__sample { margin-inline-start: 6px; font-size: 11px; line-height: 18px; padding-inline: 6px; vertical-align: middle; }

@@ -9,6 +9,7 @@ import express from 'express';
 import { stub } from './stubs.js';
 import { checkImage, MEDIA_MAX_BYTES, MEDIA_TYPES, type MediaStore } from './media.js';
 import { changeStock, deductForShipment, INVENTORY_STUBS, LOW_STOCK_DEFAULT, MOVE_SQL, productStock, seedDemoStock, stockRow, stockRows, STOCK_REASONS, StockError, type AdjustMode } from './inventory.js';
+import { mountAdminSetup } from './admin-setup.js';
 
 const nextDay = (d: string) => new Date(Date.parse(d + 'T00:00:00Z') + 86_400_000).toISOString().slice(0, 10);
 const sha = (s: string) => createHash('sha256').update(s).digest('hex');
@@ -173,7 +174,7 @@ const clientIp = (req: Request) => String(req.headers['x-forwarded-for'] ?? '').
 let dummyHash: Promise<string> | null = null; // equal work for unknown e-mails (no account enumeration by timing)
 
 /** Registers the admin API. Returns a promise for the start-up seed (awaited by createApp before any request). */
-export function mountAdmin(app: Express, db: Db, opts: { adminDemo: boolean; now: () => number; media: MediaStore }): Promise<void> {
+export function mountAdmin(app: Express, db: Db, opts: { adminDemo: boolean; now: () => number; media: MediaStore; env?: Record<string, string | undefined> }): Promise<void> {
   // Demo admins + sample orders go ONLY into a throwaway database (never into DATABASE_URL, even on a preview).
   const ready = (async () => { await seedAdminBase(db); if (opts.adminDemo && db.ephemeral) { await seedAdminDemo(db); await seedDemoStock(db); } })();
   const signed = opts.adminDemo && db.dialect === 'sqlite'; // per-instance in-memory preview only
@@ -207,6 +208,8 @@ export function mountAdmin(app: Express, db: Db, opts: { adminDemo: boolean; now
     }
     next();
   });
+  // gerdoo-update-2026-10-28: one-time /admin/setup (server/admin-setup.ts). Behind the same CSRF origin check.
+  mountAdminSetup(app, db, { now: opts.now, env: opts.env, clientIp });
 
   const revoked = new Set<string>(); // logged-out / expired signed tokens are never re-created on this instance
   /** Resolves the admin from the session cookie; returns an error code (and never writes a response) when there is no valid session. */

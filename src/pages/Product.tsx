@@ -64,7 +64,7 @@ export function Product() {
             <span>{p.rating.average.toLocaleString('fa-IR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} از ۵ · {faNumber(p.rating.count)} نظر{p.rating.sample && <span className="tag-sample"> (نمونه)</span>}</span></a>
             : <p className="caption muted pdp__rating">هنوز نظری ثبت نشده است.</p>}
           <p className="pdp__price">{sale && <><span className="sr-only">قیمت اصلی </span><s>{faNumber(p.originalPrice!)}</s></>}
-            <span className={sale ? 'pdp__now pdp__now--sale' : priced ? 'pdp__now' : 'pdp__now pdp__now--onreq'}>{sale && <span className="sr-only">قیمت با تخفیف </span>}{formatPrice(p.price)}</span></p>
+            <span className={sale ? 'pdp__now pdp__now--sale' : priced ? 'pdp__now' : 'pdp__now pdp__now--onreq'}>{sale && <span className="sr-only">قیمت با تخفیف </span>}{formatPrice(p.price)}</span>{!!p.sampleOverlay && priced && <span className="tag-sample"> قیمت نمونه</span>}</p>
           <p className="pdp__desc">{p.description || 'توضیحات این محصول به‌زودی اضافه می‌شود.'}</p>
           {colors.some(([c]) => c) && <fieldset className="pdp__opt"><legend>رنگ: <span className="muted">{color}</span> <span className="tag-sample">نام رنگ نمونه</span></legend>
             <div className="swatches">{colors.map(([c, hex]) => (

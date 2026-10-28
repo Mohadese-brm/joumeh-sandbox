@@ -12,10 +12,10 @@ export async function api<T = unknown>(path: string, opts: { method?: string; bo
   if (!r.ok) throw new ApiError(r.status, j.error ?? 'error', j.fields);
   return j;
 }
-export type Product = { id: number; slug: string; name: string; status: 'default' | 'sale' | 'new'; price: number | null; originalPrice: number | null; badgePercent: number | null; imageUrl: string; imageThumb?: string; imageThumb2?: string | null; imageAlt: string; category: string; isSample?: number; type?: string };
+export type Product = { id: number; slug: string; name: string; status: 'default' | 'sale' | 'new'; price: number | null; originalPrice: number | null; badgePercent: number | null; imageUrl: string; imageThumb?: string; imageThumb2?: string | null; imageAlt: string; category: string; isSample?: number; sampleOverlay?: number; type?: string };
 export type Variant = { id: number; size: string; color: string; colorHex: string; sku: string; available: number };
-export type CartItem = { id: number; variantId: number; quantity: number; size: string; color: string; available: boolean; productId: number; slug: string; name: string; price: number | null; originalPrice: number | null; imageUrl: string; lineTotal: number | null };
-export type Cart = { cartId: number; items: CartItem[]; totals: { count: number; subtotal: number; discount: number; payable: number; shipping: null; vat: null } };
+export type CartItem = { id: number; variantId: number; quantity: number; size: string; color: string; available: boolean; productId: number; slug: string; name: string; price: number | null; originalPrice: number | null; imageUrl: string; lineTotal: number | null; sample?: boolean };
+export type Cart = { cartId: number; sampleMode?: boolean; ordersBlocked?: boolean; items: CartItem[]; totals: { count: number; subtotal: number; discount: number; payable: number; shipping: null; vat: null } };
 export type User = { id: number; phone: string; firstName: string | null; lastName: string | null; email: string | null; emailVerified: number };
 export type Address = { id: number; recipient: string; phone: string; province: string; city: string; line: string; postalCode: string; landline: string | null; isDefault: number };
 export type OrderItem = { productId: number; name: string; size: string; color: string; unitPrice: number; quantity: number; imageUrl: string; slug: string };

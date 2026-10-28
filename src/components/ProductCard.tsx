@@ -6,7 +6,7 @@ import './ProductCard.css';
 export type ProductCardData = {
   id: number; slug: string; name: string; status: 'default' | 'sale' | 'new';
   price: number | null; originalPrice?: number | null; badgePercent?: number | null;
-  imageUrl: string; imageThumb?: string; imageThumb2?: string | null; imageAlt: string;
+  imageUrl: string; imageThumb?: string; imageThumb2?: string | null; imageAlt: string; sampleOverlay?: number;
 };
 type Props = { product: ProductCardData; size?: 'desktop' | 'mobile'; href?: string; onAddToCart?: (id: number) => void; headingLevel?: 2 | 3 | 4; showBadge?: boolean; children?: React.ReactNode };
 // Icons use currentColor (Figma stroke #1C1917 replaced).
@@ -35,6 +35,8 @@ export function ProductCard({ product, size = 'desktop', href, onAddToCart, head
         <p className="pc__price">
           {isSale && <><span className="sr-only">قیمت اصلی </span><s className="pc__old">{faNumber(product.originalPrice!)}</s></>}
           <span className={isSale ? 'pc__now pc__now--sale' : priced ? 'pc__now' : 'pc__now pc__now--onreq'}>{isSale && <span className="sr-only">قیمت با تخفیف </span>}{formatPrice(product.price)}</span>
+          {/* gerdoo-update-2026-10-28: read-time sample overlay price → labelled */}
+          {!!product.sampleOverlay && priced && <span className="tag-sample pc__sample">نمونه</span>}
         </p>
         </div>
       </Link>

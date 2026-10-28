@@ -64,3 +64,6 @@
 /* fix2c: header search icon has no fill in any state (Figma 54:333 / 116:2609); keyboard focus keeps a ring only. */
 .hdr__search, .hdr__search:hover, .hdr__search:active, .hdr__search:focus, .hdr__search[aria-expanded="true"] { background: transparent; }
 .hdr__search:focus-visible { outline: 3px solid var(--teal-600); outline-offset: -3px; background: transparent; }
+
+/* gerdoo-update-2026-10-28: sample overlay notice (only when JOUMEH_SAMPLE_OVERLAY=1). */
+.sample-bar { margin: 0; padding: 6px 16px; background: var(--amber-50); border-block-end: 1px dashed var(--n-400); color: var(--n-700, #44403C); font-size: 13px; line-height: 20px; text-align: center; }

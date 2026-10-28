@@ -1,0 +1,474 @@
+{
+ "base": "https://joumeh-storefront.gerdoo.app",
+ "tag": "gerdoo",
+ "at": "2026-10-28T12:46:03.892Z",
+ "blockedWrites": [],
+ "console": [],
+ "desktop": {
+  "home": {
+   "hero": {
+    "section": [
+     1440,
+     820
+    ],
+    "viewportW": 1440,
+    "img": [
+     1440,
+     820
+    ],
+    "src": "/img/hero-1542.webp",
+    "cta": "مشاهده",
+    "ctaHref": "/women",
+    "heroes": 1,
+    "carousel": false
+   },
+   "features": [
+    {
+     "id": "f-women",
+     "eyebrowToTitle": 16,
+     "titleToDesc": 16,
+     "descToCta": 32,
+     "descLines": 1,
+     "media": [
+      480,
+      600
+     ],
+     "textVCentreMinusMedia": 0,
+     "textAlign": "start",
+     "ctaCentreMinusTextCentre": 248,
+     "padTop": 48,
+     "padBottom": 0
+    },
+    {
+     "id": "f-men",
+     "eyebrowToTitle": 16,
+     "titleToDesc": 16,
+     "descToCta": 32,
+     "descLines": 1,
+     "media": [
+      480,
+      600
+     ],
+     "textVCentreMinusMedia": 0,
+     "textAlign": "start",
+     "ctaCentreMinusTextCentre": 248,
+     "padTop": 48,
+     "padBottom": 0
+    },
+    {
+     "id": "story",
+     "eyebrowToTitle": 16,
+     "titleToDesc": 16,
+     "descToCta": 32,
+     "descLines": 1,
+     "media": [
+      480,
+      600
+     ],
+     "textVCentreMinusMedia": 0,
+     "textAlign": "start",
+     "ctaCentreMinusTextCentre": 231,
+     "padTop": 48,
+     "padBottom": 80
+    }
+   ],
+   "sectionGaps": [
+    {
+     "from": "f-women",
+     "to": "hsec.best",
+     "contentGap": 96
+    },
+    {
+     "from": "hsec.best",
+     "to": "f-men",
+     "contentGap": 256
+    },
+    {
+     "from": "f-men",
+     "to": "hsec.best",
+     "contentGap": 96
+    },
+    {
+     "from": "hsec.best",
+     "to": "story",
+     "contentGap": 256
+    }
+   ],
+   "cardsPerRow": [
+    4,
+    4
+   ],
+   "storyImageToFooter": 80,
+   "prices": [
+    "قیمت به‌زودی / تماس بگیرید",
+    "قیمت به‌زودی / تماس بگیرید"
+   ],
+   "overflowX": 0,
+   "icons": {
+    "svgs": 11,
+    "inPackWrapper": 11,
+    "outside": [],
+    "imgIcons": []
+   }
+  },
+  "shop": {
+   "padRight": 120,
+   "padLeft": 120,
+   "columns": 3,
+   "colGap": 32,
+   "rowGap": 48,
+   "card": {
+    "w": 379,
+    "h": 563,
+    "bg": "rgb(255, 255, 255)",
+    "border": "1px rgb(231, 229, 226)",
+    "mediaPadTop": 9,
+    "hasPriceSlot": true,
+    "priceText": "قیمت به‌زودی / تماس بگیرید"
+   },
+   "swapCards": 9,
+   "cards": 9,
+   "filterControls": 0,
+   "cardHearts": 0,
+   "crumbSepIcon": true,
+   "overflowX": 0,
+   "tabActive": {
+    "gap": 8,
+    "line": 2,
+    "borderColor": "rgb(28, 116, 119)",
+    "text": "زنانه"
+   },
+   "crumbCurrent": {
+    "gap": 8,
+    "line": 2,
+    "borderColor": "rgb(28, 116, 119)",
+    "text": "زنانه"
+   },
+   "icons": {
+    "svgs": 13,
+    "inPackWrapper": 13,
+    "outside": [],
+    "imgIcons": []
+   }
+  },
+  "hoverSwap": {
+   "before": "0",
+   "after": "1",
+   "borderOnHover": "rgb(28, 116, 119)"
+  },
+  "sort": {
+   "closed": {
+    "label": "مرتب‌سازی",
+    "value": "جدیدترینپرفروش‌ترینارزان‌ترینگران‌ترین",
+    "bg": "rgba(0, 0, 0, 0)",
+    "border": "0px",
+    "chevron": true
+   },
+   "open": {
+    "valueColor": "rgb(28, 116, 119)",
+    "backdrop": "blur(20px)",
+    "options": [
+     "جدیدترین",
+     "پرفروش‌ترین",
+     "ارزان‌ترین",
+     "گران‌ترین"
+    ],
+    "optionTextRightInset": 20,
+    "tickLeftOfText": true
+   }
+  },
+  "pdp": {
+   "heroImg": [
+    492,
+    615
+   ],
+   "ratingRow": "هنوز نظری ثبت نشده است.",
+   "stars": 0,
+   "desc": "توضیحات این محصول به‌زودی اضافه می‌شود.",
+   "descSection": true,
+   "reviewsSection": true,
+   "reviewsText": "نظرات کاربرانثبت نظرهنوز نظری برای این محصول ثبت نشده است.اولین نفری باشید که نظر می‌دهد.",
+   "reviewItems": 0,
+   "sampleTag": true,
+   "price": "قیمت به‌زودی / تماس بگیرید",
+   "addDisabled": true,
+   "heart": true,
+   "icons": {
+    "svgs": 17,
+    "inPackWrapper": 17,
+    "outside": [],
+    "imgIcons": []
+   }
+  },
+  "cart": {
+   "empty": true,
+   "text": "سبد خرید سبد خرید شما خالی استمشاهده محصولات",
+   "rows": 0
+  },
+  "story": {
+   "exactMatch": true,
+   "gotLen": 929,
+   "expLen": 929
+  },
+  "chat": {
+   "fabOnPages": {
+    "/": true,
+    "/women": true,
+    "/men": true,
+    "/product/p08": true,
+    "/cart": true,
+    "/info/story": true,
+    "/support": true,
+    "/info/size-guide": true
+   },
+   "fixed": "fixed",
+   "open": {
+    "title": "پشتیبانی جومه",
+    "notice": "\n\n\n\n\n\nاین گفت‌وگو نمایشی (دمو) است؛ پیامی برای کسی ارسال نمی‌شود و پاسخ‌ها از پیش نوشته شده‌اند.",
+    "chips": [
+     "سفارشم کجاست؟",
+     "سایز مناسبم را چطور انتخاب کنم؟",
+     "هزینه و زمان ارسال چقدر است؟",
+     "شرایط بازگشت کالا چیست؟",
+     "قصه‌ی جومه چیست؟"
+    ]
+   },
+   "answer": [
+    "پاسخ نمایشی (دمو)سلام! یکی از پرسش‌های زیر را انتخاب کنید یا سؤالتان را بنویسید.",
+    "هزینه و زمان ارسال چقدر است؟",
+    "پاسخ نمایشی (دمو)اطلاعات ارسال هنوز نهایی نشده است و پس از تصمیم کسب‌وکار اعلام می‌شود."
+   ]
+  },
+  "search": {
+   "loadingShown": true,
+   "count": "۶ نتیجه برای «یزد»",
+   "items": 3,
+   "firstItem": "مجموعه یزد – ۰۱قیمت به‌زودی / تماس بگیرید"
+  },
+  "loading": {
+   "home": true,
+   "shop": true,
+   "pdp": true
+  }
+ },
+ "mobile": {
+  "home": {
+   "hero": {
+    "section": [
+     390,
+     600
+    ],
+    "viewportW": 390,
+    "img": [
+     390,
+     600
+    ],
+    "src": "/img/hero-768.webp",
+    "cta": "مشاهده",
+    "ctaHref": "/women",
+    "heroes": 1,
+    "carousel": false
+   },
+   "features": [
+    {
+     "id": "f-women",
+     "eyebrowToTitle": 16,
+     "titleToDesc": 16,
+     "descToCta": 32,
+     "descLines": 2,
+     "media": [
+      358,
+      448
+     ],
+     "textVCentreMinusMedia": 361,
+     "textAlign": "start",
+     "ctaCentreMinusTextCentre": 107,
+     "padTop": 48,
+     "padBottom": 0
+    },
+    {
+     "id": "f-men",
+     "eyebrowToTitle": 16,
+     "titleToDesc": 16,
+     "descToCta": 32,
+     "descLines": 2,
+     "media": [
+      358,
+      448
+     ],
+     "textVCentreMinusMedia": 361,
+     "textAlign": "start",
+     "ctaCentreMinusTextCentre": 107,
+     "padTop": 48,
+     "padBottom": 0
+    },
+    {
+     "id": "story",
+     "eyebrowToTitle": 16,
+     "titleToDesc": 16,
+     "descToCta": 32,
+     "descLines": 1,
+     "media": [
+      358,
+      448
+     ],
+     "textVCentreMinusMedia": 349,
+     "textAlign": "start",
+     "ctaCentreMinusTextCentre": 90,
+     "padTop": 48,
+     "padBottom": 80
+    }
+   ],
+   "sectionGaps": [
+    {
+     "from": "f-women",
+     "to": "hsec.best",
+     "contentGap": 96
+    },
+    {
+     "from": "hsec.best",
+     "to": "f-men",
+     "contentGap": 192
+    },
+    {
+     "from": "f-men",
+     "to": "hsec.best",
+     "contentGap": 96
+    },
+    {
+     "from": "hsec.best",
+     "to": "story",
+     "contentGap": 192
+    }
+   ],
+   "cardsPerRow": [
+    4,
+    4
+   ],
+   "storyImageToFooter": 306,
+   "prices": [
+    "قیمت به‌زودی / تماس بگیرید",
+    "قیمت به‌زودی / تماس بگیرید"
+   ],
+   "overflowX": 0,
+   "icons": {
+    "svgs": 11,
+    "inPackWrapper": 11,
+    "outside": [],
+    "imgIcons": []
+   }
+  },
+  "shop": {
+   "padRight": 16,
+   "padLeft": 16,
+   "columns": 2,
+   "colGap": 12,
+   "rowGap": 24,
+   "card": {
+    "w": 173,
+    "h": 276,
+    "bg": "rgb(255, 255, 255)",
+    "border": "1px rgb(231, 229, 226)",
+    "mediaPadTop": 9,
+    "hasPriceSlot": true,
+    "priceText": "قیمت به‌زودی / تماس بگیرید"
+   },
+   "swapCards": 9,
+   "cards": 9,
+   "filterControls": 0,
+   "cardHearts": 0,
+   "crumbSepIcon": true,
+   "overflowX": 0,
+   "tabActive": null,
+   "crumbCurrent": {
+    "gap": 8,
+    "line": 2,
+    "borderColor": "rgb(28, 116, 119)",
+    "text": "زنانه"
+   },
+   "icons": {
+    "svgs": 12,
+    "inPackWrapper": 12,
+    "outside": [],
+    "imgIcons": []
+   }
+  },
+  "sortMobile": {
+   "dialog": true,
+   "title": "مرتب‌سازی"
+  },
+  "pdp": {
+   "heroImg": [
+    358,
+    448
+   ],
+   "ratingRow": "هنوز نظری ثبت نشده است.",
+   "stars": 0,
+   "desc": "توضیحات این محصول به‌زودی اضافه می‌شود.",
+   "descSection": true,
+   "reviewsSection": true,
+   "reviewsText": "نظرات کاربرانثبت نظرهنوز نظری برای این محصول ثبت نشده است.اولین نفری باشید که نظر می‌دهد.",
+   "reviewItems": 0,
+   "sampleTag": true,
+   "price": "قیمت به‌زودی / تماس بگیرید",
+   "addDisabled": true,
+   "heart": true,
+   "icons": {
+    "svgs": 17,
+    "inPackWrapper": 17,
+    "outside": [],
+    "imgIcons": []
+   }
+  },
+  "cart": {
+   "empty": true,
+   "text": "سبد خرید سبد خرید شما خالی استمشاهده محصولات",
+   "rows": 0
+  },
+  "story": {
+   "exactMatch": true,
+   "gotLen": 929,
+   "expLen": 929
+  },
+  "chat": {
+   "fabOnPages": {
+    "/": true,
+    "/women": true,
+    "/men": true,
+    "/product/p08": true,
+    "/cart": true,
+    "/info/story": true,
+    "/support": true,
+    "/info/size-guide": true
+   },
+   "fixed": "fixed",
+   "open": {
+    "title": "پشتیبانی جومه",
+    "notice": "\n\n\n\n\n\nاین گفت‌وگو نمایشی (دمو) است؛ پیامی برای کسی ارسال نمی‌شود و پاسخ‌ها از پیش نوشته شده‌اند.",
+    "chips": [
+     "سفارشم کجاست؟",
+     "سایز مناسبم را چطور انتخاب کنم؟",
+     "هزینه و زمان ارسال چقدر است؟",
+     "شرایط بازگشت کالا چیست؟",
+     "قصه‌ی جومه چیست؟"
+    ]
+   },
+   "answer": [
+    "پاسخ نمایشی (دمو)سلام! یکی از پرسش‌های زیر را انتخاب کنید یا سؤالتان را بنویسید.",
+    "هزینه و زمان ارسال چقدر است؟",
+    "پاسخ نمایشی (دمو)اطلاعات ارسال هنوز نهایی نشده است و پس از تصمیم کسب‌وکار اعلام می‌شود."
+   ]
+  },
+  "search": {
+   "loadingShown": true,
+   "count": "۶ نتیجه برای «یزد»",
+   "items": 3,
+   "firstItem": "مجموعه یزد – ۰۱قیمت به‌زودی / تماس بگیرید"
+  },
+  "loading": {
+   "home": true,
+   "shop": true,
+   "pdp": true
+  }
+ }
+}

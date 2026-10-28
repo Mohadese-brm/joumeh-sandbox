@@ -6,6 +6,7 @@ import { useStore } from '../lib/store';
 import { api, type Product } from '../lib/api';
 import { faNumber, formatPrice } from '../lib/format';
 import { AuthModal } from './AuthModal';
+import { useSiteMode, SAMPLE_ORDERS_BLOCKED } from '../lib/siteMode';
 import { Toasts } from './Toasts';
 import './Layout.css';
 
@@ -80,6 +81,7 @@ export function Header() {
 }
 
 export function Footer() {
+  const mode = useSiteMode();
   return (
     <footer className="ftr">
       <div className="wrap ftr__in">
@@ -90,7 +92,8 @@ export function Footer() {
           <li><Link to="/info/shipping">ارسال و تحویل</Link></li><li><Link to="/info/returns">بازگشت کالا</Link></li><li><Link to="/info/size-guide">راهنمای سایز</Link></li><li><Link to="/support">پرسش‌های متداول</Link></li></ul></nav>
         <nav aria-labelledby="f3"><h2 id="f3">جومه</h2><ul><li><Link to="/info/story">قصه‌ی ما</Link></li><li><Link to="/support/contact">تماس با ما</Link></li><li><Link to="/info/careers">همکاری</Link></li><li><Link to="/info/blog">وبلاگ</Link></li></ul></nav>
       </div>
-      <div className="wrap"><p className="ftr__copy caption">© ۱۴۰۵ جومه — تمامی حقوق محفوظ است. <span className="ftr__sample">نسخه‌ی محلی با داده نمونه</span></p></div>
+      {/* gerdoo-update-2026-10-28: the note only shows when the server really serves sample data (was unconditional → wrong on live Gerdoo). */}
+      <div className="wrap"><p className="ftr__copy caption">© ۱۴۰۵ جومه — تمامی حقوق محفوظ است.{mode?.sampleData && <span className="ftr__sample">{mode.sampleOverlay ? 'قیمت‌ها، سایزها و نظرها نمونه‌اند (نمونه)' : 'نسخه‌ی محلی با داده نمونه'}</span>}</p></div>
     </footer>
   );
 }
@@ -108,13 +111,14 @@ export function BottomNav() {
 }
 
 export function Layout() {
-  const loc = useLocation();
+  const loc = useLocation(); const mode = useSiteMode();
   useEffect(() => {
     if (loc.hash) { document.getElementById(loc.hash.slice(1))?.scrollIntoView(); return; }
     window.scrollTo(0, 0);
   }, [loc.pathname, loc.hash]);
   return (<>
     <a href="#main" className="skip">رفتن به محتوای اصلی</a>
+    {mode?.sampleOverlay && <p className="sample-bar" role="note" data-testid="sample-bar">{SAMPLE_ORDERS_BLOCKED}</p>}
     <Header />
     <main id="main" tabIndex={-1}><Outlet /></main>
     <Footer />

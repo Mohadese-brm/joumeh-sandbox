@@ -13,6 +13,7 @@ import { Reviews } from './pages/Reviews';
 import { Content, ContentPage } from './pages/Content';
 import { Users, Audit } from './pages/Settings';
 import { Inventory, InventoryHistory } from './pages/Inventory';
+import { Setup } from './Setup';
 
 const MeCtx = createContext<Me | null>(null);
 export const useMe = () => useContext(MeCtx)!;
@@ -154,6 +155,8 @@ export function AdminApp() {
   useEffect(() => { const f = () => setMe(null); window.addEventListener('joumeh-admin-401', f); return () => window.removeEventListener('joumeh-admin-401', f); }, []);
   useEffect(() => { document.documentElement.lang = 'fa'; document.title = demo ? 'پنل مدیریت جومه (DEMO)' : 'پنل مدیریت جومه'; }, [demo]);
   const logout = async () => { await aapi('/auth/logout', { method: 'POST' }).catch(() => {}); setMe(null); };
+  // gerdoo-update-2026-10-28: the one-time setup page is reachable without a session (the server decides open/404).
+  if (/^\/admin\/setup\/?$/.test(loc.pathname)) return <Setup />;
   return <DemoCtx.Provider value={{ demo, setDemo }}>{
     !ready ? <div className="adm"><DemoBanner /></div>
     : !me ? <Login onIn={() => { load(); if (loc.pathname === '/admin/login') nav('/admin'); }} />

@@ -5,6 +5,7 @@ import { api, type Cart as CartT, type CartItem } from '../lib/api';
 import { faNumber, formatPrice } from '../lib/format';
 import { Icon } from '../components/Icon';
 import { Stub } from '../components/Stub';
+import { SAMPLE_ORDERS_BLOCKED } from '../lib/siteMode';
 import './Cart.css';
 
 export function Summary({ cart, children, title = 'خلاصه سفارش' }: { cart: CartT; children?: React.ReactNode; title?: string }) {
@@ -54,13 +55,14 @@ export function Cart() {
       <div className="cart__head" data-figma="119:594"><h1 className="cart__title">سبد خرید</h1><span className="cart__count">{faNumber(cart.totals.count)} کالا</span></div>
       <div className="cart__grid">
         <div>
+          {cart.ordersBlocked && <p className="stub" role="note" data-testid="orders-blocked"><Icon name="danger-circle" size={20} /><span>{SAMPLE_ORDERS_BLOCKED}</span></p>}
           {unavailable && <p className="stub" role="alert"><Icon name="danger-circle" size={20} /><span>برخی کالاها ناموجود شده‌اند و در جمع حساب نمی‌شوند. آن‌ها را حذف کنید.</span></p>}
           <ul className="cart__list">{cart.items.map(it => (
             <li key={it.id} className={`citem${it.available ? '' : ' citem--na'}`} aria-busy={busy === it.id}>
               <Link to={`/product/${it.slug}`} className="citem__img" tabIndex={-1} aria-hidden="true"><img src={it.imageUrl} alt="" width={72} height={96} /></Link>
               <div className="citem__info">
                 <Link to={`/product/${it.slug}`} className="citem__name">{it.name}</Link>
-                <p className="citem__var">رنگ: {it.color} · سایز: {it.size}</p>
+                <p className="citem__var">رنگ: {it.color} · سایز: {it.size}{it.sample && <> <span className="tag-sample">نمونه</span></>}</p>
                 <p className="citem__unit">قیمت واحد: {it.originalPrice != null && it.price != null && it.originalPrice > it.price && <s className="muted">{faNumber(it.originalPrice)}</s>} <span className={it.originalPrice ? 'pc__now--sale' : ''}>{formatPrice(it.price)}</span></p>
                 {!it.available && <p className="err">ناموجود</p>}
               </div>
@@ -74,7 +76,7 @@ export function Cart() {
             </li>))}</ul>
           <Stub code="BD-08/BD-16">رزرو موجودی، پیام «موجودی ناکافی» و «تغییر قیمت» به تصمیم کسب‌وکار وابسته‌اند و فعال نیستند.</Stub>
         </div>
-        <Summary cart={cart}><button className="btn btn--primary btn--block" disabled={cart.totals.count === 0} onClick={() => nav('/checkout')}>ادامه فرایند خرید</button></Summary>
+        <Summary cart={cart}><button className="btn btn--primary btn--block" disabled={cart.totals.count === 0 || !!cart.ordersBlocked} onClick={() => nav('/checkout')}>{cart.ordersBlocked ? 'ثبت سفارش غیرفعال (نمونه)' : 'ادامه فرایند خرید'}</button></Summary>
       </div>
     </div>
   );

@@ -19,6 +19,11 @@ openDb().then(db => {
   app.disable('x-powered-by');
   app.use('/api', (req, res, next) => { req.url = req.originalUrl; api(req, res, next); });
   app.use(express.static(dist, { index: false, maxAge: '1h' }));
+  // gerdoo-update-2026-10-28: the one-time setup page answers with a real HTTP 404 once it has closed (server/admin-setup.ts).
+  app.get(['/admin/setup', '/admin/setup/'], async (_req, res, next) => {
+    try { const open = await (api.locals.adminSetupOpen as () => Promise<boolean>)(); res.setHeader('Cache-Control', 'no-store');
+      res.status(open ? 200 : 404).sendFile(join(dist, 'index.html')); } catch (e) { next(e); }
+  });
   app.get(/^\/(?!api\/|img\/|assets\/).*/, (_req, res) => res.sendFile(join(dist, 'index.html')));
   app.listen(port, '0.0.0.0', () => console.log(`Joumeh on 0.0.0.0:${port}`));
 });

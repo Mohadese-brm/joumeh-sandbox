@@ -8,6 +8,7 @@ import { MockProvider, type PaymentProvider } from './payment.js';
 import { ConsoleSmsAdapter, type SmsAdapter } from './sms.js';
 import { mountAdmin, adminDemoAllowed } from './admin.js';
 import { mediaFromEnv, type MediaStore } from './media.js';
+import { sampleOverlayOn, OVERLAY_SQL, sampleVariants, sampleDescription, sampleReviewsBlock, decodeVirtualVariant, SampleCartLines, SAMPLE_MODE_NOTICE } from './sample-overlay.js';
 
 const sha = (s: string) => createHash('sha256').update(s).digest('hex');
 const PHONE_RE = /^09\d{9}$/;
@@ -20,17 +21,19 @@ const LIVE = `(SELECT * FROM products WHERE publish_state='published')`;
 // catalog-real: a product without a prices row has price NULL («قیمت به‌زودی / تماس بگیرید»); it is listed (LEFT JOIN) but cannot be bought.
 // Real product photos have a 600px thumb next to the full image (public/img/products/thumb/); other images use themselves.
 const THUMB_SQL = (col: string) => `CASE WHEN ${col} LIKE '/img/products/%' THEN replace(${col}, '/img/products/', '/img/products/thumb/') ELSE ${col} END`;
-const PRODUCT_SQL = `SELECT ${TYPE_SQL} AS type, p.id, p.slug, p.name, p.status, p.badge_percent AS badgePercent, p.is_sample AS isSample, c.slug AS category,
-  pr.amount AS price, pr.original_amount AS originalPrice, pr.currency,
+// gerdoo-update-2026-10-28: with the sample overlay on (server/sample-overlay.ts) unpriced products get labelled placeholder values at read time.
+const productSql = (overlay: boolean) => `SELECT ${TYPE_SQL} AS type, p.id, p.slug, p.name, ${overlay ? OVERLAY_SQL.status : 'p.status'} AS status,
+  ${overlay ? OVERLAY_SQL.badge : 'p.badge_percent'} AS badgePercent, ${overlay ? OVERLAY_SQL.isSample : 'p.is_sample'} AS isSample, ${overlay ? OVERLAY_SQL.overlay : '0'} AS sampleOverlay, c.slug AS category,
+  ${overlay ? OVERLAY_SQL.price : 'pr.amount'} AS price, ${overlay ? OVERLAY_SQL.originalPrice : 'pr.original_amount'} AS originalPrice, ${overlay ? OVERLAY_SQL.currency : 'pr.currency'} AS currency,
   (SELECT url FROM images i WHERE i.product_id=p.id ORDER BY position LIMIT 1) AS imageUrl,
   (SELECT ${THUMB_SQL('url')} FROM images i WHERE i.product_id=p.id ORDER BY position LIMIT 1) AS imageThumb,
   (SELECT alt FROM images i WHERE i.product_id=p.id ORDER BY position LIMIT 1) AS imageAlt,
   (SELECT ${THUMB_SQL('url')} FROM images i WHERE i.product_id=p.id AND i.url <> (SELECT url FROM images j WHERE j.product_id=p.id ORDER BY position LIMIT 1) ORDER BY position LIMIT 1) AS imageThumb2
   FROM ${LIVE} p LEFT JOIN prices pr ON pr.product_id=p.id JOIN categories c ON c.id=p.category_id`;
-const SORTS: Record<string, string> = {
+const sortsFor = (overlay: boolean): Record<string, string> => { const a = overlay ? OVERLAY_SQL.price : 'pr.amount'; return {
   newest: 'p.created_at DESC, p.id', bestseller: 'p.sort_rank, p.id', // best-seller definition open (Refinement 2): sample rank
-  'price-asc': 'pr.amount IS NULL, pr.amount ASC, p.id', 'price-desc': 'pr.amount IS NULL, pr.amount DESC, p.id', // unpriced always last
-};
+  'price-asc': `${a} IS NULL, ${a} ASC, p.id`, 'price-desc': `${a} IS NULL, ${a} DESC, p.id`, // unpriced always last
+}; };
 const CATALOG_STUBS = { stock: stub('BD-16'), reviews: stub('BD-15'), sizeChart: stub('BD-18'), shipping: stub('BD-02'), returns: stub('BD-04') };
 
 export type Deps = { sms?: SmsAdapter; payment?: PaymentProvider; now?: () => number;
@@ -39,7 +42,11 @@ export type Deps = { sms?: SmsAdapter; payment?: PaymentProvider; now?: () => nu
   /** admin-demo: enables the SMS-free DEMO admin login. Local only; the Vercel handler never sets it. */
   adminDemo?: boolean;
   /** Product-image storage adapter (server/media.ts). Default: from MEDIA_* env vars (memory when unset). */
-  media?: MediaStore };
+  media?: MediaStore;
+  /** gerdoo-update-2026-10-28: non-destructive sample overlay + order block. Default: JOUMEH_SAMPLE_OVERLAY=1 only. */
+  sampleOverlay?: boolean;
+  /** Env for the one-time /admin/setup page (server/admin-setup.ts). Default process.env. */
+  env?: Record<string, string | undefined> };
 type AuthedReq = Request & { userId?: number };
 
 /** Express 4 does not catch rejected promises: every handler/middleware registered on the app is wrapped so a rejection goes to next(err). */
@@ -60,6 +67,9 @@ export function createApp(db: Db, deps: Deps = {}) {
   const sms = deps.sms ?? new ConsoleSmsAdapter(demoOtp);
   const pay = deps.payment ?? new MockProvider();
   const now = deps.now ?? (() => Date.now());
+  const overlay = deps.sampleOverlay ?? sampleOverlayOn();
+  const PRODUCT_SQL = productSql(overlay); const SORTS = sortsFor(overlay);
+  const sampleLines = new SampleCartLines();
   const app = asyncSafe(express());
   let ready: Promise<void> = Promise.resolve();
   app.use(async (_q, _r, next) => { await ready; next(); });
@@ -73,7 +83,12 @@ export function createApp(db: Db, deps: Deps = {}) {
   };
   const bad = (res: Response, error: string, fields?: Record<string, string>) => res.status(400).json({ error, fields });
 
-  app.get('/api/health', async (_q, res) => res.json({ ok: true, sampleData: samplePlaceholdersOn(), catalog: samplePlaceholdersOn() ? 'real photos + placeholder sample data (db/sample-placeholder-data.ts)' : 'real (placeholder names, no prices yet)' }));
+  // gerdoo-update-2026-10-28: sampleData now reflects what is actually served (seeded sample rows or the overlay), not just the seed-time flag default.
+  app.get('/api/health', async (_q, res) => {
+    const seeded = !!await db.one('SELECT id FROM products WHERE is_sample=1 LIMIT 1');
+    res.json({ ok: true, sampleData: seeded || overlay, sampleOverlay: overlay, ordersBlocked: overlay, ...(overlay ? { notice: SAMPLE_MODE_NOTICE } : {}),
+      catalog: overlay ? 'real catalogue + read-time sample overlay for unpriced products (server/sample-overlay.ts)' : seeded ? 'real photos + seeded placeholder sample data (db/sample-placeholder-data.ts)' : 'real (no prices yet)' });
+  });
 
   // ---------- Catalog ----------
   app.get('/api/products', async (req, res) => {
@@ -107,10 +122,11 @@ export function createApp(db: Db, deps: Deps = {}) {
     const prod = await db.one<Record<string, unknown> & { id: number; category: string }>(PRODUCT_SQL + ' WHERE p.slug = ?', [req.params.slug]);
     if (!prod) return res.status(404).json({ error: 'not_found' });
     const d = (await db.one<{ description: string }>('SELECT description FROM products WHERE id=?', [prod.id]))!;
+    const ov = !!prod.sampleOverlay; // overlay product: virtual sample variants + sample description (real one kept if present)
     const related = await db.all(PRODUCT_SQL + ' WHERE c.slug=? AND p.id<>? ORDER BY p.sort_rank LIMIT 4', [prod.category, prod.id]);
-    res.json({ data: { ...prod, description: d.description,
+    res.json({ data: { ...prod, description: ov ? sampleDescription(d.description) : d.description,
       images: await db.all(`SELECT url, ${THUMB_SQL('url')} AS thumb, alt FROM images WHERE product_id=? ORDER BY position`, [prod.id]),
-      variants: await db.all('SELECT id, size, color, color_hex AS colorHex, sku, available FROM variants WHERE product_id=? ORDER BY id', [prod.id]),
+      variants: ov ? sampleVariants(prod.id) : await db.all('SELECT id, size, color, color_hex AS colorHex, sku, available FROM variants WHERE product_id=? ORDER BY id', [prod.id]),
       related,
       // design-batch-2026-10-26 item 10: aggregate rating row on the PDP (sample placeholder when the switch is on; real reviews otherwise).
       rating: await (async () => { const r = await reviewSummary(prod.id); return { average: r.average, count: r.count, sample: !!(r as { sample?: boolean }).sample }; })() },
@@ -131,10 +147,18 @@ export function createApp(db: Db, deps: Deps = {}) {
       FROM cart_items ci JOIN variants v ON v.id=ci.variant_id JOIN products p ON p.id=v.product_id LEFT JOIN prices pr ON pr.product_id=p.id WHERE ci.cart_id=? ORDER BY ci.id`, [cid]);
     // An item whose price was removed after it was added is treated as unavailable (never summed, never ordered).
     for (const i of items) if (i.price == null) i.available = 0;
+    // Sample overlay: in-memory sample lines (never in cart_items). Dropped if the product left the overlay (real price saved) or is gone.
+    if (overlay) for (const l of sampleLines.get(cid)) {
+      const v = decodeVirtualVariant(l.variantId);
+      const pr = v && await db.one<{ price: number; originalPrice: number | null; slug: string; name: string; imageThumb: string; sampleOverlay: number }>(PRODUCT_SQL + ' WHERE p.id=?', [v.pid]);
+      if (!v || !pr || !Number(pr.sampleOverlay)) { sampleLines.remove(cid, l.variantId); continue; }
+      (items as unknown as Record<string, unknown>[]).push({ id: l.variantId, variantId: l.variantId, quantity: l.quantity, size: v.size, color: v.color, available: v.available ? 1 : 0,
+        productId: v.pid, slug: pr.slug, name: pr.name, price: pr.price, originalPrice: pr.originalPrice, imageUrl: pr.imageThumb, sample: true });
+    }
     const live = items.filter(i => i.available);
     const subtotal = live.reduce((s, i) => s + (i.originalPrice ?? i.price!) * i.quantity, 0);
     const payable = live.reduce((s, i) => s + i.price! * i.quantity, 0);
-    return { cartId: cid, items: items.map(i => ({ ...i, available: !!i.available, lineTotal: i.price == null ? null : i.price * i.quantity })),
+    return { cartId: cid, sampleMode: overlay, ordersBlocked: overlay, items: items.map(i => ({ ...i, available: !!i.available, lineTotal: i.price == null ? null : i.price * i.quantity })),
       totals: { count: live.reduce((s, i) => s + i.quantity, 0), subtotal, discount: subtotal - payable, payable, shipping: null, vat: null },
       stubs: { shipping: stub('BD-02'), vat: stub('BD-06'), discountCode: stub('BD-17'), reservation: stub('BD-08') } };
   };
@@ -147,6 +171,17 @@ export function createApp(db: Db, deps: Deps = {}) {
   app.post('/api/cart/items', async (req, res) => {
     const { cartId, variantId, quantity = 1 } = req.body ?? {};
     if (!Number.isInteger(variantId) || !Number.isInteger(quantity) || quantity < 1 || quantity > 99) return bad(res, 'invalid_body');
+    if (variantId < 0) { // sample overlay virtual variant → in-memory line only
+      const v = overlay ? decodeVirtualVariant(variantId) : null;
+      const pr = v && await db.one<{ sampleOverlay: number }>(PRODUCT_SQL + ' WHERE p.id=?', [v.pid]);
+      if (!v || !pr || !Number(pr.sampleOverlay)) return res.status(404).json({ error: 'variant_not_found' });
+      if (!v.available) return res.status(409).json({ error: 'variant_unavailable' });
+      let cid = cartId;
+      if (cid === undefined || cid === null) cid = await db.insert('INSERT INTO carts DEFAULT VALUES');
+      else if (!await cartExists(cid)) return res.status(404).json({ error: 'cart_not_found' });
+      sampleLines.add(cid, variantId, quantity);
+      return res.status(201).json({ data: await cartView(cid) });
+    }
     const v = await db.one<{ available: number; price: number | null }>('SELECT v.available, pr.amount AS price FROM variants v LEFT JOIN prices pr ON pr.product_id=v.product_id WHERE v.id=?', [variantId]);
     if (!v) return res.status(404).json({ error: 'variant_not_found' });
     if (v.price == null) return res.status(409).json({ error: 'price_on_request' }); // catalog-real: no price yet → not purchasable
@@ -161,12 +196,14 @@ export function createApp(db: Db, deps: Deps = {}) {
   app.patch('/api/cart/:id/items/:itemId', async (req, res) => {
     const cid = Number(req.params.id); const q = req.body?.quantity;
     if (!Number.isInteger(q) || q < 1 || q > 99) return bad(res, 'invalid_quantity');
+    if (Number(req.params.itemId) < 0) { if (!sampleLines.has(cid, Number(req.params.itemId))) return res.status(404).json({ error: 'item_not_found' }); sampleLines.set(cid, Number(req.params.itemId), q); return res.json({ data: await cartView(cid) }); }
     if (!await db.one('SELECT id FROM cart_items WHERE id=? AND cart_id=?', [Number(req.params.itemId), cid])) return res.status(404).json({ error: 'item_not_found' });
     await db.run('UPDATE cart_items SET quantity=? WHERE id=?', [q, Number(req.params.itemId)]);
     res.json({ data: await cartView(cid) });
   });
   app.delete('/api/cart/:id/items/:itemId', async (req, res) => {
     const cid = Number(req.params.id);
+    if (Number(req.params.itemId) < 0) { if (!sampleLines.has(cid, Number(req.params.itemId))) return res.status(404).json({ error: 'item_not_found' }); sampleLines.remove(cid, Number(req.params.itemId)); return res.json({ data: await cartView(cid) }); }
     if (!await db.one('SELECT id FROM cart_items WHERE id=? AND cart_id=?', [Number(req.params.itemId), cid])) return res.status(404).json({ error: 'item_not_found' });
     await db.run('DELETE FROM cart_items WHERE id=?', [Number(req.params.itemId)]); // removing a line from a cart is user action, undo = re-add
     res.json({ data: await cartView(cid) });
@@ -286,6 +323,7 @@ export function createApp(db: Db, deps: Deps = {}) {
   // fix2 reviews — DEFAULTS (not policy; BD-15 open): signed-in only · rating integer 1–5 · text 1–1000 chars after trim ·
   // published immediately — CEO DECISION 2026-10-21: no moderation (REVIEW_DEFAULTS.moderation = 'none') · multiple reviews per user allowed · average = mean rounded to 1 decimal.
   const sampleProduct = async (pid: number) => !!(await db.one<{ s: number }>('SELECT is_sample AS s FROM products WHERE id=?', [pid]))?.s;
+  const overlayProduct = async (pid: number) => !await db.one('SELECT product_id FROM prices WHERE product_id=?', [pid]);
   const REVIEW_DEFAULTS = { minLen: 1, maxLen: 1000, moderation: 'none' as 'none' | 'pre' };
   const reviewSummary = async (pid: number) => {
     const reviews = await db.all<{ id: number; rating: number; body: string; createdAt: string; firstName: string | null; lastName: string | null }>(
@@ -295,6 +333,7 @@ export function createApp(db: Db, deps: Deps = {}) {
     const real = reviews.map(r => ({ id: r.id as number | string, rating: r.rating, body: r.body, createdAt: r.createdAt, meta: undefined as string | undefined, sample: false,
       name: r.firstName ? `${r.firstName}${r.lastName ? ` ${r.lastName.slice(0, 1)}.` : ''}` : 'کاربر جومه' }));
     // design-batch-2026-10-26: placeholder reviews + aggregate (Figma 266:71769), labelled «(نمونه)»; real reviews are listed first.
+    if (overlay && await overlayProduct(pid)) return sampleReviewsBlock(real, count);
     if (samplePlaceholdersOn() && await sampleProduct(pid)) return { reviews: [...real, ...SAMPLE_REVIEWS.map(r => ({ ...r, createdAt: undefined }))], count: SAMPLE_RATING.count + count, average: SAMPLE_RATING.average, sample: true };
     return { reviews: real, count, average };
   };
@@ -336,6 +375,8 @@ export function createApp(db: Db, deps: Deps = {}) {
   });
   app.post('/api/orders', auth, async (req: AuthedReq, res) => {
     // BD-07 STUB: guest checkout undecided → login required.
+    // gerdoo-update-2026-10-28: no order can be placed while the sample overlay is on (no one can order at a sample price).
+    if (overlay) return res.status(409).json({ error: 'sample_mode', message: SAMPLE_MODE_NOTICE });
     const { cartId, address, shippingMethodId } = req.body ?? {};
     if (!await cartExists(cartId)) return res.status(404).json({ error: 'cart_not_found' });
     const f = validateAddress(address ?? {});
@@ -359,6 +400,7 @@ export function createApp(db: Db, deps: Deps = {}) {
     const o = await db.one<{ id: number; total: number; payment_status: string }>('SELECT id,total,payment_status FROM orders WHERE id=? AND user_id=?', [Number(req.params.id), req.userId!]);
     if (!o) return res.status(404).json({ error: 'not_found' });
     if (o.payment_status === 'paid') return res.status(409).json({ error: 'already_paid' });
+    if (overlay) return res.status(409).json({ error: 'sample_mode', message: SAMPLE_MODE_NOTICE });
     const s = pay.start(o.id, o.total);
     await db.run('INSERT INTO payments (order_id,provider,status,ref,amount) VALUES (?,?,?,?,?)', [o.id, pay.name, 'started', s.ref, o.total]);
     res.status(201).json({ data: s, stubs: { payment: stub('BD-01') } });
@@ -385,7 +427,7 @@ export function createApp(db: Db, deps: Deps = {}) {
     res.json({ data: r, stubs: { returns: stub('BD-04') } });
   });
 
-  ready = mountAdmin(app, db, { adminDemo: deps.adminDemo ?? adminDemoAllowed(), now, media: deps.media ?? mediaFromEnv() });
+  ready = mountAdmin(app, db, { adminDemo: deps.adminDemo ?? adminDemoAllowed(), now, media: deps.media ?? mediaFromEnv(), env: deps.env });
   ready.catch(() => {}); // surfaced per request by the gate above (→ 500)
 
   app.use('/api', (_q, res) => res.status(404).json({ error: 'not_found' }));

@@ -7,6 +7,7 @@ import { Summary } from './Cart';
 import { Stub } from '../components/Stub';
 import { Icon } from '../components/Icon';
 import { faNumber } from '../lib/format';
+import { SAMPLE_ORDERS_BLOCKED } from '../lib/siteMode';
 import './Checkout.css';
 
 export function Steps({ current }: { current: 1 | 2 | 3 }) {
@@ -29,11 +30,12 @@ export function Checkout() {
   if (!cart || cart.items.length === 0) return <div className="wrap state" style={{ paddingBlock: 64 }}><h1 className="h-page">سبد خرید شما خالی است</h1><Link to="/" className="btn btn--primary">بازگشت به فروشگاه</Link></div>;
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setFail('');
+    if (cart.ordersBlocked) { setFail(SAMPLE_ORDERS_BLOCKED); return; }
     if (!user) { openAuth(); return; }
     setBusy(true);
     try { const r = await api<Order>('/orders', { method: 'POST', body: { cartId: cart.cartId, address: v, shippingMethodId: method } });
       await refreshCart(); nav(`/checkout/payment?order=${r.data.id}`); }
-    catch (x) { const er = x as ApiError; if (er.fields) { setErrors(er.fields); setTimeout(() => document.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus(), 0); } else setFail('ثبت سفارش انجام نشد. دوباره تلاش کنید.'); }
+    catch (x) { const er = x as ApiError; if (er.fields) { setErrors(er.fields); setTimeout(() => document.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus(), 0); } else setFail(er.code === 'sample_mode' ? SAMPLE_ORDERS_BLOCKED : 'ثبت سفارش انجام نشد. دوباره تلاش کنید.'); }
     finally { setBusy(false); }
   };
   return (
@@ -42,6 +44,7 @@ export function Checkout() {
       <form className="checkout__grid" onSubmit={submit} noValidate>
         <section className="card checkout__form" aria-labelledby="ship-h">
           <h1 id="ship-h" className="h-section">اطلاعات ارسال</h1>
+          {cart.ordersBlocked && <p className="stub" role="note" data-testid="orders-blocked"><Icon name="danger-circle" size={20} /><span>{SAMPLE_ORDERS_BLOCKED}</span></p>}
           {authReady && !user && <p className="stub"><Icon name="information-circle" size={20} /><span><strong>برای ادامه وارد شوید.</strong> خرید مهمان در انتظار تصمیم کسب‌وکار است (BD-07). <button type="button" className="link" onClick={() => openAuth()}>ورود / ثبت‌نام</button></span></p>}
           <AddressFields v={v} set={setV} errors={errors} idp="co" />
           <fieldset className="checkout__methods" aria-describedby={errors.shippingMethodId ? 'm-e' : undefined}>
@@ -53,7 +56,7 @@ export function Checkout() {
         </section>
         <Summary cart={cart} title="خلاصه‌ی سفارش">
           {fail && <p className="err" role="alert">{fail}</p>}
-          <button className="btn btn--primary btn--block" disabled={busy}>{busy ? 'در حال ثبت…' : 'ادامه و پرداخت'}</button>
+          <button className="btn btn--primary btn--block" disabled={busy || !!cart.ordersBlocked}>{cart.ordersBlocked ? 'ثبت سفارش غیرفعال (نمونه)' : busy ? 'در حال ثبت…' : 'ادامه و پرداخت'}</button>
         </Summary>
       </form>
     </div>
