@@ -87,7 +87,8 @@ export function createApp(db: Db, deps: Deps = {}) {
 
   // gerdoo-update-2026-10-28: sampleData now reflects what is actually served (seeded sample rows or the overlay), not just the seed-time flag default.
   app.get('/api/health', async (_q, res) => {
-    const seeded = !!await db.one('SELECT id FROM products WHERE is_sample=1 LIMIT 1');
+    // Only a published sample row counts. Preview demo products are unpublished and must not label the real shop as sample data.
+    const seeded = !!await db.one(`SELECT id FROM products WHERE is_sample=1 AND publish_state='published' LIMIT 1`);
     res.json({ ok: true, sampleData: seeded || overlay, sampleOverlay: overlay, ordersBlocked: overlay, ...(overlay ? { notice: SAMPLE_MODE_NOTICE } : {}),
       catalog: overlay ? 'real catalogue + read-time sample overlay for unpriced products (server/sample-overlay.ts)' : seeded ? 'real photos + seeded placeholder sample data (db/sample-placeholder-data.ts)' : 'real catalogue' });
   });

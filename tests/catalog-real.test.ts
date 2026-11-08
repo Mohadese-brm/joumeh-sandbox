@@ -71,8 +71,11 @@ describe('API after the catalogue release', () => {
     const c = (await request(app).get('/api/cart/1')).body.data;
     expect(c.items[0].available).toBe(false); expect(c.items[0].lineTotal).toBeNull(); expect(c.totals.payable).toBe(0);
   });
-  it('health reports real catalogue', async () => {
-    expect((await request(await mk()).get('/api/health')).body).toMatchObject({ ok: true, sampleData: false });
+  it('health reports real catalogue, and an unpublished sample row does not flip the flag', async () => {
+    const db = await createDb();
+    await db.run(`INSERT INTO products (slug,name,category_id,status,description,sort_rank,is_sample,publish_state) VALUES ('hidden-sample','نمونه پنهان',1,'default','',999,1,'unpublished')`);
+    const body = (await request(createApp(db)).get('/api/health')).body;
+    expect(body).toMatchObject({ ok: true, sampleData: false, sampleOverlay: false, ordersBlocked: false, catalog: 'real catalogue' });
   });
 });
 
