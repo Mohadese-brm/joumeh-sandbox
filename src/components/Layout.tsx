@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { SupportChat } from './SupportChat';
 import { Icon } from './Icon';
+import { StoreContact } from './StoreContact';
 import { useStore } from '../lib/store';
 import { api, type Product } from '../lib/api';
 import { faNumber, formatPrice } from '../lib/format';
@@ -85,7 +86,7 @@ export function Footer() {
   return (
     <footer className="ftr">
       <div className="wrap ftr__in">
-        <div className="ftr__brand"><span className="ftr__logo">{LOGO}</span><p className="small">پوشاک دست‌ساز جومه؛ الهام‌گرفته از رنگ و نور کویر ایران.</p></div>
+        <div className="ftr__brand"><span className="ftr__logo">{LOGO}</span><p className="small">پوشاک دست‌ساز جومه؛ الهام‌گرفته از رنگ و نور کویر ایران.</p><StoreContact className="ftr__contact" /></div>
         <nav aria-labelledby="f1"><h2 id="f1">فروشگاه</h2><ul><li><Link to="/women">زنانه</Link></li><li><Link to="/men">مردانه</Link></li><li><Link to="/women?sale=1">حراج</Link></li></ul></nav>
         <nav aria-labelledby="f2"><h2 id="f2">راهنمای خرید</h2><ul>
           {/* Policy pages are BD stubs (BD-02/04/18) and not designed → placeholder route */}

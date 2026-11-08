@@ -3,6 +3,7 @@
 // (they live on only as a test fixture: tests/fixtures/sample-seed.ts).
 import type { Db } from '../server/db.js';
 import { CATALOG, type CatalogProduct } from './catalog.js';
+import { applyCatalogRelease } from './catalog-release.js';
 import { samplePlaceholdersOn, withSamplePlaceholders, sampleStatus, sampleSizeAvailable } from './sample-placeholder-data.js';
 export const SAMPLE_LABEL = 'داده نمونه';
 export const SAMPLE_PHONE = '09123456789';
@@ -40,6 +41,10 @@ export async function seedCatalog(db: Db, catalog: CatalogProduct[] = CATALOG, o
 export async function seed(db: Db, placeholders = samplePlaceholdersOn()) {
   await seedCategories(db);
   if (placeholders) await seedCatalog(db, withSamplePlaceholders(CATALOG), { sample: true });
-  else await seedCatalog(db);
+  else {
+    await seedCatalog(db);
+    // Real catalogue: prices, sizes, the new products, and unpublish-without-price. No-op if already applied.
+    await applyCatalogRelease(db);
+  }
   await db.syncIds();
 }

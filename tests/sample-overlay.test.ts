@@ -3,16 +3,19 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import request from 'supertest';
 import { createDb, type Db } from '../server/db';
 import { createApp } from '../server/app';
+import { seedCategories, seedCatalog } from '../db/seed';
 
+// The overlay is defined on the bare (unpriced) catalogue. The 2026-11 release is a separate suite.
+const bare = () => createDb(async db => { await seedCategories(db); await seedCatalog(db); });
 let db: Db; let app: ReturnType<typeof createApp>;
 const count = async (t: string) => (await db.one<{ n: number }>(`SELECT COUNT(*) AS n FROM ${t}`))!.n;
-beforeEach(async () => { db = await createDb(); app = createApp(db, { demoOtp: true, sampleOverlay: true }); });
+beforeEach(async () => { db = await bare(); app = createApp(db, { demoOtp: true, sampleOverlay: true }); });
 const login = async () => { const phone = '09125550000'; const r = await request(app).post('/api/auth/otp/request').send({ phone });
   return (await request(app).post('/api/auth/otp/verify').send({ phone, code: r.body.data.devCode })).body.data.token as string; };
 
 describe('sample overlay (JOUMEH_SAMPLE_OVERLAY=1)', () => {
   it('is OFF by default: the bare catalogue, health says no sample data', async () => {
-    const off = createApp(await createDb());
+    const off = createApp(await bare());
     const h = (await request(off).get('/api/health')).body; expect(h).toMatchObject({ sampleData: false, sampleOverlay: false, ordersBlocked: false });
     const p = (await request(off).get('/api/products?category=women')).body.data; expect(p.every((x: { price: null }) => x.price === null)).toBe(true);
   });

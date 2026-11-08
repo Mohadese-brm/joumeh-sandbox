@@ -11,6 +11,7 @@ import { Breadcrumbs } from '../components/Breadcrumbs';
 import { Stub } from '../components/Stub';
 import { ProductReviews } from '../components/Reviews';
 import { SizeGuide } from '../components/SizeGuide';
+import { STORE_PHONE_DISPLAY, STORE_PHONE_TEL } from '../content/store';
 import { flags } from '../config/flags';
 import { NotFound } from './NotFound';
 import './Product.css';
@@ -38,10 +39,12 @@ export function Product() {
   const sizes = useMemo(() => p ? p.variants.filter(v => v.color === color) : [], [p, color]);
   if (r.error === 404) return <NotFound />;
   if (r.loading || !p) return <div className="wrap pdp btn-scope-m" aria-busy="true">{r.error ? <div className="state" role="alert"><p>بارگذاری انجام نشد.</p><button className="btn btn--outline" onClick={r.reload}>تلاش دوباره</button></div> : <PdpSkeleton />}</div>;
-  const priced = p.price != null; // catalog-real: no price yet → «قیمت به‌زودی / تماس بگیرید», add-to-cart disabled
+  const priced = p.price != null; // no price → «قیمت به‌زودی / تماس بگیرید», add-to-cart disabled
+  const soldOut = !!Number(p.soldOut) || (p.variants.length > 0 && p.variants.every(v => !Number(v.available)));
   const sale = priced && p.status === 'sale' && p.originalPrice != null;
+  const colorIsSample = p.variants.some(v => v.sample);
   const add = async () => {
-    if (!priced) return;
+    if (!priced || soldOut) return;
     const v = sizes.find(s => s.size === size);
     if (!v) { setErr('لطفاً سایز را انتخاب کنید.'); document.getElementById('size-group')?.querySelector<HTMLInputElement>('input:not(:disabled)')?.focus(); return; }
     setErr(''); setBusy(true);
@@ -64,25 +67,26 @@ export function Product() {
             <span>{p.rating.average.toLocaleString('fa-IR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} از ۵ · {faNumber(p.rating.count)} نظر{p.rating.sample && <span className="tag-sample"> (نمونه)</span>}</span></a>
             : <p className="caption muted pdp__rating">هنوز نظری ثبت نشده است.</p>}
           <p className="pdp__price">{sale && <><span className="sr-only">قیمت اصلی </span><s>{faNumber(p.originalPrice!)}</s></>}
-            <span className={sale ? 'pdp__now pdp__now--sale' : priced ? 'pdp__now' : 'pdp__now pdp__now--onreq'}>{sale && <span className="sr-only">قیمت با تخفیف </span>}{formatPrice(p.price)}</span>{!!p.sampleOverlay && priced && <span className="tag-sample"> قیمت نمونه</span>}</p>
+            <span className={sale ? 'pdp__now pdp__now--sale' : priced ? 'pdp__now' : 'pdp__now pdp__now--onreq'}>{sale && <span className="sr-only">قیمت با تخفیف </span>}{soldOut && !priced ? 'ناموجود' : formatPrice(p.price)}</span>{!!p.sampleOverlay && priced && <span className="tag-sample"> قیمت نمونه</span>}</p>
           <p className="pdp__desc">{p.description || 'توضیحات این محصول به‌زودی اضافه می‌شود.'}</p>
-          {colors.some(([c]) => c) && <fieldset className="pdp__opt"><legend>رنگ: <span className="muted">{color}</span> <span className="tag-sample">نام رنگ نمونه</span></legend>
+          {colors.some(([c]) => c) && <fieldset className="pdp__opt"><legend>رنگ: <span className="muted">{color}</span> {colorIsSample && <span className="tag-sample">نام رنگ نمونه</span>}</legend>
             <div className="swatches">{colors.map(([c, hex]) => (
-              <label key={c} className="swatch" title={c}><input type="radio" name="color" checked={color === c} onChange={() => { setColor(c); setSize(null); }} aria-label={c} /><span style={{ background: hex ?? '#ccc' }} /></label>))}</div></fieldset>}
+              <label key={c} className="swatch" title={c}><input type="radio" name="color" checked={color === c} onChange={() => { setColor(c); setSize(null); const idx = colors.findIndex(([name]) => name === c); if (idx >= 0 && p.images.length === colors.length) setImg(idx); }} aria-label={c} /><span style={{ background: hex ?? '#ccc' }} /></label>))}</div></fieldset>}
           {p.variants.length > 0 && <fieldset className="pdp__opt" id="options"><legend className="pdp__sizehead"><span>سایز</span></legend>
             <button type="button" className="link pdp__guide" onClick={() => setGuide(true)}>راهنمای سایز</button>
             <div className="sizes" id="size-group" role="radiogroup" aria-label="سایز" aria-describedby={err ? 'pdp-err' : undefined}>{sizes.map(v => (
               <label key={v.id} className="size"><input type="radio" name="size" value={v.size} checked={size === v.size} disabled={!v.available} onChange={() => { setSize(v.size); setErr(''); }} />
                 <span>{v.size}{!v.available && <span className="sr-only"> (ناموجود)</span>}</span></label>))}</div></fieldset>}
           {err && <p id="pdp-err" className="err" role="alert">{err}</p>}
-          {!priced && <p id="pdp-onreq" className="small pdp__onreq" role="note">قیمت این محصول به‌زودی اعلام می‌شود. فعلاً امکان خرید آنلاین آن نیست؛ برای سفارش تماس بگیرید.</p>}
+          {soldOut && <p id="pdp-oos" className="small pdp__onreq" role="note">ناموجود. <a href={`tel:${STORE_PHONE_TEL}`}>{STORE_PHONE_DISPLAY}</a></p>}
+          {!priced && !soldOut && <p id="pdp-onreq" className="small pdp__onreq" role="note">قیمت این محصول به‌زودی اعلام می‌شود. فعلاً امکان خرید آنلاین آن نیست؛ برای سفارش تماس بگیرید.</p>}
           <div className="pdp__buy">
-            {priced && <div className="qty" role="group" aria-label="تعداد">
+            {priced && !soldOut && <div className="qty" role="group" aria-label="تعداد">
               <button type="button" onClick={() => setQty(q => Math.min(99, q + 1))} aria-label="افزایش تعداد"><Icon name="add" size={18} /></button>
               <output aria-live="polite">{faNumber(qty)}</output>
               <button type="button" onClick={() => setQty(q => Math.max(1, q - 1))} disabled={qty <= 1} aria-label="کاهش تعداد"><Icon name="minus" size={18} /></button>
             </div>}
-            <button type="button" className="btn btn--primary pdp__add" onClick={add} disabled={busy || !priced} aria-describedby={priced ? undefined : 'pdp-onreq'}><Icon name="bag-1" size={20} />{busy ? 'در حال افزودن…' : 'افزودن به سبد خرید'}</button>
+            <button type="button" className="btn btn--primary pdp__add" onClick={add} disabled={busy || !priced || soldOut} aria-describedby={soldOut ? 'pdp-oos' : priced ? undefined : 'pdp-onreq'}><Icon name="bag-1" size={20} />{busy ? 'در حال افزودن…' : 'افزودن به سبد خرید'}</button>
             <button type="button" className="pdp__fav" data-figma={favorites.has(p.id) ? '266:67406' : '266:67401'} aria-pressed={favorites.has(p.id)} aria-label={`${p.name} در علاقه‌مندی‌ها`} onClick={() => toggleFavorite(p.id)}><Icon name={favorites.has(p.id) ? 'heart-2' : 'heart-1'} /></button>
           </div>
           <ul className="pdp__facts">

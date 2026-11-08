@@ -21,6 +21,7 @@ const LIVE = `(SELECT * FROM products WHERE publish_state='published')`;
 // catalog-real: a product without a prices row has price NULL («قیمت به‌زودی / تماس بگیرید»); it is listed (LEFT JOIN) but cannot be bought.
 // Real product photos have a 600px thumb next to the full image (public/img/products/thumb/); other images use themselves.
 const THUMB_SQL = (col: string) => `CASE WHEN ${col} LIKE '/img/products/%' THEN replace(${col}, '/img/products/', '/img/products/thumb/') ELSE ${col} END`;
+const SOLD_OUT_SQL = `CASE WHEN EXISTS (SELECT 1 FROM variants vx WHERE vx.product_id=p.id) AND NOT EXISTS (SELECT 1 FROM variants vy WHERE vy.product_id=p.id AND vy.available=1) THEN 1 ELSE 0 END`;
 // gerdoo-update-2026-10-28: with the sample overlay on (server/sample-overlay.ts) unpriced products get labelled placeholder values at read time.
 const productSql = (overlay: boolean) => `SELECT ${TYPE_SQL} AS type, p.id, p.slug, p.name, ${overlay ? OVERLAY_SQL.status : 'p.status'} AS status,
   ${overlay ? OVERLAY_SQL.badge : 'p.badge_percent'} AS badgePercent, ${overlay ? OVERLAY_SQL.isSample : 'p.is_sample'} AS isSample, ${overlay ? OVERLAY_SQL.overlay : '0'} AS sampleOverlay, c.slug AS category,
@@ -28,7 +29,8 @@ const productSql = (overlay: boolean) => `SELECT ${TYPE_SQL} AS type, p.id, p.sl
   (SELECT url FROM images i WHERE i.product_id=p.id ORDER BY position LIMIT 1) AS imageUrl,
   (SELECT ${THUMB_SQL('url')} FROM images i WHERE i.product_id=p.id ORDER BY position LIMIT 1) AS imageThumb,
   (SELECT alt FROM images i WHERE i.product_id=p.id ORDER BY position LIMIT 1) AS imageAlt,
-  (SELECT ${THUMB_SQL('url')} FROM images i WHERE i.product_id=p.id AND i.url <> (SELECT url FROM images j WHERE j.product_id=p.id ORDER BY position LIMIT 1) ORDER BY position LIMIT 1) AS imageThumb2
+  (SELECT ${THUMB_SQL('url')} FROM images i WHERE i.product_id=p.id AND i.url <> (SELECT url FROM images j WHERE j.product_id=p.id ORDER BY position LIMIT 1) ORDER BY position LIMIT 1) AS imageThumb2,
+  ${SOLD_OUT_SQL} AS soldOut
   FROM ${LIVE} p LEFT JOIN prices pr ON pr.product_id=p.id JOIN categories c ON c.id=p.category_id`;
 const sortsFor = (overlay: boolean): Record<string, string> => { const a = overlay ? OVERLAY_SQL.price : 'pr.amount'; return {
   newest: 'p.created_at DESC, p.id', bestseller: 'p.sort_rank, p.id', // best-seller definition open (Refinement 2): sample rank
@@ -87,7 +89,7 @@ export function createApp(db: Db, deps: Deps = {}) {
   app.get('/api/health', async (_q, res) => {
     const seeded = !!await db.one('SELECT id FROM products WHERE is_sample=1 LIMIT 1');
     res.json({ ok: true, sampleData: seeded || overlay, sampleOverlay: overlay, ordersBlocked: overlay, ...(overlay ? { notice: SAMPLE_MODE_NOTICE } : {}),
-      catalog: overlay ? 'real catalogue + read-time sample overlay for unpriced products (server/sample-overlay.ts)' : seeded ? 'real photos + seeded placeholder sample data (db/sample-placeholder-data.ts)' : 'real (no prices yet)' });
+      catalog: overlay ? 'real catalogue + read-time sample overlay for unpriced products (server/sample-overlay.ts)' : seeded ? 'real photos + seeded placeholder sample data (db/sample-placeholder-data.ts)' : 'real catalogue' });
   });
 
   // ---------- Catalog ----------
@@ -184,8 +186,8 @@ export function createApp(db: Db, deps: Deps = {}) {
     }
     const v = await db.one<{ available: number; price: number | null }>('SELECT v.available, pr.amount AS price FROM variants v LEFT JOIN prices pr ON pr.product_id=v.product_id WHERE v.id=?', [variantId]);
     if (!v) return res.status(404).json({ error: 'variant_not_found' });
+    if (!v.available) return res.status(409).json({ error: 'variant_unavailable' }); // BD-16 STUB: availability flag only. Checked first so ناموجود (تاپ «نارنج», no price) is not reported as "price soon".
     if (v.price == null) return res.status(409).json({ error: 'price_on_request' }); // catalog-real: no price yet → not purchasable
-    if (!v.available) return res.status(409).json({ error: 'variant_unavailable' }); // BD-16 STUB: availability flag only
     let cid = cartId;
     if (cid === undefined || cid === null) { cid = await db.insert('INSERT INTO carts DEFAULT VALUES'); }
     else if (!await cartExists(cid)) return res.status(404).json({ error: 'cart_not_found' });
@@ -323,7 +325,14 @@ export function createApp(db: Db, deps: Deps = {}) {
   // fix2 reviews — DEFAULTS (not policy; BD-15 open): signed-in only · rating integer 1–5 · text 1–1000 chars after trim ·
   // published immediately — CEO DECISION 2026-10-21: no moderation (REVIEW_DEFAULTS.moderation = 'none') · multiple reviews per user allowed · average = mean rounded to 1 decimal.
   const sampleProduct = async (pid: number) => !!(await db.one<{ s: number }>('SELECT is_sample AS s FROM products WHERE id=?', [pid]))?.s;
-  const overlayProduct = async (pid: number) => !await db.one('SELECT product_id FROM prices WHERE product_id=?', [pid]);
+  const overlayProduct = async (pid: number) => {
+    if (await db.one('SELECT product_id FROM prices WHERE product_id=?', [pid])) return false;
+    // A published product with only unavailable variants and no price (تاپ «نارنج») is intentionally not a sample.
+    const any = await db.one('SELECT 1 AS x FROM variants WHERE product_id=?', [pid]);
+    const open = await db.one('SELECT 1 AS x FROM variants WHERE product_id=? AND available=1', [pid]);
+    if (any && !open) return false;
+    return true;
+  };
   const REVIEW_DEFAULTS = { minLen: 1, maxLen: 1000, moderation: 'none' as 'none' | 'pre' };
   const reviewSummary = async (pid: number) => {
     const reviews = await db.all<{ id: number; rating: number; body: string; createdAt: string; firstName: string | null; lastName: string | null }>(

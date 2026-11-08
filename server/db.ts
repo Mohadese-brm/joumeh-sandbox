@@ -8,6 +8,7 @@ import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { MIGRATIONS } from '../db/migrations.js';
+import { applyCatalogRelease } from '../db/catalog-release.js';
 import { seed } from '../db/seed.js';
 const require = createRequire(import.meta.url);
 
@@ -122,7 +123,7 @@ export async function connectPg(url: string, opts: { schema?: string; max?: numb
 
 // ---------- Migrations ----------
 /** Applies db/migrations.ts in order; applied ids are recorded in schema_migrations. Returns the ids applied now. */
-export async function migrate(db: Db): Promise<string[]> {
+async function migrateSql(db: Db): Promise<string[]> {
   return db.tx(async t => {
     if (t.dialect === 'pg') await t.run('SELECT pg_advisory_xact_lock(7243100)'); // concurrent cold starts migrate one at a time
     await t.run('CREATE TABLE IF NOT EXISTS schema_migrations (id TEXT PRIMARY KEY, applied_at TEXT NOT NULL)');
@@ -136,6 +137,15 @@ export async function migrate(db: Db): Promise<string[]> {
     }
     return applied;
   });
+}
+
+/** SQL migrations, then the catalogue release when this database already has products (live Postgres).
+ *  An empty database is left for seed(); that path applies the same release after inserting the catalogue.
+ *  Returns the SQL migration ids applied now (the catalogue release is recorded separately). */
+export async function migrate(db: Db): Promise<string[]> {
+  const applied = await migrateSql(db);
+  await applyCatalogRelease(db);
+  return applied;
 }
 
 /** Fresh, migrated, seeded throwaway database (tests and the in-memory preview). In-memory SQLite by default;
@@ -152,7 +162,9 @@ export async function createDb(withSeed: boolean | Seeder = true): Promise<Db> {
     db = new SqliteDb(raw);
   }
   await migrate(db);
-  if (typeof withSeed === 'function') await withSeed(db); else if (withSeed) await seed(db);
+  // In-memory preview (no DATABASE_URL): the real release, unless JOUMEH_SAMPLE_PLACEHOLDERS=1 is set on purpose.
+  // Tests set that variable to 0. An unset variable must NOT turn the old sample prices back on.
+  if (typeof withSeed === 'function') await withSeed(db); else if (withSeed) await seed(db, process.env.JOUMEH_SAMPLE_PLACEHOLDERS === '1');
   await db.syncIds();
   return db;
 }

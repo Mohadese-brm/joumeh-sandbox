@@ -7,7 +7,7 @@ describe('Vercel serverless entry (api/index.ts)', () => {
   const srv = createServer((req, res) => void handler(req, res));
   it('serves catalog and health through the handler', async () => {
     expect((await request(srv).get('/api/health')).body).toMatchObject({ ok: true, sampleData: false });
-    const r = await request(srv).get('/api/products?category=men'); expect(r.status).toBe(200); expect(r.body.total).toBe(5); // real catalogue: P35–P39
+    const r = await request(srv).get('/api/products?category=men'); expect(r.status).toBe(200); expect(r.body.total).toBe(5); // real catalogue: P35–P39, now priced
   });
   it('never returns the demo OTP code, even with JOUMEH_DEMO_OTP=1 set (R2-2)', async () => {
     const prev = process.env.JOUMEH_DEMO_OTP; process.env.JOUMEH_DEMO_OTP = '1';
@@ -15,10 +15,14 @@ describe('Vercel serverless entry (api/index.ts)', () => {
     finally { if (prev === undefined) delete process.env.JOUMEH_DEMO_OTP; else process.env.JOUMEH_DEMO_OTP = prev; }
   });
   it('keeps state within one instance (cart round-trip)', async () => {
-    // Real catalogue has no prices/variants yet: create an empty cart, read it back, and check an unpriced product cannot be added.
     const c = await request(srv).post('/api/cart'); expect(c.status).toBe(201);
     const back = await request(srv).get(`/api/cart/${c.body.data.id ?? c.body.data.cartId}`); expect(back.status).toBe(200);
     expect(back.body.data.items).toHaveLength(0);
-    const p = (await request(srv).get('/api/products/p35')).body.data; expect(p.price).toBeNull(); expect(p.variants).toHaveLength(0);
+    const p = (await request(srv).get('/api/products/p35')).body.data;
+    expect(p.price).toBe(1_490_000); expect(p.variants).toHaveLength(4);
+    const added = await request(srv).post('/api/cart/items').send({ cartId: c.body.data.cartId, variantId: p.variants[0].id, quantity: 1 });
+    expect(added.status).toBe(201); expect(added.body.data.totals.payable).toBe(1_490_000);
+    const narenj = (await request(srv).get('/api/products/narenj')).body.data;
+    expect((await request(srv).post('/api/cart/items').send({ variantId: narenj.variants[0].id })).status).toBe(409);
   });
 });

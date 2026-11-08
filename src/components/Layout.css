@@ -41,6 +41,8 @@
 .ftr__in { display: grid; gap: 32px; grid-template-columns: 1fr 1fr; }
 @media (min-width: 1024px) { .ftr__in { grid-template-columns: 2fr 1fr 1fr 1fr; } }
 .ftr__brand { grid-column: 1 / -1; } @media (min-width: 1024px) { .ftr__brand { grid-column: auto; } }
+.ftr__contact { display: grid; gap: 4px; margin-block-start: 8px; }
+.ftr__contact a { color: inherit; }
 .ftr__logo { display: inline-grid; place-items: center; inline-size: 64px; block-size: 64px; background: var(--bg-page); border-radius: 999px; }
 .ftr h2 { font-size: 15px; font-weight: 700; margin-block-end: 12px; }
 .ftr ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }

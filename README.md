@@ -16,7 +16,8 @@ Vercel (later, needs CEO approval): `vercel.json` builds Vite to `dist/` and ser
 Flags: `src/config/flags.ts` · decisions: `docs/decision-log.md` · stubs: `server/stubs.ts` · reports: `reports/`.
 
 ## Database & admin accounts (admin-v1)
-- No `DATABASE_URL` → in-memory SQLite, seeded at start (as before). `DATABASE_URL=postgres://…` → Postgres via `pg`; migrations run at start, nothing is auto-seeded.
+- No `DATABASE_URL` → in-memory SQLite, seeded at start with the real catalogue release (`db/catalog-release.ts`). `DATABASE_URL=postgres://…` → Postgres via `pg`; migrations run at start and apply that same release once if products already exist. Nothing else is auto-seeded. `db:seed` still loads the catalogue only into an empty `products` table.
+- **`JOUMEH_SAMPLE_OVERLAY` must be off** for this release (unset, or any value other than `1`). While it is `1`, checkout is refused for the whole shop. The live Gerdoo store currently has it on; turn it off when this release is deployed there. Do not set it on the Vercel preview.
 - `npm run db:migrate` — apply `db/migrations/*.sql` (edit the `.sql`, then `npm run schema` regenerates `db/migrations.ts`).
 - `npm run db:seed` — catalogue only, only into an empty `products` table.
 - `npm run admin:setup` — one-time creation of the real admins (max 2; first = Owner). Prompts for e-mail, name and password (hidden); the password is never stored anywhere but as a bcrypt hash.

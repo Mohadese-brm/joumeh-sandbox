@@ -137,6 +137,8 @@ textarea.input { padding-block: 10px; min-block-size: 88px; }
 .modal__box--wide { inline-size: min(536px, 100%); }
 /* P8 size guide (245:61044) */
 .sg { display: grid; gap: 16px; } .sg p { margin: 0; }
+.sg__fig { margin: 0; }
+.sg__img { display: block; inline-size: 100%; block-size: auto; border-radius: var(--r-12); }
 .sg__title { font-size: 20px; font-weight: 800; }
 .sg__chips { display: flex; flex-wrap: wrap; gap: 8px; margin-block-start: 8px; }
 .sg__chip { background: var(--n-100); border-radius: 999px; padding: 4px 12px; font-size: 12px; }

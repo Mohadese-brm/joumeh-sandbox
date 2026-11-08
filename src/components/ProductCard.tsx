@@ -5,7 +5,7 @@ import './ProductCard.css';
 
 export type ProductCardData = {
   id: number; slug: string; name: string; status: 'default' | 'sale' | 'new';
-  price: number | null; originalPrice?: number | null; badgePercent?: number | null;
+  price: number | null; originalPrice?: number | null; badgePercent?: number | null; soldOut?: number;
   imageUrl: string; imageThumb?: string; imageThumb2?: string | null; imageAlt: string; sampleOverlay?: number;
 };
 type Props = { product: ProductCardData; size?: 'desktop' | 'mobile'; href?: string; onAddToCart?: (id: number) => void; headingLevel?: 2 | 3 | 4; showBadge?: boolean; children?: React.ReactNode };
@@ -13,7 +13,8 @@ type Props = { product: ProductCardData; size?: 'desktop' | 'mobile'; href?: str
 const svg = (raw: string) => raw.replace(/ id="[^"]*"/g, '').replace(/stroke="#1C1917"/gi, 'stroke="currentColor"').replace(/fill="#1C1917"/gi, 'fill="currentColor"');
 
 export function ProductCard({ product, size = 'desktop', href, onAddToCart, headingLevel = 3, showBadge = true, children }: Props) {
-  const priced = product.price != null; // catalog-real: null price → «قیمت به‌زودی / تماس بگیرید», no add-to-cart
+  const priced = product.price != null; // null price → «قیمت به‌زودی / تماس بگیرید», no add-to-cart. soldOut + no price (تاپ «نارنج») shows ناموجود instead.
+  const soldOutUnpriced = !priced && !!Number(product.soldOut);
   const isSale = priced && product.status === 'sale' && product.originalPrice != null;
   const H = `h${headingLevel}` as 'h2' | 'h3' | 'h4';
   const w = size === 'desktop' ? 378 : 171, h = size === 'desktop' ? 504 : 228;
@@ -34,7 +35,7 @@ export function ProductCard({ product, size = 'desktop', href, onAddToCart, head
         <H className="pc__name">{product.name}</H>
         <p className="pc__price">
           {isSale && <><span className="sr-only">قیمت اصلی </span><s className="pc__old">{faNumber(product.originalPrice!)}</s></>}
-          <span className={isSale ? 'pc__now pc__now--sale' : priced ? 'pc__now' : 'pc__now pc__now--onreq'}>{isSale && <span className="sr-only">قیمت با تخفیف </span>}{formatPrice(product.price)}</span>
+          <span className={isSale ? 'pc__now pc__now--sale' : priced ? 'pc__now' : 'pc__now pc__now--onreq'}>{isSale && <span className="sr-only">قیمت با تخفیف </span>}{soldOutUnpriced ? 'ناموجود' : formatPrice(product.price)}</span>
           {/* gerdoo-update-2026-10-28: read-time sample overlay price → labelled */}
           {!!product.sampleOverlay && priced && <span className="tag-sample pc__sample">نمونه</span>}
         </p>

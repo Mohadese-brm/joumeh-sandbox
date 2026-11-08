@@ -23,14 +23,17 @@ const SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
 /** SQL fragments (portable SQLite + Postgres) used by PRODUCT_SQL when the overlay is on. `pr` = prices, `p` = products. */
 const idx = '((p.id - 1) % 8)';
 const caseOf = (vals: (number | null)[]) => `CASE ${idx} ${vals.map((v, k) => `WHEN ${k} THEN ${v ?? 'NULL'}`).join(' ')} END`;
+/** Real variants exist and none are available (تاپ «نارنج»: visible, no price, ناموجود). Do not invent a sample price for it. */
+const SOLD_OUT = `(EXISTS (SELECT 1 FROM variants vx WHERE vx.product_id=p.id) AND NOT EXISTS (SELECT 1 FROM variants vy WHERE vy.product_id=p.id AND vy.available=1))`;
+const OPEN = `(pr.amount IS NULL AND NOT ${SOLD_OUT})`;
 export const OVERLAY_SQL = {
-  price: `COALESCE(pr.amount, ${caseOf(PRICES.map((_, k) => payable(k)))})`,
-  originalPrice: `CASE WHEN pr.amount IS NULL THEN ${caseOf(PRICES.map((p, k) => (isSale(k) ? p : null)))} ELSE pr.original_amount END`,
-  currency: `CASE WHEN pr.amount IS NULL THEN 'IRT' ELSE pr.currency END`,
-  status: `CASE WHEN pr.amount IS NULL THEN (CASE WHEN (p.id - 1) % 4 = 1 THEN 'sale' WHEN (p.id - 1) % 5 = 2 THEN 'new' ELSE 'default' END) ELSE p.status END`,
-  badge: `CASE WHEN pr.amount IS NULL THEN (CASE WHEN (p.id - 1) % 4 = 1 THEN 20 ELSE NULL END) ELSE p.badge_percent END`,
-  isSample: `CASE WHEN pr.amount IS NULL THEN 1 ELSE p.is_sample END`,
-  overlay: `CASE WHEN pr.amount IS NULL THEN 1 ELSE 0 END`,
+  price: `CASE WHEN ${OPEN} THEN ${caseOf(PRICES.map((_, k) => payable(k)))} ELSE pr.amount END`,
+  originalPrice: `CASE WHEN ${OPEN} THEN ${caseOf(PRICES.map((p, k) => (isSale(k) ? p : null)))} ELSE pr.original_amount END`,
+  currency: `CASE WHEN ${OPEN} THEN 'IRT' ELSE pr.currency END`,
+  status: `CASE WHEN ${OPEN} THEN (CASE WHEN (p.id - 1) % 4 = 1 THEN 'sale' WHEN (p.id - 1) % 5 = 2 THEN 'new' ELSE 'default' END) ELSE p.status END`,
+  badge: `CASE WHEN ${OPEN} THEN (CASE WHEN (p.id - 1) % 4 = 1 THEN 20 ELSE NULL END) ELSE p.badge_percent END`,
+  isSample: `CASE WHEN ${OPEN} THEN 1 ELSE p.is_sample END`,
+  overlay: `CASE WHEN ${OPEN} THEN 1 ELSE 0 END`,
 };
 
 /** Virtual variant id: −(productId × 100 + colour × 10 + size). Never collides with real (positive) ids. */

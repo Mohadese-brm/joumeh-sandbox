@@ -254,7 +254,7 @@ describe('admin-v1: real catalogue (unpriced) + NULL prices', () => {
     const a = createApp(real, { adminDemo: true });
     const t = await login(OWNER, a);
     const list = await request(a).get('/api/admin/products').set(h(t));
-    expect(list.status).toBe(200); expect(list.body.allCount).toBe(41 + 3); expect(list.body.counts.draft).toBe(2);
+    expect(list.status).toBe(200); expect(list.body.allCount).toBe(41 + 11 + 3); expect(list.body.counts.draft).toBe(2);
     expect(list.body.data.some((p: { price: number | null }) => p.price === null)).toBe(true);
     expect((await request(a).get('/api/products?limit=100')).body).toEqual(shopBefore); // preview shop == production shop
     expect((await request(a).get('/api/admin/dashboard').set(h(t))).status).toBe(200);

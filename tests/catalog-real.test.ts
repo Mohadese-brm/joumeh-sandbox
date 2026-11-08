@@ -5,21 +5,21 @@ import { join } from 'node:path';
 import { createDb, type Db } from '../server/db';
 import { createApp } from '../server/app';
 import { CATALOG, type CatalogProduct } from '../db/catalog';
+import { NEW_PRODUCTS } from '../db/catalog-release';
 import { seedCategories, seedCatalog } from '../db/seed';
 import { formatPrice, PRICE_ON_REQUEST } from '../src/lib/format';
 
-// Real catalogue (branch catalog-real): placeholder names, NO prices/sizes/stock yet.
+// The photo catalogue in db/catalog.ts still has no prices of its own. The 2026-11 release (db/catalog-release.ts)
+// prices the shorts product and the men's products, adds the named pieces, and unpublishes the rest.
 describe('real catalogue seed', () => {
-  it('loads every CATALOG product, none flagged sample, no price rows, no variants', async () => {
+  it('keeps the original photo catalogue unpriced in the source file, and stores the release on top', async () => {
     const db = await createDb();
-    expect((await db.all<{ n: number }>('SELECT COUNT(*) n FROM products'))[0].n).toBe(CATALOG.length);
     expect(CATALOG.length).toBe(41);
-    expect(await db.all('SELECT id FROM products WHERE is_sample=1')).toHaveLength(0);
-    expect(await db.all('SELECT * FROM prices')).toHaveLength(0);
-    expect(await db.all('SELECT * FROM variants')).toHaveLength(0);
     expect(CATALOG.every(p => p.price === null && p.salePrice === null && p.stock === null && p.sizes.length === 0)).toBe(true);
+    expect((await db.all<{ n: number }>('SELECT COUNT(*) n FROM products'))[0].n).toBe(CATALOG.length + NEW_PRODUCTS.length);
+    expect(await db.all('SELECT id FROM products WHERE is_sample=1')).toHaveLength(0);
   });
-  it('every product has ≥1 image and every image + thumb file exists in public/', () => {
+  it('every catalogue photo and every release photo + thumb exists in public/', () => {
     for (const p of CATALOG) {
       expect(p.images.length).toBeGreaterThan(0);
       for (const im of p.images) {
@@ -27,18 +27,23 @@ describe('real catalogue seed', () => {
         expect(existsSync(join(process.cwd(), 'public', im.thumb))).toBe(true);
       }
     }
+    for (const p of NEW_PRODUCTS) for (const im of p.images) {
+      expect(existsSync(join(process.cwd(), 'public/img/products', im.file))).toBe(true);
+      expect(existsSync(join(process.cwd(), 'public/img/products/thumb', im.file))).toBe(true);
+    }
+    expect(existsSync(join(process.cwd(), 'public/img/size-guide.webp'))).toBe(true);
   });
 });
 
-describe('API with null prices', () => {
+describe('API after the catalogue release', () => {
   const mk = async () => createApp(await createDb(), { demoOtp: false });
   it('lists, sorts and filters without crashing; price is null', async () => {
     const app = await mk();
     for (const sort of ['newest', 'bestseller', 'price-asc', 'price-desc']) {
       const r = await request(app).get(`/api/products?category=women&sort=${sort}`);
-      expect(r.status).toBe(200); expect(r.body.total).toBe(36);
-      expect(r.body.data[0].price).toBeNull(); expect(r.body.sampleData).toBe(false);
-      expect(r.body.data[0].imageThumb).toMatch(/^\/img\/products\/thumb\/\d{3}\.webp$/);
+      expect(r.status).toBe(200); expect(r.body.total).toBe(12);
+      expect(r.body.data[0].price).toBeGreaterThan(0); expect(r.body.sampleData).toBe(false);
+      expect(r.body.data[0].imageThumb).toMatch(/^\/img\/products\/thumb\/.+\.webp$/);
     }
     expect((await request(app).get('/api/products?category=women&sort=bogus')).status).toBe(400);
     expect((await request(app).get('/api/products?category=men')).body.total).toBe(5);
@@ -49,14 +54,14 @@ describe('API with null prices', () => {
   it('product page and search return price null', async () => {
     const app = await mk();
     const p = await request(app).get('/api/products/p08'); expect(p.status).toBe(200);
-    expect(p.body.data.price).toBeNull(); expect(p.body.data.images.length).toBe(17);
+    expect(p.body.data.price).toBe(1_390_000); expect(p.body.data.images.length).toBe(17);
     expect(p.body.data.images[0].thumb).toContain('/img/products/thumb/');
     expect((await request(app).get('/api/search?q=' + encodeURIComponent('یزد'))).status).toBe(200);
   });
   it('refuses to add an unpriced product to the cart (409 price_on_request) and never totals it', async () => {
-    const db = await createDb(false); seedCategories(db);
+    const db = await createDb(false); await seedCategories(db);
     const fake: CatalogProduct = { ...CATALOG[0], sizes: ['M'], colours: [], price: null } as CatalogProduct;
-    seedCatalog(db, [fake]);
+    await seedCatalog(db, [fake]);
     const app = createApp(db, { demoOtp: false });
     const v = (await request(app).get('/api/products/p01')).body.data.variants[0];
     const r = await request(app).post('/api/cart/items').send({ variantId: v.id });

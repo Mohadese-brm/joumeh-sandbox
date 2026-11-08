@@ -5,6 +5,7 @@ import { api, type Order } from '../lib/api';
 import { faDigits, formatPrice } from '../lib/format';
 import { Placeholder, Stub } from '../components/Stub';
 import { Steps } from './Checkout';
+import { StoreContact } from '../components/StoreContact';
 // PLACEHOLDER: payment step is NOT designed (CU-18/19/20; handoff README "Missing for development"). BD-01: MockProvider only.
 export function Payment() {
   const [sp] = useSearchParams(); const id = sp.get('order'); const nav = useNavigate();
@@ -19,7 +20,8 @@ export function Payment() {
   return (
     <div className="wrap checkout"><Steps current={3} />
       <Placeholder title="پرداخت" figma="CU-18 / CU-19 / CU-20 — Missing">
-        <Stub code="BD-01">درگاه پرداخت (شاپرک) انتخاب نشده است. فقط پرداخت آزمایشی (MockProvider) فعال است؛ هیچ پولی جابه‌جا نمی‌شود.</Stub>
+        <Stub code="BD-01">گام پرداخت جایگزین: درگاه پرداخت (شاپرک) انتخاب نشده است. فقط پرداخت آزمایشی (MockProvider) فعال است؛ سفارش ثبت می‌شود و هیچ پولی جابه‌جا نمی‌شود.</Stub>
+        <StoreContact />
         {!id || o.error ? <p className="err">سفارش پیدا نشد. <Link to="/account/orders">سفارش‌های من</Link></p> : o.data && <>
           <p>سفارش <bdi>{faDigits(o.data.orderNumber)}</bdi> · مبلغ اقلام: <strong>{formatPrice(o.data.total)}</strong> <span className="caption muted">(بدون ارسال و مالیات — BD-02/BD-06)</span></p>
           {o.data.paymentStatus === 'paid' ? <Link className="btn btn--primary" to={`/checkout/confirmation/${id}`}>مشاهده‌ی تأیید سفارش</Link> : <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -40,6 +42,7 @@ export function Confirmation({ id }: { id: string }) {
           <p>شماره سفارش: <bdi>{faDigits(o.data.orderNumber)}</bdi> <span className="caption muted">(قالب شماره در انتظار تصمیم — BD-11)</span></p>
           <p className="small">وضعیت پرداخت: {o.data.paymentStatus === 'paid' ? 'پرداخت‌شده (آزمایشی)' : 'پرداخت‌نشده'} · وضعیت سفارش: {o.data.orderStatus === 'processing' ? 'در حال پردازش' : o.data.orderStatus}</p>
           <Stub code="BD-03/BD-13">زمان تحویل و پیامک تأیید سفارش تعیین نشده‌اند.</Stub>
+          <StoreContact />
           <Link className="btn btn--primary" to={`/account/orders/${id}`}>مشاهده‌ی سفارش</Link>
         </> : o.error ? <p className="err">سفارش پیدا نشد.</p> : <p aria-busy="true">…</p>}
       </Placeholder>

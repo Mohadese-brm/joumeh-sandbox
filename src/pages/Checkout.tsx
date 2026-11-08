@@ -8,6 +8,7 @@ import { Stub } from '../components/Stub';
 import { Icon } from '../components/Icon';
 import { faNumber } from '../lib/format';
 import { SAMPLE_ORDERS_BLOCKED } from '../lib/siteMode';
+import { StoreContact } from '../components/StoreContact';
 import './Checkout.css';
 
 export function Steps({ current }: { current: 1 | 2 | 3 }) {
@@ -44,6 +45,7 @@ export function Checkout() {
       <form className="checkout__grid" onSubmit={submit} noValidate>
         <section className="card checkout__form" aria-labelledby="ship-h">
           <h1 id="ship-h" className="h-section">اطلاعات ارسال</h1>
+          <StoreContact />
           {cart.ordersBlocked && <p className="stub" role="note" data-testid="orders-blocked"><Icon name="danger-circle" size={20} /><span>{SAMPLE_ORDERS_BLOCKED}</span></p>}
           {authReady && !user && <p className="stub"><Icon name="information-circle" size={20} /><span><strong>برای ادامه وارد شوید.</strong> خرید مهمان در انتظار تصمیم کسب‌وکار است (BD-07). <button type="button" className="link" onClick={() => openAuth()}>ورود / ثبت‌نام</button></span></p>}
           <AddressFields v={v} set={setV} errors={errors} idp="co" />
