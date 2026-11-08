@@ -5,7 +5,9 @@ import { createApp } from '../server/app';
 import { seedCategories, seedCatalog } from '../db/seed';
 import { CATALOG } from '../db/catalog';
 import { applyCatalogRelease, existingPriceTargets, NEW_PRODUCTS, NARENJ_SLUG, RELEASE_ID, SHORTS_PRICE, MENS_PRICE, unpublishedExisting } from '../db/catalog-release';
-import { STORE_ADDRESS, STORE_PHONE_DISPLAY, STORE_PHONE_TEL } from '../src/content/store';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { STORE_ADDRESS, STORE_HOURS, STORE_PHONE_DISPLAY, STORE_PHONE_TEL, VAT_INCLUDED } from '../src/content/store';
 
 describe('catalog release 2026-11', () => {
   it('prices only the listed products, keeps نارنج visible and out of stock, unpublishes the rest, deletes nothing', async () => {
@@ -96,6 +98,22 @@ describe('catalog release 2026-11', () => {
     expect(STORE_ADDRESS).toBe('یزد، پاساژ ستاره، طبقه اول');
     expect(STORE_PHONE_DISPLAY).toBe('۰۹۱۳۶۷۲۷۲۶۲');
     expect(STORE_PHONE_TEL).toBe('09136727262');
+    expect(STORE_HOURS).toBe('۹ صبح - ۱۷ عصر');
+    expect(VAT_INCLUDED).toBe('قیمت‌ها با احتساب ۱۰٪ مالیات بر ارزش افزوده می‌باشد.');
     expect(NEW_PRODUCTS.find(p => p.slug === 'mahtab')!.price).toBe(1_190_000);
+  });
+
+  it('renames the five men only while they still have the placeholder name', async () => {
+    const db = await createDb();
+    const names = Object.fromEntries((await db.all<{ slug: string; name: string }>('SELECT slug, name FROM products WHERE slug IN (?,?,?,?,?) ORDER BY slug', ['p35', 'p36', 'p37', 'p38', 'p39'])).map(r => [r.slug, r.name]));
+    expect(names).toEqual({ p35: 'پولوشرت مردانه «آرش»', p36: 'پولوشرت مردانه «کیان»', p37: 'پیراهن مردانه «رادین»', p38: 'پولوشرت مردانه «سامان»', p39: 'پیراهن مردانه «نیما»' });
+    const sql = readFileSync(join(process.cwd(), 'db/migrations/0005_men_names.sql'), 'utf8');
+    await db.run(`UPDATE products SET name=? WHERE slug=?`, ['استودیو – ۳۵', 'p35']);
+    await db.run(`UPDATE products SET name=? WHERE slug=?`, ['نام ویرایش‌شده', 'p36']);
+    await db.run(sql);
+    expect((await db.one<{ name: string }>('SELECT name FROM products WHERE slug=?', ['p35']))!.name).toBe('پولوشرت مردانه «آرش»');
+    expect((await db.one<{ name: string }>('SELECT name FROM products WHERE slug=?', ['p36']))!.name).toBe('نام ویرایش‌شده');
+    await db.run(sql);
+    expect((await db.one<{ name: string }>('SELECT name FROM products WHERE slug=?', ['p35']))!.name).toBe('پولوشرت مردانه «آرش»');
   });
 });

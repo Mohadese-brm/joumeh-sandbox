@@ -9,7 +9,7 @@ import { ProductGrid } from '../../components/Grid';
 import { Modal } from '../../components/Modal';
 import { Stub, Placeholder } from '../../components/Stub';
 import { Icon } from '../../components/Icon';
-import { STORE_ADDRESS, STORE_PHONE_DISPLAY, STORE_PHONE_TEL } from '../../content/store';
+import { STORE_ADDRESS, STORE_HOURS, STORE_PHONE_DISPLAY, STORE_PHONE_TEL, VAT_INCLUDED } from '../../content/store';
 import { AddressFields, emptyAddr, type AddrValues } from '../../components/AddressForm';
 
 const Thumbs = ({ o }: { o: Order }) => <span className="thumbs">{o.items.slice(0, 3).map((i, k) => <img key={k} src={i.imageUrl} alt="" width={32} height={40} />)}</span>;
@@ -67,7 +67,7 @@ export function OrderDetail() {
       <div><dt>جمع کالاها</dt><dd>{formatPrice(o.subtotal)}</dd></div>
       {o.discount > 0 && <div><dt>تخفیف</dt><dd>{formatPrice(o.discount)}−</dd></div>}
       <div><dt>ارسال</dt><dd className="caption muted">در انتظار تصمیم (BD-02)</dd></div>
-      <div><dt>مالیات</dt><dd className="caption muted">در انتظار تصمیم (BD-06)</dd></div>
+      <div><dt>مالیات</dt><dd>{VAT_INCLUDED}</dd></div>
       <div><dt>مبلغ کالاها</dt><dd><strong>{formatPrice(o.total)}</strong></dd></div>
     </dl></section>
     <Stub code="BD-05/BD-04">لغو سفارش و درخواست مرجوعی پس از تعیین سیاست‌ها فعال می‌شوند.</Stub>
@@ -190,18 +190,13 @@ export function SupportFaq() {
     </section>
   </>);
 }
-const CONTACT_OPEN: [string, string][] = [
-  ['ایمیل پشتیبانی', 'ایمیل پشتیبانی هنوز تعیین نشده است.'],
-  ['ساعات پاسخ‌گویی', 'ساعات پاسخ‌گویی هنوز تعیین نشده است.'],
-  ['زمان پاسخ به درخواست', 'زمان پاسخ هنوز تعیین نشده است.'],
-];
 export function SupportContact() {
   return (<>
     <div className="acc__sub"><h2>تماس با ما</h2></div>
-    <p className="small" style={{ margin: 0 }}>برای هماهنگی حضوری یا پرسش درباره‌ی سفارش، از آدرس و تلفن فروشگاه استفاده کنید. ایمیل و ساعات پاسخ‌گویی هنوز تعیین نشده‌اند.</p>
+    <p className="small" style={{ margin: 0 }}>برای هماهنگی حضوری یا پرسش درباره‌ی سفارش، از آدرس و تلفن فروشگاه استفاده کنید.</p>
     <section className="card contact-card" data-figma="246:15613"><h3>آدرس فروشگاه</h3><p>{STORE_ADDRESS}</p></section>
     <section className="card contact-card" data-figma="246:15613"><h3>تلفن</h3><p><a href={`tel:${STORE_PHONE_TEL}`}><bdi dir="ltr">{STORE_PHONE_DISPLAY}</bdi></a></p></section>
-    {CONTACT_OPEN.map(([t, body]) => <section key={t} className="card contact-card" data-figma="246:15613"><h3>{t}</h3><p className="small muted">{body} <span className="caption">(در انتظار تصمیم کسب‌وکار، BD-12)</span></p></section>)}
+    <section className="card contact-card" data-figma="246:15613"><h3>ساعات پاسخ‌گویی</h3><p>{STORE_HOURS}</p></section>
     <div className="faq__act"><TicketCta /></div><TicketNote />
   </>);
 }

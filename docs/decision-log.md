@@ -119,3 +119,12 @@ Replaces the moderation DEFAULT above: this is now Mohadeseh's decision, not a d
 | 2026-11-08 | Catalogue prices and names for the new pieces, shorts at 1,390,000, every existing men's product at 1,490,000. Products still without a price are unpublished (kept in the DB). تاپ «نارنج» stays visible with no price and Add to Cart disabled (ناموجود). شومیز «مهتاب» is 1,190,000 for the shirt, confirmed final. Sizes S–XL. Photos ship as static files, not in-memory uploads. | Owner | this task | `db/catalog-release.ts`. Applied once; an existing price/name/variant set is not overwritten. |
 | 2026-11-08 | Store contact: یزد، پاساژ ستاره، طبقه اول and ۰۹۱۳۶۷۲۷۲۶۲. Email, hours, shipping, returns and the payment provider stay labelled placeholders. | Owner | this task | footer, contact, checkout, payment, size guide, support chat |
 | 2026-11-08 | This release runs with `JOUMEH_SAMPLE_OVERLAY` off. Live must turn the overlay off or checkout stays blocked. | Owner | this task | preview is deployed with the variable unset |
+
+## round-2-2026-11
+| When | Decision | Who | Source | Notes |
+|---|---|---|---|---|
+| 2026-11-08 | Contact: no store email, hours ۹ صبح - ۱۷ عصر, no response-time line. | Owner | round 2 | contact, footer, checkout, support chat |
+| 2026-11-08 | Prices include 10% VAT. The shop states that and does not add a tax amount. Product page: «این کالا موجود می‌باشد.» or ناموجود, plus the VAT sentence. Returns line removed from the product page until design sends it back (comment left in place). | Owner | round 2 | cart/checkout payable unchanged |
+| 2026-11-08 | Checkout: the address is confirmed with ثبت before shipping and payment. | Owner | round 2 | `Checkout.tsx` |
+| 2026-11-08 | Men's p35–p39 renamed from the placeholder only while the old name is still there. | Owner | round 2 | migration `0005_men_names` |
+| 2026-11-08 | Added-to-cart notice matches the approved bar (380×44 / 358×44, #3E2E26, «مشاهده سبد» #E7DED9, 16px close). Size guide stays as it is. | Owner | round 2 | `Toasts.tsx` |

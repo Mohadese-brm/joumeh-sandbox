@@ -98,9 +98,17 @@ textarea.input { padding-block: 10px; min-block-size: 88px; }
 .tab { border: 0; background: none; min-block-size: 44px; cursor: pointer; font-size: 14px; line-height: 24px; color: var(--n-600); padding-block: calc(44px - 24px - var(--sel-gap) - var(--sel-line)) var(--sel-gap); border-block-end: var(--sel-line) solid transparent; }
 .tab[aria-selected="true"] { color: var(--sel-color); font-weight: 700; border-color: var(--sel-color); } /* shared selected indicator (8px gap) */
 .auth__form { display: grid; gap: 16px; } .auth__alt { text-align: center; margin: 0; }
-.toasts { position: fixed; z-index: 60; inset-block-start: calc(var(--header-h) + 12px); inset-inline-start: max(var(--margin), calc((100vw - var(--container)) / 2)); display: grid; gap: 8px; inline-size: min(380px, calc(100vw - 32px)); }
-.toast { display: flex; align-items: center; gap: 8px; background: var(--n-900); color: #fff; border-radius: var(--r-12); padding-inline: 14px 4px; min-block-size: 44px; font-size: 14px; box-shadow: var(--shadow-2); }
-.toast span:nth-child(2) { flex: 1; } .toast__act { color: var(--teal-200); } .toast__x { color: #fff; inline-size: 36px; block-size: 36px; }
+/* Add-to-cart notice: fixed under the sticky header. Desktop 380×44, mobile 358×44 (16px side inset).
+   Brown-800 #3E2E26, radius 12, Vazirmatn Medium 14. Link #E7DED9. Close is the pack's close icon at 16. */
+.toasts { position: fixed; z-index: 40; inset-block-start: calc(var(--header-h) + 12px); inset-inline-start: max(16px, var(--margin)); display: grid; gap: 8px; inline-size: 380px; max-inline-size: calc(100vw - 32px); }
+@media (max-width: 767px) { .toasts { inset-inline-start: 16px; inline-size: min(358px, calc(100vw - 32px)); } }
+.toast { display: flex; align-items: center; gap: 12px; box-sizing: border-box; block-size: 44px; padding-inline: 16px 14px; background: var(--brown-800); color: #fff; border-radius: 12px;
+  font-family: Vazirmatn, sans-serif; font-weight: 500; font-size: 14px; line-height: 24px; }
+.toast__msg { margin: 0; flex: 1; min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.toast__act { flex: none; margin: 0; padding: 0; border: 0; background: none; cursor: pointer; color: var(--brown-100); font: inherit; font-weight: 500; text-decoration: none; }
+.toast__act:hover { text-decoration: underline; }
+.toast__x { flex: none; inline-size: 16px; block-size: 16px; padding: 0; border: 0; background: transparent; color: #fff; cursor: pointer; display: grid; place-items: center; }
+.toast__x .icon { inline-size: 16px; block-size: 16px; }
 /* design-batch-2026-10-26 item 8 — fluid grid: 1440 → page padding 120 (--margin), 3 columns, 32 between cards, 48 between rows. */
 :root { --pgrid-col: 12px; --pgrid-row: 24px; }
 @media (min-width: 768px) { :root { --pgrid-col: 24px; --pgrid-row: 40px; } }

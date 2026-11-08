@@ -11,7 +11,7 @@ import { Breadcrumbs } from '../components/Breadcrumbs';
 import { Stub } from '../components/Stub';
 import { ProductReviews } from '../components/Reviews';
 import { SizeGuide } from '../components/SizeGuide';
-import { STORE_PHONE_DISPLAY, STORE_PHONE_TEL } from '../content/store';
+import { IN_STOCK_LINE, OUT_OF_STOCK_LINE, STORE_PHONE_DISPLAY, STORE_PHONE_TEL, VAT_INCLUDED } from '../content/store';
 import { flags } from '../config/flags';
 import { NotFound } from './NotFound';
 import './Product.css';
@@ -90,9 +90,11 @@ export function Product() {
             <button type="button" className="pdp__fav" data-figma={favorites.has(p.id) ? '266:67406' : '266:67401'} aria-pressed={favorites.has(p.id)} aria-label={`${p.name} در علاقه‌مندی‌ها`} onClick={() => toggleFavorite(p.id)}><Icon name={favorites.has(p.id) ? 'heart-2' : 'heart-1'} /></button>
           </div>
           <ul className="pdp__facts">
-            <li><Icon name="tick" size={18} /><span>موجودی: در انتظار تصمیم کسب‌وکار (BD-16)</span></li>
-            <li><Icon name="send-1" size={18} /><span>ارسال و هزینه: در انتظار تصمیم کسب‌وکار (BD-02/BD-03)</span></li>
+            <li><Icon name="tick" size={18} /><span>{soldOut ? OUT_OF_STOCK_LINE : IN_STOCK_LINE}</span></li>
+            <li><Icon name="information-circle" size={18} /><span>{VAT_INCLUDED}</span></li>
+            {/* RESTORE round-2: returns line removed from the product page until the designer sends it back.
             <li><Icon name="information-circle" size={18} /><span>بازگشت کالا: در انتظار تصمیم کسب‌وکار (BD-04)</span></li>
+            */}
           </ul>
         </div>
         <div className="pdp__gallery">

@@ -6,6 +6,7 @@ import { faNumber, formatPrice } from '../lib/format';
 import { Icon } from '../components/Icon';
 import { Stub } from '../components/Stub';
 import { SAMPLE_ORDERS_BLOCKED } from '../lib/siteMode';
+import { VAT_INCLUDED } from '../content/store';
 import './Cart.css';
 
 export function Summary({ cart, children, title = 'خلاصه سفارش' }: { cart: CartT; children?: React.ReactNode; title?: string }) {
@@ -17,10 +18,10 @@ export function Summary({ cart, children, title = 'خلاصه سفارش' }: { c
         <div><dt>جمع کل ({faNumber(t.count)} کالا)</dt><dd>{formatPrice(t.subtotal)}</dd></div>
         {t.discount > 0 && <div><dt>تخفیف</dt><dd className="summary__disc">{formatPrice(t.discount)}−</dd></div>}
         <div><dt>ارسال</dt><dd className="small muted">در انتظار تصمیم (BD-02)</dd></div>
-        <div><dt>مالیات بر ارزش افزوده</dt><dd className="small muted">در انتظار تصمیم (BD-06)</dd></div>
+        <div><dt>مالیات بر ارزش افزوده</dt><dd className="small">{VAT_INCLUDED}</dd></div>
         <div className="summary__total"><dt>مبلغ قابل پرداخت</dt><dd>{formatPrice(t.payable)}</dd></div>
       </dl>
-      <p className="caption muted">مبلغ بدون هزینه‌ی ارسال و مالیات است؛ این دو در انتظار تصمیم کسب‌وکار هستند.</p>
+      <p className="caption muted">مبلغ کالا همان قیمت فروش است و مالیات جداگانه اضافه نمی‌شود. هزینه ارسال هنوز تعیین نشده است.</p>
       {children}
     </aside>
   );

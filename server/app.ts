@@ -395,7 +395,7 @@ export function createApp(db: Db, deps: Deps = {}) {
     const cart = await cartView(cartId);
     const items = cart.items.filter(i => i.available);
     if (!items.length) return res.status(409).json({ error: 'cart_empty' });
-    // BD-02/BD-06: shipping fee and VAT are NULL (undecided); total = items only.
+    // Shipping fee stays NULL (BD-02, not decided). VAT is included in the item price (owner, 2026-11): vat_amount stays NULL and nothing is added.
     const oid = await db.insert(`INSERT INTO orders (user_id,order_status,payment_status,fulfilment_status,shipping_method,shipping_fee,vat_amount,subtotal,discount,total,address_json)
       VALUES (?,'pending','unpaid','unfulfilled',?,NULL,NULL,?,?,?,?)`, [req.userId!, shippingMethodId, cart.totals.subtotal, cart.totals.discount, cart.totals.payable,
       JSON.stringify({ recipient: address.recipient, phone: toLatin(address.phone), province: address.province, city: address.city, line: address.line, postalCode: toLatin(address.postalCode) })]);

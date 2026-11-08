@@ -36,6 +36,8 @@ describe('round 1', () => {
     rtl(<SupportContact />);
     expect(screen.getByText('یزد، پاساژ ستاره، طبقه اول')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '۰۹۱۳۶۷۲۷۲۶۲' })).toHaveAttribute('href', 'tel:09136727262');
-    expect(screen.getAllByText(/در انتظار تصمیم کسب‌وکار/).length).toBe(3);
+    expect(screen.getByText('۹ صبح - ۱۷ عصر')).toBeInTheDocument();
+    expect(screen.queryByText(/ایمیل/)).toBeNull();
+    expect(screen.queryByText(/زمان پاسخ/)).toBeNull();
   });
 });
