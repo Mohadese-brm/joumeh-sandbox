@@ -11,10 +11,11 @@ import './Home.css';
 /* design-batch-2026-10-26 items 2–4. Women feature 55:368 / Story 55:350: image 480×600 arch + copy, text vertically centred beside the
    image (Figma). Spacing (CEO): eyebrow→title 16, title→sentence 16, sentence on one line, sentence→button 32, section→section 48,
    last image→footer 80. The same spacing rules apply to every following section. */
-function Feature({ id, eyebrow, title, text, img, to, alt = '', cta, ctaKind = 'primary', tone, flip = false, last = false, frame = false }: {
-  id: string; eyebrow: string; title: string; text: string; img: string; to: string; alt?: string; cta: string; ctaKind?: 'primary' | 'secondary';
-  tone: 'white' | 'cream'; flip?: boolean; last?: boolean; frame?: boolean }) {
-  const pic = <img className={frame ? 'story__img' : 'feature__img'} src={`/img/${img}@1x.webp`} srcSet={`/img/${img}@1x.webp 1x, /img/${img}@2x.webp 2x`} alt={alt} width={480} height={600} loading="lazy" />;
+function Feature({ id, eyebrow, title, text, img, to, alt = '', cta, ctaKind = 'primary', tone, flip = false, last = false, frame = false, src }: {
+  id: string; eyebrow: string; title: string; text: string; img?: string; to: string; alt?: string; cta: string; ctaKind?: 'primary' | 'secondary';
+  tone: 'white' | 'cream'; flip?: boolean; last?: boolean; frame?: boolean; src?: string }) {
+  const url = src ?? `/img/${img}@1x.webp`;
+  const pic = <img className={frame ? 'story__img' : 'feature__img'} src={url} srcSet={src ? `${src} 1x, ${src} 2x` : `/img/${img}@1x.webp 1x, /img/${img}@2x.webp 2x`} alt={alt} width={480} height={600} loading="lazy" />;
   return (
     <section id={id} className={`hsec feature feature--${tone}${flip ? ' feature--flip' : ''}${last ? ' hsec--last' : ''}`} aria-labelledby={`${id}-h`}>
       <div className="wrap feature__in">
@@ -44,7 +45,7 @@ function BestSellers({ cat, title, tone }: { cat: string; title: string; tone: '
 export function Home() {
   return (<>
     {flags.heroMode === 'static' ? <HeroStatic /> : <HeroCarousel />}
-    <Feature id="f-women" flip tone="white" eyebrow="کالکشن پاییز ۱۴۰۵" title="تن‌پوش‌های زنانه" text="لباس‌هایی سبک و روان، با رنگ‌های گرم خاک و نور عصر کویر؛ دوخته‌شده برای روزهای آرام." img="product-women-lilac-shirt" to="/women" cta="مشاهده" />
+    <Feature id="f-women" flip tone="white" eyebrow="کالکشن پاییز ۱۴۰۵" title="تن‌پوش‌های زنانه" text="لباس‌هایی سبک و روان، با رنگ‌های گرم خاک و نور عصر کویر؛ دوخته‌شده برای روزهای آرام." src="/img/products/r-mahtab.webp" alt="زنی با شومیز سفید و شال زرد در حیاط کاه‌گلی، زیر نور عصر" to="/women" cta="مشاهده" />
     <BestSellers tone="white" cat="women" title="پرفروش‌های زنانه" />
     <Feature id="f-men" tone="cream" eyebrow="کالکشن پاییز ۱۴۰۵" title="تن‌پوش‌های مردانه" text="دوخت ساده، پارچه‌های طبیعی و رنگ‌های خاکی؛ برای مردی که آرامش را انتخاب می‌کند." img="product-men-doorway" to="/men" cta="مشاهده" />
     <BestSellers tone="cream" cat="men" title="پرفروش‌های مردانه" />
