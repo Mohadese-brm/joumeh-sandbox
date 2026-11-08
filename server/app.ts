@@ -390,14 +390,15 @@ export function createApp(db: Db, deps: Deps = {}) {
     const { cartId, address, shippingMethodId } = req.body ?? {};
     if (!await cartExists(cartId)) return res.status(404).json({ error: 'cart_not_found' });
     const f = validateAddress(address ?? {});
-    if (!SAMPLE_SHIPPING_METHODS.some(m => m.id === shippingMethodId)) f.shippingMethodId = 'روش ارسال را انتخاب کنید';
+    // A missing method is allowed: no shipping rate is configured, so no fee is added. An unknown id is still rejected.
+    if (shippingMethodId && !SAMPLE_SHIPPING_METHODS.some(m => m.id === shippingMethodId)) f.shippingMethodId = 'روش ارسال را انتخاب کنید';
     if (Object.keys(f).length) return bad(res, 'validation', f);
     const cart = await cartView(cartId);
     const items = cart.items.filter(i => i.available);
     if (!items.length) return res.status(409).json({ error: 'cart_empty' });
     // Shipping fee stays NULL (BD-02, not decided). VAT is included in the item price (owner, 2026-11): vat_amount stays NULL and nothing is added.
     const oid = await db.insert(`INSERT INTO orders (user_id,order_status,payment_status,fulfilment_status,shipping_method,shipping_fee,vat_amount,subtotal,discount,total,address_json)
-      VALUES (?,'pending','unpaid','unfulfilled',?,NULL,NULL,?,?,?,?)`, [req.userId!, shippingMethodId, cart.totals.subtotal, cart.totals.discount, cart.totals.payable,
+      VALUES (?,'pending','unpaid','unfulfilled',?,NULL,NULL,?,?,?,?)`, [req.userId!, shippingMethodId || null, cart.totals.subtotal, cart.totals.discount, cart.totals.payable,
       JSON.stringify({ recipient: address.recipient, phone: toLatin(address.phone), province: address.province, city: address.city, line: address.line, postalCode: toLatin(address.postalCode) })]);
     await db.run('UPDATE orders SET order_number=? WHERE id=?', [String(oid), oid]); // BD-11 STUB: one sample format app-wide (same as seeded ۱۰۱۲۴); final format = CEO
     for (const i of items as unknown as { productId: number; variantId: number; name: string; size: string; color: string; price: number; quantity: number }[])

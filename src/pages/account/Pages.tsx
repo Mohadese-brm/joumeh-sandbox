@@ -66,7 +66,7 @@ export function OrderDetail() {
     <section className="card"><dl className="kv">
       <div><dt>جمع کالاها</dt><dd>{formatPrice(o.subtotal)}</dd></div>
       {o.discount > 0 && <div><dt>تخفیف</dt><dd>{formatPrice(o.discount)}−</dd></div>}
-      <div><dt>ارسال</dt><dd className="caption muted">در انتظار تصمیم (BD-02)</dd></div>
+      {o.shippingFee != null && <div><dt>ارسال</dt><dd>{formatPrice(o.shippingFee)}</dd></div>}
       <div><dt>مالیات</dt><dd>{VAT_INCLUDED}</dd></div>
       <div><dt>مبلغ کالاها</dt><dd><strong>{formatPrice(o.total)}</strong></dd></div>
     </dl></section>

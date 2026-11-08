@@ -23,7 +23,7 @@ export function Payment() {
         <Stub code="BD-01">گام پرداخت جایگزین: درگاه پرداخت (شاپرک) انتخاب نشده است. فقط پرداخت آزمایشی (MockProvider) فعال است؛ سفارش ثبت می‌شود و هیچ پولی جابه‌جا نمی‌شود.</Stub>
         <StoreContact />
         {!id || o.error ? <p className="err">سفارش پیدا نشد. <Link to="/account/orders">سفارش‌های من</Link></p> : o.data && <>
-          <p>سفارش <bdi>{faDigits(o.data.orderNumber)}</bdi> · مبلغ اقلام: <strong>{formatPrice(o.data.total)}</strong> <span className="caption muted">(مالیات ۱۰٪ داخل قیمت است و چیزی به آن اضافه نمی‌شود. هزینه ارسال هنوز تعیین نشده — BD-02)</span></p>
+          <p>سفارش <bdi>{faDigits(o.data.orderNumber)}</bdi> · مبلغ اقلام: <strong>{formatPrice(o.data.total)}</strong> <span className="caption muted">(مالیات ۱۰٪ داخل قیمت است و چیزی به آن اضافه نمی‌شود.)</span></p>
           {o.data.paymentStatus === 'paid' ? <Link className="btn btn--primary" to={`/checkout/confirmation/${id}`}>مشاهده‌ی تأیید سفارش</Link> : <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
             <button className="btn btn--primary" disabled={busy} onClick={() => pay('success')}>پرداخت آزمایشی موفق</button>
             <button className="btn btn--outline" disabled={busy} onClick={() => pay('failure')}>شبیه‌سازی پرداخت ناموفق</button></div>}

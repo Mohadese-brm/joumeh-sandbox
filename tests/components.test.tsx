@@ -16,7 +16,10 @@ const sale = { id: 1, slug: 'women-1', name: 'مانتو کتان کویری', s
 const rtl = (ui: React.ReactElement, path = '/') => render(<div lang="fa" dir="rtl"><MemoryRouter initialEntries={[path]}>{ui}</MemoryRouter></div>);
 
 describe('flags (decision log)', () => {
-  it('defaults match CEO/Emma decisions', () => { expect(flags).toEqual({ showDiscountBadge: true, filterMode: 'off', heroMode: 'static', priceSize: '17px' }); }); // heroMode → 'static': design-batch-2026-10-26 item 1 (CEO)
+  it('defaults match CEO/Emma decisions', () => {
+    // stockNotices off and shippingRates empty: round 3 — no reservation / insufficient-stock / price-change notices, and no shipping fee until one is configured.
+    expect(flags).toEqual({ showDiscountBadge: true, filterMode: 'off', heroMode: 'static', priceSize: '17px', stockNotices: false, shippingRates: [] });
+  }); // heroMode → 'static': design-batch-2026-10-26 item 1 (CEO)
 });
 
 describe('ProductCard', () => {

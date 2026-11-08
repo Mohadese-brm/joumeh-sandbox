@@ -4,24 +4,23 @@ import { useStore } from '../lib/store';
 import { api, type Cart as CartT, type CartItem } from '../lib/api';
 import { faNumber, formatPrice } from '../lib/format';
 import { Icon } from '../components/Icon';
-import { Stub } from '../components/Stub';
 import { SAMPLE_ORDERS_BLOCKED } from '../lib/siteMode';
-import { VAT_INCLUDED } from '../content/store';
+import { flags } from '../config/flags';
 import './Cart.css';
 
-export function Summary({ cart, children, title = 'خلاصه سفارش' }: { cart: CartT; children?: React.ReactNode; title?: string }) {
+/** Items and the merchandise total. Shipping is not shown here; VAT is already inside the prices and is not added. */
+export function Summary({ cart, children, title = 'خلاصه سفارش', shippingFee = null }: { cart: CartT; children?: React.ReactNode; title?: string; shippingFee?: number | null }) {
   const t = cart.totals;
+  const payable = t.payable + (shippingFee ?? 0);
   return (
     <aside className="card summary" aria-labelledby="sum-h">
       <h2 id="sum-h" className="summary__h">{title}</h2>
       <dl>
         <div><dt>جمع کل ({faNumber(t.count)} کالا)</dt><dd>{formatPrice(t.subtotal)}</dd></div>
         {t.discount > 0 && <div><dt>تخفیف</dt><dd className="summary__disc">{formatPrice(t.discount)}−</dd></div>}
-        <div><dt>ارسال</dt><dd className="small muted">در انتظار تصمیم (BD-02)</dd></div>
-        <div><dt>مالیات بر ارزش افزوده</dt><dd className="small">{VAT_INCLUDED}</dd></div>
-        <div className="summary__total"><dt>مبلغ قابل پرداخت</dt><dd>{formatPrice(t.payable)}</dd></div>
+        {shippingFee != null && <div><dt>ارسال</dt><dd>{formatPrice(shippingFee)}</dd></div>}
+        <div className="summary__total"><dt>مبلغ قابل پرداخت</dt><dd>{formatPrice(payable)}</dd></div>
       </dl>
-      <p className="caption muted">مبلغ کالا همان قیمت فروش است و مالیات جداگانه اضافه نمی‌شود. هزینه ارسال هنوز تعیین نشده است.</p>
       {children}
     </aside>
   );
@@ -75,7 +74,7 @@ export function Cart() {
               <div className="citem__total"><span className="caption muted">جمع</span><strong>{formatPrice(it.lineTotal)}</strong></div>
               <button type="button" className="icon-btn citem__del" onClick={() => remove(it)} disabled={busy === it.id} aria-label={`حذف ${it.name} از سبد`}><Icon name="trash" size={24} /></button>
             </li>))}</ul>
-          <Stub code="BD-08/BD-16">رزرو موجودی، پیام «موجودی ناکافی» و «تغییر قیمت» به تصمیم کسب‌وکار وابسته‌اند و فعال نیستند.</Stub>
+          {flags.stockNotices && <p className="stub" role="note">رزرو موجودی، پیام «موجودی کافی نیست» و هشدار «تغییر قیمت».</p>}
         </div>
         <Summary cart={cart}><button className="btn btn--primary btn--block" disabled={cart.totals.count === 0 || !!cart.ordersBlocked} onClick={() => nav('/checkout')}>{cart.ordersBlocked ? 'ثبت سفارش غیرفعال (نمونه)' : 'ادامه فرایند خرید'}</button></Summary>
       </div>
