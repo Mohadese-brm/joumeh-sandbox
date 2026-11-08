@@ -109,8 +109,8 @@ export function Product() {
         <div className="sec-head"><h2 id="rel-h" className="h-section">محصولات مشابه</h2><Link to={`/${p.category}`} className="more">مشاهده همه <Icon name="left-2" size={16} /></Link></div>
         <ProductGrid products={p.related.slice(0, 4)} four />
       </section>}
-      {guide && <Modal title="راهنمای سایز" onClose={() => setGuide(false)} labelId="guide-title" sheet wide hideTitle>
-        <SizeGuide name={p.name} type={p.type} sizes={[...new Set(p.variants.map(v => v.size))]} />
+      {guide && <Modal title="راهنمای سایز" onClose={() => setGuide(false)} labelId="guide-title" sheet>
+        <SizeGuide />
       </Modal>}
     </div>
   );

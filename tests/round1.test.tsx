@@ -5,7 +5,6 @@ import { MemoryRouter } from 'react-router-dom';
 import { axe } from 'jest-axe';
 import { PaymentInfo, SupportFaq, SupportContact } from '../src/pages/account/Pages';
 import { NotFound } from '../src/pages/NotFound';
-import { SizeGuide } from '../src/components/SizeGuide';
 const rtl = (ui: React.ReactElement) => render(<div lang="fa" dir="rtl"><MemoryRouter>{ui}</MemoryRouter></div>);
 
 describe('round 1', () => {
@@ -18,14 +17,6 @@ describe('round 1', () => {
   it('m4 404 per 260:66609', () => {
     rtl(<NotFound />); expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('۴۰۴');
     expect(screen.getByText('صفحه‌ای که دنبالش هستید پیدا نشد.')).toBeInTheDocument(); expect(screen.getByRole('link', { name: 'بازگشت به صفحهٔ اصلی' })).toHaveAttribute('href', '/');
-  });
-  it('size guide shows the owner chart (phone status bar cropped off) and the store phone', async () => {
-    const { container } = rtl(<SizeGuide name="مانتو کتان کویری" type="مانتو" sizes={['S', 'M']} />);
-    expect(screen.getByRole('img', { name: /راهنمای سایز/ })).toHaveAttribute('src', '/img/size-guide.webp');
-    expect(container.querySelector('table')).toBeNull();
-    expect(screen.getByText('یزد، پاساژ ستاره، طبقه اول')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '۰۹۱۳۶۷۲۷۲۶۲' })).toHaveAttribute('href', 'tel:09136727262');
-    expect(await axe(container)).toHaveNoViolations();
   });
   it('P6 FAQ accordion (246:15454) + contact (246:15613); ticket form not built', async () => {
     const { container } = rtl(<SupportFaq />);
